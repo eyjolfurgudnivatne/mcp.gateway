@@ -680,6 +680,10 @@ dotnet run --project Mcp.Gateway.Server
 - Maintain test coverage
 - Follow existing patterns
 
+### Release Process
+- [GitHub Release Automation](docs/GitHub-Release-Automation.md) - Automated releases
+- [Trusted Publishing](docs/NuGet-Trusted-Publishing.md) - Secure NuGet publishing
+
 ---
 
 ## 📈 Roadmap
