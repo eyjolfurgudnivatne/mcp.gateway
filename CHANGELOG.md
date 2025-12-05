@@ -7,16 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- **Auto-generated tool names** - `[McpTool]` attribute now accepts optional `name` parameter
-  - If `name` is null, it's auto-generated from method name (e.g., `AddNumbers` → `add_numbers`)
-  - `ToolNameGenerator.ToSnakeCase()` - Converts method names to snake_case
-  - `ToolNameGenerator.ToHumanizedTitle()` - Generates human-readable titles
-  - Backward compatible - explicit names still work as before
-  - 17 unit tests added for name generation
-
-### Planned for v1.1
-- NuGet package release for Mcp.Gateway.Tools
+### Planned for v1.2
 - Additional example tools
 - Performance optimizations (parameter caching)
 - Enhanced documentation
@@ -28,6 +19,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tool lifecycle hooks for monitoring
 - Custom transport provider API
 - Enhanced streaming (compression, flow control, multiplexing)
+
+---
+
+## [1.1.0] - 2025-12-05
+
+### Added
+- **Auto-generated tool names** - `[McpTool]` attribute now accepts optional `name` parameter
+  - If `name` is null, it's auto-generated from method name (e.g., `AddNumbers` → `add_numbers`)
+  - `ToolNameGenerator.ToSnakeCase()` - Converts method names to snake_case
+  - `ToolNameGenerator.ToHumanizedTitle()` - Generates human-readable titles
+  - Backward compatible - explicit names still work as before
+  - Example: `Mcp.Gateway.Server/Tools/Examples/AutoNamedTools.cs`
+- **GitHub Actions automation**
+  - Automated testing on push/PR to main branch
+  - Automated release workflow with version tagging
+  - NuGet Trusted Publishing support (keyless authentication)
+- **Documentation**
+  - Auto-generated tool names guide (`docs/Auto-Generated-Tool-Names.md`)
+  - GitHub Actions testing guide (`docs/GitHub-Actions-Testing.md`)
+  - GitHub release automation guide (`docs/GitHub-Release-Automation.md`)
+  - NuGet Trusted Publishing guide (`docs/NuGet-Trusted-Publishing.md`)
+  - Client examples (`Mcp.Gateway.Tools/docs/examples/client-examples.md`)
+
+### Changed
+- `McpToolAttribute` constructor now accepts optional `name` parameter (nullable)
+- Tool discovery logic updated to auto-generate names if not specified
+- Updated all documentation with auto-naming examples
+
+### Fixed
+- GitHub Actions workflow: Updated `upload-artifact` from v3 to v4 (v3 deprecated)
+
+### Testing
+- 17 new unit tests for `ToolNameGenerator` (total: 62+ tests)
+- All tests passing ✅
 
 ---
 
