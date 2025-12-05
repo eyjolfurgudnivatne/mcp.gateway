@@ -230,52 +230,98 @@ public static async Task ErrorHandlingTool(ToolConnector connector)
 }
 ```
 
-### Example 7: Validation Before Streaming
+### Example 7: Early Validation (Using StreamMessageMeta)
 
-Validate input before starting stream:
+**Pattern:** Access parameters via `connector.StreamMessage.Meta`
 
 ```csharp
-[McpTool("example_validation")]
-public static async Task ValidationTool(ToolConnector connector, JsonRpcMessage request)
+[McpTool("example_validation",
+    Description = "Validates file path before streaming",
+    InputSchema = @"{
+        ""type"":""object"",
+        ""properties"":{
+            ""path"":{""type"":""string"",""description"":""File path"",""minLength"":1}
+        },
+        ""required"":[""path""]
+    }")]
+public static async Task ValidationTool(ToolConnector connector)
 {
-    // Validate request params before opening stream
-    if (request.Params is null)
+    // Extract StreamMessageMeta from connector
+    if (!StreamMessageMeta.TryGetFromObject(connector.StreamMessage?.Meta, out var streamMeta) || streamMeta == null)
     {
-        throw new ToolInvalidParamsException("Missing params");
+        throw new ToolInvalidParamsException("Invalid stream metadata");
     }
 
-    var filePath = request.Params.GetProperty("path").GetString();
+    // Use Name property from meta (client can send file path here)
+    var filePath = streamMeta.Name;
     
-    if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+    if (string.IsNullOrEmpty(filePath))
     {
-        throw new ToolInvalidParamsException($"Invalid file path: {filePath}");
+        throw new ToolInvalidParamsException("File path is required");
     }
 
-    // Validation passed, start streaming
     var meta = new StreamMessageMeta(
         Method: "result.file",
         Binary: true,
-        Name: Path.GetFileName(filePath));
+        Name: Path.GetFileName(filePath),
+        Mime: "application/octet-stream");
 
     using var handle = (ToolConnector.BinaryStreamHandle)connector.OpenWrite(meta);
-    using var fileStream = File.OpenRead(filePath);
     
-    await fileStream.CopyToAsync(handle);
-    await handle.CompleteAsync(new { success = true });
+    try
+    {
+        if (!File.Exists(filePath))
+        {
+            await handle.FailAsync(new JsonRpcError(404, "File not found", new { path = filePath }));
+            return;
+        }
+
+        using var fileStream = File.OpenRead(filePath);
+        await fileStream.CopyToAsync(handle);
+        await handle.CompleteAsync(new { 
+            fileName = Path.GetFileName(filePath),
+            fileSize = new FileInfo(filePath).Length,
+            success = true 
+        });
+    }
+    catch (Exception ex)
+    {
+        await handle.FailAsync(new JsonRpcError(-32603, "Error reading file", new { detail = ex.Message }));
+    }
 }
 ```
+
+**How client sends file path:**
+```javascript
+// Client sends StreamMessage with path in Name
+ws.send(JSON.stringify({
+  type: "start",
+  id: "stream-123",
+  meta: {
+    method: "example_validation",
+    binary: true,
+    name: "C:\\data\\myfile.bin"  // ← File path here!
+  }
+}));
+```
+
+**Key points:**
+- ✅ `StreamMessageMeta.Name` can be used for file paths
+- ✅ Access via `StreamMessageMeta.TryGetFromObject(connector.StreamMessage?.Meta, out var meta)`
+- ✅ Other metadata available: `Mime`, `TotalSize`, `Compression`, etc.
+- ✅ For complex parameters, use `InputSchema` validation instead
 
 ---
 
 ## Integration with Existing Stream APIs
 
-### Example 8: Copy from Stream
+### Example 8: IAsyncEnumerable Integration
 
-Use `Stream.CopyToAsync()` for efficient streaming:
+Integrate with IAsyncEnumerable for streaming:
 
 ```csharp
-[McpTool("example_stream_copy")]
-public static async Task StreamCopyTool(ToolConnector connector)
+[McpTool("example_asyncenumerable")]
+public static async Task AsyncEnumerableTool(ToolConnector connector)
 {
     var meta = new StreamMessageMeta(
         Method: "result.data",
@@ -283,36 +329,24 @@ public static async Task StreamCopyTool(ToolConnector connector)
 
     using var handle = (ToolConnector.BinaryStreamHandle)connector.OpenWrite(meta);
 
-    // BinaryStreamHandle implements Stream, so CopyToAsync works!
-    using var sourceStream = GetDataStream(); // Your data source
-    await sourceStream.CopyToAsync(handle);
-    
-    await handle.CompleteAsync(new { status = "copied" });
+    // Example: Stream returned as IAsyncEnumerable
+    await foreach (var chunk in GetChunksAsync())
+    {
+        await handle.WriteAsync(chunk);
+    }
+
+    await handle.CompleteAsync(new { status = "completed" });
 }
-```
 
-### Example 9: Compression
-
-Stream compressed data:
-
-```csharp
-[McpTool("example_compression")]
-public static async Task CompressionTool(ToolConnector connector)
+// Simulated async stream method
+private static async IAsyncEnumerable<byte[]> GetChunksAsync()
 {
-    var meta = new StreamMessageMeta(
-        Method: "result.compressed",
-        Binary: true,
-        Compression: "gzip",
-        Mime: "application/gzip");
-
-    using var handle = (ToolConnector.BinaryStreamHandle)connector.OpenWrite(meta);
-    using var gzipStream = new GZipStream(handle, CompressionLevel.Optimal, leaveOpen: true);
-
-    var data = Encoding.UTF8.GetBytes("Large text data to compress...");
-    await gzipStream.WriteAsync(data);
-    await gzipStream.FlushAsync();
-
-    await handle.CompleteAsync(new { compressed = true });
+    for (int i = 0; i < 10; i++)
+    {
+        // Simulate delay
+        await Task.Delay(500);
+        yield return new byte[1024]; // 1KB chunk
+    }
 }
 ```
 
@@ -320,56 +354,85 @@ public static async Task CompressionTool(ToolConnector connector)
 
 ## Common Patterns
 
-### Pattern 1: Progress Reporting via Summary
+### Pattern 1: Basic Streaming
 
-Report progress in the done message:
+Basic streaming setup:
 
 ```csharp
-var totalBytes = 0L;
-var chunks = 0;
-
-while (hasMoreData)
+[McpTool("example_basic_stream")]
+public static async Task BasicStreamTool(ToolConnector connector)
 {
-    await handle.WriteAsync(chunk);
-    totalBytes += chunk.Length;
-    chunks++;
+    // Example: Basic echo tool
+    
+    var meta = new StreamMessageMeta(
+        Method: "result.data",
+        Binary: true);
+
+    using var handle = (ToolConnector.BinaryStreamHandle)connector.OpenWrite(meta);
+
+    // Echo back received data
+    await connector.StreamMessage.Content.CopyToAsync(handle);
+    await handle.CompleteAsync(new { status = "echoed" });
 }
-
-await handle.CompleteAsync(new 
-{ 
-    totalBytes, 
-    chunks,
-    duration = stopwatch.Elapsed.TotalSeconds
-});
 ```
 
-### Pattern 2: Metadata-rich Streams
+### Pattern 2: Chunked Transfer
 
-Include metadata in `StreamMessageMeta`:
+Chunked transfer example:
 
 ```csharp
-var meta = new StreamMessageMeta(
-    Method: "result.image",
-    Binary: true,
-    Name: "photo.jpg",
-    Mime: "image/jpeg",
-    TotalSize: 1024 * 1024, // 1MB
-    CorrelationId: Guid.NewGuid().ToString());
+[McpTool("example_chunked_transfer")]
+public static async Task ChunkedTransferTool(ToolConnector connector)
+{
+    var meta = new StreamMessageMeta(
+        Method: "result.data",
+        Binary: true);
+
+    using var handle = (ToolConnector.BinaryStreamHandle)connector.OpenWrite(meta);
+
+    // Send data in chunks
+    for (int i = 0; i < 10; i++)
+    {
+        var chunk = Encoding.UTF8.GetBytes($"Chunk {i}\n");
+        await handle.WriteAsync(chunk);
+        await Task.Delay(100); // Simulate delay
+    }
+
+    await handle.CompleteAsync(new { status = "chunked" });
+}
 ```
 
-### Pattern 3: Chunking Strategy
+### Pattern 3: Large File Upload
 
-Use appropriate chunk sizes:
+Handling large file uploads:
 
 ```csharp
-// Small chunks for low-latency (e.g., real-time logs)
-var buffer = new byte[1024]; // 1KB
+[McpTool("example_large_file")]
+public static async Task LargeFileUploadTool(ToolConnector connector)
+{
+    var filePath = @"C:\data\largefile.bin";
+    var fileInfo = new FileInfo(filePath);
 
-// Large chunks for throughput (e.g., file transfer)
-var buffer = new byte[64 * 1024]; // 64KB
+    var meta = new StreamMessageMeta(
+        Method: "result.file",
+        Binary: true,
+        Name: fileInfo.Name,
+        Mime: "application/octet-stream",
+        TotalSize: fileInfo.Length);
 
-// Adaptive chunking based on network conditions
-var buffer = new byte[GetOptimalChunkSize()];
+    using var handle = (ToolConnector.BinaryStreamHandle)connector.OpenWrite(meta);
+    using var fileStream = File.OpenRead(filePath);
+
+    // Upload in chunks
+    var buffer = new byte[8192]; // 8KB chunks
+    int bytesRead;
+    while ((bytesRead = await fileStream.ReadAsync(buffer)) > 0)
+    {
+        await handle.WriteAsync(buffer.AsMemory(0, bytesRead));
+    }
+
+    await handle.CompleteAsync(new { status = "uploaded" });
+}
 ```
 
 ### Pattern 4: Cancellation Support
@@ -378,27 +441,61 @@ Respect cancellation tokens:
 
 ```csharp
 [McpTool("example_cancellation")]
-public static async Task CancellableTool(ToolConnector connector, CancellationToken ct)
+public static async Task CancellableTool(ToolConnector connector)
 {
+    // Note: CancellationToken parameter is NOT supported for ToolConnector tools
+    // Use connector.StreamMessage to check for client disconnect instead
+    
     var meta = new StreamMessageMeta(Method: "result.data", Binary: true);
     using var handle = (ToolConnector.BinaryStreamHandle)connector.OpenWrite(meta);
 
     try
     {
-        while (!ct.IsCancellationRequested)
+        // Check if client is still connected via WebSocket state
+        // or implement timeout logic
+        
+        int chunks = 0;
+        const int maxChunks = 100;
+        
+        while (chunks < maxChunks)
         {
-            var chunk = await GetNextChunkAsync(ct);
-            await handle.WriteAsync(chunk, ct);
+            // For long-running operations, check if we should continue
+            // (In practice, ToolConnector manages this internally via WebSocket state)
+            
+            var chunk = await GetNextChunkAsync();
+            await handle.WriteAsync(chunk);
+            chunks++;
+            
+            // Optional: Add delay between chunks
+            await Task.Delay(100);
         }
 
-        await handle.CompleteAsync(new { cancelled = true }, ct);
+        await handle.CompleteAsync(new { totalChunks = chunks });
     }
-    catch (OperationCanceledException)
+    catch (WebSocketException)
     {
-        await handle.FailAsync(new JsonRpcError(499, "Cancelled", null));
+        // Client disconnected - cleanup and exit
+        return;
+    }
+    catch (Exception ex)
+    {
+        await handle.FailAsync(new JsonRpcError(-32603, "Error", new { detail = ex.Message }));
     }
 }
+
+// Helper method (example)
+private static async Task<byte[]> GetNextChunkAsync()
+{
+    await Task.Delay(10);
+    return new byte[1024];
+}
 ```
+
+**Important Notes:**
+- `CancellationToken` is **NOT** automatically injected for `ToolConnector` tools
+- WebSocket state is managed by `ToolConnector` internally
+- For cancellation, catch `WebSocketException` when client disconnects
+- For timeouts, implement custom timeout logic or use `Task.WhenAny`
 
 ---
 
@@ -409,15 +506,156 @@ public static async Task CancellableTool(ToolConnector connector, CancellationTo
 3. **Include metadata** - Name, Mime, TotalSize help clients
 4. **Use summary effectively** - Include useful statistics in `CompleteAsync()`
 5. **Handle errors gracefully** - Use `FailAsync()` instead of throwing
-6. **Respect cancellation** - Check `CancellationToken` in loops
-7. **Validate early** - Check inputs before opening stream
+6. **Respect cancellation** - Catch `WebSocketException` for client disconnect
+7. **Validate early** - Use JSON Schema in `InputSchema` for parameter validation
 8. **Log appropriately** - Log start/complete/errors for debugging
 9. **Follow MCP naming rules** - Use underscores: `example_tool_name` (not dots!)
 
 ---
 
-## 📚 See Also
+## 🔧 Parameter Resolution Rules
 
-- [Phase 2 Implementation](phase-2-implementation.md)
-- [Architecture Decision Record 001](adr-001-websocket-ownership.md)
-- [ToolConnector API Reference](../api/ToolConnector.md) (TODO)
+### ToolConnector Tools (Streaming)
+
+**Signature:** `public static async Task MyTool(ToolConnector connector, ...)`
+
+**Parameter resolution:**
+1. **First parameter MUST be `ToolConnector`** - Automatically injected
+2. **Additional parameters** - Resolved from Dependency Injection (DI)
+3. **Special parameters NOT supported:**
+   - ❌ `JsonRpcMessage request` - Not available (use JSON Schema validation)
+   - ❌ `CancellationToken ct` - Not automatically injected (use WebSocket state)
+   - ❌ Request parameters - Not directly accessible (passed via `StreamMessage.Meta`)
+
+**Valid examples:**
+```csharp
+// ✅ Just ToolConnector
+public static async Task MyTool(ToolConnector connector)
+
+// ✅ ToolConnector + DI service
+public static async Task MyTool(ToolConnector connector, ILogger logger)
+
+// ✅ ToolConnector + multiple DI services
+public static async Task MyTool(
+    ToolConnector connector,
+    IMyService service,
+    ILogger<MyTool> logger)
+```
+
+**Invalid examples:**
+```csharp
+// ❌ JsonRpcMessage not supported with ToolConnector
+public static async Task MyTool(ToolConnector connector, JsonRpcMessage request)
+
+// ❌ CancellationToken not automatically injected
+public static async Task MyTool(ToolConnector connector, CancellationToken ct)
+
+// ❌ Custom parameters not supported (use DI or StreamMessage.Meta)
+public static async Task MyTool(ToolConnector connector, string filePath)
+```
+
+### Non-Streaming Tools (JSON-RPC)
+
+**Signature:** `public async Task<JsonRpcMessage> MyTool(JsonRpcMessage request, ...)`
+
+**Parameter resolution:**
+1. **First parameter MUST be `JsonRpcMessage`** - The request
+2. **Additional parameters** - Resolved from Dependency Injection (DI)
+
+**Valid examples:**
+```csharp
+// ✅ Just JsonRpcMessage
+public async Task<JsonRpcMessage> MyTool(JsonRpcMessage request)
+
+// ✅ JsonRpcMessage + DI service
+public async Task<JsonRpcMessage> MyTool(JsonRpcMessage request, ILogger logger)
+
+// ✅ JsonRpcMessage + multiple DI services
+public async Task<JsonRpcMessage> MyTool(
+    JsonRpcMessage request,
+    IMyService service,
+    ILogger<MyTool> logger)
+```
+
+---
+
+## 🚨 Common Mistakes
+
+### Mistake 1: Mixing ToolConnector with JsonRpcMessage
+```csharp
+// ❌ WRONG - This will fail at runtime!
+[McpTool("bad_example")]
+public static async Task BadExample(ToolConnector connector, JsonRpcMessage request)
+{
+    // DI will try to resolve JsonRpcMessage from container (fails!)
+}
+```
+
+**Fix:** Choose one or the other
+```csharp
+// ✅ CORRECT - Streaming tool
+[McpTool("good_streaming")]
+public static async Task GoodStreaming(ToolConnector connector)
+
+// ✅ CORRECT - Regular tool with request access
+[McpTool("good_regular")]
+public async Task<JsonRpcMessage> GoodRegular(JsonRpcMessage request)
+```
+
+### Mistake 2: Expecting CancellationToken
+```csharp
+// ❌ WRONG - CancellationToken not automatically injected!
+[McpTool("bad_cancellation")]
+public static async Task BadCancellation(ToolConnector connector, CancellationToken ct)
+{
+    // DI will try to resolve CancellationToken (may fail!)
+}
+```
+
+**Fix:** Use WebSocket exception handling
+```csharp
+// ✅ CORRECT - Detect cancellation via WebSocket
+[McpTool("good_cancellation")]
+public static async Task GoodCancellation(ToolConnector connector)
+{
+    try
+    {
+        // ... streaming logic ...
+    }
+    catch (WebSocketException)
+    {
+        // Client disconnected
+        return;
+    }
+}
+```
+
+### Mistake 3: Trying to access request parameters in streaming tool
+```csharp
+// ❌ WRONG - Cannot access request params directly!
+[McpTool("bad_params")]
+public static async Task BadParams(ToolConnector connector)
+{
+    // How do I get the file path from request? ← Can't!
+}
+```
+
+**Fix:** Use JSON Schema validation or StreamMessage.Meta
+```csharp
+// ✅ CORRECT - Use JSON Schema for validation
+[McpTool("good_params",
+    InputSchema = @"{
+        ""type"":""object"",
+        ""properties"":{
+            ""path"":{""type"":""string"",""minLength"":1}
+        },
+        ""required"":[""path""]
+    }")]
+public static async Task GoodParams(ToolConnector connector)
+{
+    // Parameters validated before tool invocation
+    // Access via connector.StreamMessage.Meta if needed
+}
+```
+
+---

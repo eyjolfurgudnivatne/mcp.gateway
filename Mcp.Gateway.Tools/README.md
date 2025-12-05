@@ -512,6 +512,20 @@ public async Task Ping_ReturnsSuccessResponse()
 - [Streaming Protocol v1.0](../docs/StreamingProtocol.md)
 - [Performance Optimization](../docs/Performance-Optimization-Plan.md)
 
+### Code Examples
+
+- **[Client Examples](docs/examples/client-examples.md)** - How to use Mcp.Gateway.Tools to build MCP clients
+  - HTTP client examples (tool calls, initialize, list tools)
+  - WebSocket client examples (streaming, real-time)
+  - Binary/text streaming examples
+  - Helper methods reference (JsonRpcMessage, StreamMessage, StreamMessageMeta)
+
+- **[Server Examples (ToolConnector)](docs/examples/toolconnector-usage.md)** - How to build streaming tools
+  - Binary streaming (server → client)
+  - Text streaming (JSON chunks)
+  - Error handling patterns
+  - Integration with existing Stream APIs
+
 ---
 
 ## ⚡ Performance
