@@ -483,7 +483,7 @@ public void ParseParameters_Uncached() { }
 - Custom JSON serializer for JsonRpcMessage hot paths
 - ValueTask for sync tools (breaking change)
 - SIMD optimizations where applicable
-- Sub-microsecond tool invocation
+- **Sub-100 ns parameter parsing** (via caching - from 584 ns → <100 ns)
 
 ---
 

@@ -1,7 +1,7 @@
 # 🎨 Hybrid Tool API - Design Plan (v2.0+)
 
 **Created:** 5. desember 2025  
-**Updated:** 6. desember 2025  
+**Updated:** 5. desember 2025  
 **Status:** 📋 Deferred to v2.0+ (Too complex for v1.1)
 
 **Target:** Simplify tool creation while maintaining flexibility  
