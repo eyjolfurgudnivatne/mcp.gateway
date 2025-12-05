@@ -3,6 +3,7 @@
 > Production-ready Model Context Protocol (MCP) Gateway library for .NET 10
 
 [![.NET 10](https://img.shields.io/badge/.NET-10-purple)](https://dotnet.microsoft.com/)
+[![NuGet](https://img.shields.io/nuget/v/Mcp.Gateway.Tools.svg)](https://www.nuget.org/packages/Mcp.Gateway.Tools/)
 [![MCP Protocol](https://img.shields.io/badge/MCP-2025--06--18-green)](https://modelcontextprotocol.io/)
 [![C# 14.0](https://img.shields.io/badge/C%23-14.0-blue)](https://learn.microsoft.com/en-us/dotnet/csharp/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -199,10 +200,15 @@ Create `.mcp.json` in `%APPDATA%\Code\User\globalStorage\github.copilot-chat\`:
 
 ## 🚀 Installation
 
-### Option 1: Add NuGet Package (Coming Soon)
+### Option 1: Install from NuGet ✨
 
 ```bash
 dotnet add package Mcp.Gateway.Tools
+```
+
+**Or via Package Manager Console:**
+```powershell
+Install-Package Mcp.Gateway.Tools
 ```
 
 ### Option 2: Build from Source
@@ -260,10 +266,20 @@ builder.AddToolsService();
 
 var app = builder.Build();
 
+// Check for stdio mode (for GitHub Copilot, Claude Desktop, etc.)
+var isStdioMode = args.Contains("--stdio");
+
+if (isStdioMode)
+{
+    // Run in stdio mode for local MCP clients
+    await ToolInvoker.RunStdioModeAsync(app.Services);
+    return;
+}
+
 // Enable WebSockets for streaming
 app.UseWebSockets();
 
-// Map endpoints
+// Map endpoints (HTTP, WebSocket, SSE)
 app.MapHttpRpcEndpoint("/rpc");
 app.MapWsRpcEndpoint("/ws");
 app.MapSseRpcEndpoint("/sse");
@@ -637,27 +653,29 @@ dotnet run --project Mcp.Gateway.Server
 
 ## 📈 Roadmap
 
-### v1.0 (Current)
+### v1.0.1 (Current) ✅
 - ✅ Full MCP Protocol 2025-06-18
 - ✅ HTTP, WebSocket, SSE, stdio transports
 - ✅ Binary streaming
 - ✅ GitHub Copilot integration
 - ✅ 45+ tests (100% passing)
 - ✅ Example servers (Server, GCCServer)
+- ✅ **NuGet package published**
+- ✅ **Performance optimizations:**
+  - ArrayPool for WebSocket buffers (90% GC reduction)
+  - SerializeToUtf8Bytes optimization (production throughput)
 
-### v1.1 (In Progress)
-- 🔜 NuGet package release
+### v1.1 (Planned)
 - 🔜 More example tools
-- ⚡ **Performance optimizations** (see [Performance Optimization Plan](docs/Performance-Optimization-Plan.md))
-  - ✅ SerializeToUtf8Bytes optimization (production throughput improvement)
-  - ❌ JSON Source Generators (blocked by polymorphic `object?` types - deferred to v2.0)
-  - 🔜 ArrayPool for WebSocket buffers (90% mindre GC pressure)
-  - 🔜 Parameter parsing cache (90% raskere repeated calls)
+- 🔜 Parameter caching (proper design)
 - 🔜 Additional documentation
+- 🔜 GitHub Actions automation
 
 ### v2.0 (Future)
+- 🔮 **Hybrid Tool API** - Simplified tool authoring (see [Hybrid Tool API Plan](docs/HybridToolAPI-Plan.md))
 - 🔮 **MCP Resources support** - Full implementation of MCP Resources specification
 - 🔮 **MCP Prompts support** - Full implementation of MCP Prompts specification
+- 🔮 **JSON Source Generators** - Hybrid approach for performance
 - 🔮 **Tool lifecycle hooks** - Events for monitoring tool invocations (opt-in)
 - 🔮 **Custom transport providers** - Extensibility API for custom transports
 - 🔮 **Enhanced streaming** - Compression, flow control, multiplexing
@@ -668,7 +686,7 @@ dotnet run --project Mcp.Gateway.Server
 
 MIT License
 
-Copyright (c) 2025 ARKo AS - AHelse Development Team
+Copyright (c) 2024 ARKo AS - AHelse Development Team
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -692,14 +710,18 @@ SOFTWARE.
 
 ## 🙏 Acknowledgments
 
+**Built by:** ARKo AS - AHelse Development Team
+
+**Special thanks to:**
 - **Anthropic** - For creating the MCP specification
 - **GitHub** - For Copilot and MCP client support
-- **Microsoft** - For .NET and ASP.NET Core
+- **Microsoft** - For .NET 10 and ASP.NET Core
 
 ---
 
 ## 📞 Support
 
+- **NuGet Package**: [Mcp.Gateway.Tools](https://www.nuget.org/packages/Mcp.Gateway.Tools/)
 - **GitHub Issues**: [Report bugs or request features](https://github.com/eyjolfurgudnivatne/mcp.gateway/issues)
 - **Documentation**: [Full docs](docs/)
 - **Examples**: See `Mcp.Gateway.Server` and `Mcp.Gateway.GCCServer` for reference implementations
@@ -708,6 +730,8 @@ SOFTWARE.
 
 **Built with ❤️ using .NET 10 and C# 14.0**
 
-**Version:** 1.0.0  
-**Last Updated:** 4. desember 2025  
+**Version:** 1.0.1  
+**Last Updated:** 5. desember 2025  
+**License:** MIT  
+**NuGet:** [Mcp.Gateway.Tools](https://www.nuget.org/packages/Mcp.Gateway.Tools/)
 
