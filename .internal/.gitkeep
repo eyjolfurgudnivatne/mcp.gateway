@@ -1,0 +1,4 @@
+# This file ensures .internal/ folder exists in Git
+# All other files in .internal/ are gitignored
+
+# See .internal/README.md for details

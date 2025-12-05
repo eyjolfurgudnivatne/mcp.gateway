@@ -481,6 +481,14 @@ Any other relevant information.
 - [Streaming Protocol](docs/StreamingProtocol.md) - Streaming details
 - [Performance Plan](docs/Performance-Optimization-Plan.md) - Performance optimization
 
+### Internal Documentation
+
+- `.internal/` - Local-only development notes (not in Git)
+  - Release checklists
+  - Session notes
+  - Quick reference guides
+  - Personal development notes
+
 ### External Resources
 
 - [MCP Specification](https://modelcontextprotocol.io/) - Official MCP spec
