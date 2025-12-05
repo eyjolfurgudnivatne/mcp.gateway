@@ -15,6 +15,7 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
+    environment: production  # Add environment for Trusted Publishing
     
     steps:
       - name: Checkout
