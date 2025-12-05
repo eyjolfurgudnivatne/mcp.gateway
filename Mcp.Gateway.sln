@@ -1,0 +1,81 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11205.157
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.Server", "Mcp.Gateway.Server\Mcp.Gateway.Server.csproj", "{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Folder", "Solution Folder", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitignore = .gitignore
+		.mcp.json = .mcp.json
+		CHANGELOG.md = CHANGELOG.md
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.Tools", "Mcp.Gateway.Tools\Mcp.Gateway.Tools.csproj", "{BC5B75A5-7BC5-4ECA-8EA0-A027A86776BF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.Tests", "Mcp.Gateway.Tests\Mcp.Gateway.Tests.csproj", "{1922CEEB-EA6A-497E-F01D-8263B11438FF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{74DBB65B-8717-4BC6-B042-79FDA377A533}"
+	ProjectSection(SolutionItems) = preProject
+		docs\ArrayPool-Implementation.md = docs\ArrayPool-Implementation.md
+		docs\HybridToolAPI-Plan.md = docs\HybridToolAPI-Plan.md
+		docs\JSON-RPC-2.0-spec.md = docs\JSON-RPC-2.0-spec.md
+		docs\MCP-Protocol-Verification.md = docs\MCP-Protocol-Verification.md
+		docs\MCP-Protocol.md = docs\MCP-Protocol.md
+		docs\Performance-Optimization-Plan.md = docs\Performance-Optimization-Plan.md
+		docs\Quick-Wins-Session-Summary.md = docs\Quick-Wins-Session-Summary.md
+		docs\StreamingProtocol.md = docs\StreamingProtocol.md
+		docs\v1.0.1-Release-Summary.md = docs\v1.0.1-Release-Summary.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{2073C2C6-7C99-46FE-90E3-E845EEF2FD6C}"
+	ProjectSection(SolutionItems) = preProject
+		.github\copilot-instructions.md = .github\copilot-instructions.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.GCCServer", "Mcp.Gateway.GCCServer\Mcp.Gateway.GCCServer.csproj", "{661516DD-0891-4129-9588-BE54922DA529}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.Benchmarks", "Mcp.Gateway.Benchmarks\Mcp.Gateway.Benchmarks.csproj", "{5AD7C004-0D72-EB71-C28B-8686BC69A566}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BC5B75A5-7BC5-4ECA-8EA0-A027A86776BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC5B75A5-7BC5-4ECA-8EA0-A027A86776BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC5B75A5-7BC5-4ECA-8EA0-A027A86776BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC5B75A5-7BC5-4ECA-8EA0-A027A86776BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1922CEEB-EA6A-497E-F01D-8263B11438FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1922CEEB-EA6A-497E-F01D-8263B11438FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1922CEEB-EA6A-497E-F01D-8263B11438FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1922CEEB-EA6A-497E-F01D-8263B11438FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{661516DD-0891-4129-9588-BE54922DA529}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{661516DD-0891-4129-9588-BE54922DA529}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{661516DD-0891-4129-9588-BE54922DA529}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{661516DD-0891-4129-9588-BE54922DA529}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5AD7C004-0D72-EB71-C28B-8686BC69A566}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AD7C004-0D72-EB71-C28B-8686BC69A566}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AD7C004-0D72-EB71-C28B-8686BC69A566}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AD7C004-0D72-EB71-C28B-8686BC69A566}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{74DBB65B-8717-4BC6-B042-79FDA377A533} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{2073C2C6-7C99-46FE-90E3-E845EEF2FD6C} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}
+	EndGlobalSection
+EndGlobal

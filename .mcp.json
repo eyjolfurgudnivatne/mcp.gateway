@@ -1,0 +1,21 @@
+//{
+//  "inputs": [],
+//  "servers": {
+//    "gcc_server_test_sse": {
+//      "type": "sse",
+//      "url": "http://localhost:5286/sse",
+//      "headers": {}
+//    }
+//  }
+//}
+
+//{
+//  "inputs": [],
+//  "servers": {
+//    "gcc_server_test_stdio": {
+//      "type": "stdio",
+//      "command": "Mcp.Gateway.GCCServer\\bin\\Debug\\net10.0\\Mcp.Gateway.GCCServer.exe",
+//      "args": [ "--stdio" ]
+//    }
+//  }
+//}
