@@ -41,6 +41,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.GCCServer", "Mc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.Benchmarks", "Mcp.Gateway.Benchmarks\Mcp.Gateway.Benchmarks.csproj", "{5AD7C004-0D72-EB71-C28B-8686BC69A566}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".internal", ".internal", "{ECD71231-234D-434A-9891-059749093AC1}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\.gitkeep = .internal\.gitkeep
+		.internal\README.md = .internal\README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -74,6 +80,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{74DBB65B-8717-4BC6-B042-79FDA377A533} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{2073C2C6-7C99-46FE-90E3-E845EEF2FD6C} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{ECD71231-234D-434A-9891-059749093AC1} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}
