@@ -481,6 +481,12 @@ Any other relevant information.
 - [Streaming Protocol](docs/StreamingProtocol.md) - Streaming details
 - [Performance Plan](docs/Performance-Optimization-Plan.md) - Performance optimization
 
+### Release Process
+
+- [GitHub Release Automation](docs/GitHub-Release-Automation.md) - Automated release workflow
+- Release workflow: `.github/workflows/release.yml`
+- Test workflow: `.github/workflows/test.yml`
+
 ### Internal Documentation
 
 - `.internal/` - Local-only development notes (not in Git)

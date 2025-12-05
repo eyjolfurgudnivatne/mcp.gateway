@@ -22,10 +22,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{74DBB65B-8717-4BC6-B042-79FDA377A533}"
 	ProjectSection(SolutionItems) = preProject
 		docs\ArrayPool-Implementation.md = docs\ArrayPool-Implementation.md
+		docs\Auto-Generated-Tool-Names.md = docs\Auto-Generated-Tool-Names.md
+		docs\GitHub-Release-Automation.md = docs\GitHub-Release-Automation.md
 		docs\HybridToolAPI-Plan.md = docs\HybridToolAPI-Plan.md
 		docs\JSON-RPC-2.0-spec.md = docs\JSON-RPC-2.0-spec.md
 		docs\MCP-Protocol-Verification.md = docs\MCP-Protocol-Verification.md
 		docs\MCP-Protocol.md = docs\MCP-Protocol.md
+		docs\NuGet-Trusted-Publishing.md = docs\NuGet-Trusted-Publishing.md
 		docs\Performance-Optimization-Plan.md = docs\Performance-Optimization-Plan.md
 		docs\Quick-Wins-Session-Summary.md = docs\Quick-Wins-Session-Summary.md
 		docs\StreamingProtocol.md = docs\StreamingProtocol.md
@@ -35,6 +38,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{2073C2C6-7C99-46FE-90E3-E845EEF2FD6C}"
 	ProjectSection(SolutionItems) = preProject
 		.github\copilot-instructions.md = .github\copilot-instructions.md
+		.github\release-notes.md = .github\release-notes.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.GCCServer", "Mcp.Gateway.GCCServer\Mcp.Gateway.GCCServer.csproj", "{661516DD-0891-4129-9588-BE54922DA529}"
@@ -45,6 +49,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".internal", ".internal", "{
 	ProjectSection(SolutionItems) = preProject
 		.internal\.gitkeep = .internal\.gitkeep
 		.internal\README.md = .internal\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "notes", "notes", "{CC761499-6044-48DF-9E01-744F32E64955}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\notes\attributes.md = .internal\notes\attributes.md
+		.internal\notes\auto-naming.md = .internal\notes\auto-naming.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{D9842DC7-A4E0-4990-8C20-F27C0424D473}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\release.yml = .github\workflows\release.yml
+		.github\workflows\test.yml = .github\workflows\test.yml
 	EndProjectSection
 EndProject
 Global
@@ -81,6 +97,8 @@ Global
 		{74DBB65B-8717-4BC6-B042-79FDA377A533} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{2073C2C6-7C99-46FE-90E3-E845EEF2FD6C} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{ECD71231-234D-434A-9891-059749093AC1} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{CC761499-6044-48DF-9E01-744F32E64955} = {ECD71231-234D-434A-9891-059749093AC1}
+		{D9842DC7-A4E0-4990-8C20-F27C0424D473} = {2073C2C6-7C99-46FE-90E3-E845EEF2FD6C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}

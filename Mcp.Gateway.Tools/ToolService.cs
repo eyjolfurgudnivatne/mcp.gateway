@@ -81,8 +81,20 @@ public class ToolService(IServiceProvider serviceProvider)
                         if (attribute is null)
                             continue;
                         
+                        // Auto-generate tool name if not specified
+                        var toolName = attribute.Name ?? ToolNameGenerator.ToSnakeCase(method.Name);
+                        
+                        // Validate tool name
+                        if (!ToolMethodNameValidator.IsValid(toolName, out var validationError))
+                        {
+                            System.Diagnostics.Debug.WriteLine(
+                                $"WARNING: Skipping tool '{method.Name}' in {type.FullName} - Invalid tool name '{toolName}': {validationError}");
+                            continue;
+                        }
+                        
                         // Debug: Found a tool!
-                        System.Diagnostics.Debug.WriteLine($"Found tool: {attribute.Name} in {type.FullName}.{method.Name}");
+                        System.Diagnostics.Debug.WriteLine(
+                            $"Found tool: {toolName} (from method: {method.Name}) in {type.FullName}");
                         
                         // Create delegate
                         Delegate toolDelegate;
@@ -111,8 +123,8 @@ public class ToolService(IServiceProvider serviceProvider)
                                 method);
                         }
                         
-                        // Register the tool (uses existing RegisterTool logic)
-                        RegisterTool(attribute.Name, toolDelegate);
+                        // Register the tool with auto-generated or explicit name
+                        RegisterTool(toolName, toolDelegate);
                         toolCount++;
                     }
                 }

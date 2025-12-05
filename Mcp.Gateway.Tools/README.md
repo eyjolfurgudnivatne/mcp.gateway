@@ -53,6 +53,7 @@
 ### Developer Experience
 - ✅ **Attribute-based tools** - Simple `[McpTool]` attribute
 - ✅ **Auto-discovery** - Tools are automatically scanned and registered
+- ✅ **Auto-naming** - Tool names auto-generated from method names (optional)
 - ✅ **Dependency injection** - Full DI support for tool methods
 - ✅ **Type safety** - Strongly-typed request/response models
 - ✅ **Comprehensive logging** - Debug-friendly with file logging for stdio
@@ -247,7 +248,7 @@ dotnet run --project YourServer -- --stdio
 
 ## 🛠️ Creating Tools
 
-### Basic Tool (JSON-RPC)
+### Basic Tool (Explicit Name)
 
 ```csharp
 [McpTool("ping",
@@ -260,6 +261,42 @@ public async Task<JsonRpcMessage> PingTool(JsonRpcMessage request)
 }
 ```
 
+### Auto-Generated Tool Name ✨ NEW in v1.1
+
+Tool names can now be auto-generated from method names!
+
+```csharp
+// Name auto-generated: "ping" (from method name "Ping")
+[McpTool]
+public JsonRpcMessage Ping(JsonRpcMessage request)
+{
+    return ToolResponse.Success(request.Id, new { message = "Pong" });
+}
+
+// Name auto-generated: "add_numbers" (from "AddNumbers")
+[McpTool(Description = "Adds two numbers")]
+public JsonRpcMessage AddNumbers(JsonRpcMessage request)
+{
+    var a = request.GetParams().GetProperty("a").GetInt32();
+    var b = request.GetParams().GetProperty("b").GetInt32();
+    return ToolResponse.Success(request.Id, new { result = a + b });
+}
+
+// Explicit name still works (backward compatible)
+[McpTool("get_user", Description = "Gets user by ID")]
+public JsonRpcMessage GetUserById(JsonRpcMessage request)
+{
+    var userId = request.GetParams().GetProperty("userId").GetInt32();
+    return ToolResponse.Success(request.Id, new { userId, name = "John Doe" });
+}
+```
+
+**How it works:**
+- `AddNumbers` → `"add_numbers"` (snake_case conversion)
+- `Ping` → `"ping"` (lowercase)
+- `echo_message` → `"echo_message"` (already valid)
+- Explicit names take priority when specified
+
 ### Tool with Parameters
 
 ```csharp
@@ -268,7 +305,8 @@ public async Task<JsonRpcMessage> PingTool(JsonRpcMessage request)
     Description = "Greets a user by name",
     InputSchema = @"{
         ""type"":""object"",
-        ""properties"":{
+        ""properties"":
+        {
             ""name"":{""type"":""string"",""description"":""Name to greet""}
         },
         ""required"":[""name""]

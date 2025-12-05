@@ -97,6 +97,7 @@ Create `.mcp.json` in `%APPDATA%\Code\User\globalStorage\github.copilot-chat\`:
 
 ### 🛠️ Developer-Friendly
 - **Auto-Discovery**: Tools discovered via `[McpTool]` attribute
+- **Auto-Naming**: Tool names auto-generated from method names (optional)
 - **Type-Safe**: Strong typing with C# records
 - **Dependency Injection**: Full ASP.NET Core DI support
 - **Testable**: 100% test coverage with xUnit
@@ -454,7 +455,7 @@ Copilot: The result is 28.
 
 ## 🛠️ Creating Custom Tools
 
-### Basic Tool
+### Basic Tool (Explicit Name)
 
 ```csharp
 using Mcp.Gateway.Tools;
@@ -463,10 +464,10 @@ using Mcp.Gateway.Tools;
     Description = "Greets a user by name",
     InputSchema = @"{
         ""type"":""object"",
-        ""properties"":{
+        ""properties""){
             ""name"":{""type"":""string"",""description"":""User's name""}
         },
-        ""required"":[""name""]
+        ""required"":[""name""
     }")]
 public async Task<JsonRpcMessage> GreetUser(JsonRpcMessage request)
 {
@@ -475,6 +476,35 @@ public async Task<JsonRpcMessage> GreetUser(JsonRpcMessage request)
     return ToolResponse.Success(request.Id, new { message = greeting });
 }
 ```
+
+### Auto-Generated Tool Name ✨
+
+**NEW in v1.1:** Tool names can be auto-generated from method names!
+
+```csharp
+using Mcp.Gateway.Tools;
+
+// Name auto-generated: "ping" (from method name "Ping")
+[McpTool]
+public JsonRpcMessage Ping(JsonRpcMessage request)
+{
+    return ToolResponse.Success(request.Id, new { message = "Pong" });
+}
+
+// Name auto-generated: "add_numbers_tool" (from "AddNumbersTool")
+[McpTool(Description = "Adds two numbers")]
+public JsonRpcMessage AddNumbersTool(JsonRpcMessage request)
+{
+    var a = request.GetParams().GetProperty("a").GetInt32();
+    var b = request.GetParams().GetProperty("b").GetInt32();
+    return ToolResponse.Success(request.Id, new { result = a + b });
+}
+```
+
+**How it works:**
+- Method name converted to `snake_case`: `AddNumbersTool` → `add_numbers_tool`
+- Already valid names used as-is: `ping` → `ping`
+- Explicit names still supported for full control
 
 ### Streaming Tool
 
@@ -650,6 +680,10 @@ dotnet run --project Mcp.Gateway.Server
 - Maintain test coverage
 - Follow existing patterns
 
+### Release Process
+- [GitHub Release Automation](docs/GitHub-Release-Automation.md) - Automated releases
+- [Trusted Publishing](docs/NuGet-Trusted-Publishing.md) - Secure NuGet publishing
+
 ---
 
 ## 📈 Roadmap
@@ -666,7 +700,8 @@ dotnet run --project Mcp.Gateway.Server
   - ArrayPool for WebSocket buffers (90% GC reduction)
   - SerializeToUtf8Bytes optimization (production throughput)
 
-### v1.1 (Planned)
+### v1.1 (In Progress) 🚧
+- ✅ **Auto-generated tool names** - Optional tool naming from method names
 - 🔜 More example tools
 - 🔜 Parameter caching (proper design)
 - 🔜 Additional documentation
