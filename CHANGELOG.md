@@ -7,15 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Auto-generated tool names** - `[McpTool]` attribute now accepts optional `name` parameter
+  - If `name` is null, it's auto-generated from method name (e.g., `AddNumbers` → `add_numbers`)
+  - `ToolNameGenerator.ToSnakeCase()` - Converts method names to snake_case
+  - `ToolNameGenerator.ToHumanizedTitle()` - Generates human-readable titles
+  - Backward compatible - explicit names still work as before
+  - 17 unit tests added for name generation
+
 ### Planned for v1.1
 - NuGet package release for Mcp.Gateway.Tools
 - Additional example tools
-- Performance optimizations
+- Performance optimizations (parameter caching)
 - Enhanced documentation
 
 ### Planned for v2.0
 - MCP Resources support (official MCP spec feature)
 - MCP Prompts support (official MCP spec feature)
+- Hybrid Tool API - Simplified tool authoring with auto-generated schemas
 - Tool lifecycle hooks for monitoring
 - Custom transport provider API
 - Enhanced streaming (compression, flow control, multiplexing)
