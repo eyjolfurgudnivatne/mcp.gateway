@@ -35,16 +35,13 @@ public class ToolInvoker
         {
             using var doc = await JsonDocument.ParseAsync(request.Body, cancellationToken: cancellationToken);
 
-            // Detect transport for capability-based filtering
-            var transport = DetectTransport(request.HttpContext);
-
             // Batch request (array)
             if (doc.RootElement.ValueKind == JsonValueKind.Array)
             {
                 var responses = new List<object>();
                 foreach (var element in doc.RootElement.EnumerateArray())
                 {
-                    var response = await InvokeSingleAsync(element, transport, cancellationToken);
+                    var response = await InvokeSingleAsync(element, cancellationToken);
                     if (response is not null)
                         responses.Add(response);
                 }
@@ -58,7 +55,7 @@ public class ToolInvoker
             // Single request
             else
             {
-                var response = await InvokeSingleAsync(doc.RootElement, transport, cancellationToken);
+                var response = await InvokeSingleAsync(doc.RootElement, cancellationToken);
                 
                 // Notification (no response)
                 if (response is null)
@@ -434,111 +431,9 @@ public class ToolInvoker
         JsonElement element,
         CancellationToken cancellationToken = default)
     {
-        // Delegate to transport-aware InvokeSingleAsync with stdio transport
-        return await InvokeSingleAsync(element, "stdio", cancellationToken);
-    }
-
-    /// <summary>
-    /// Invokes a single JSON-RPC request with transport filtering.
-    /// Returns null for notifications (no response expected).
-    /// </summary>
-    private async Task<object?> InvokeSingleAsync(
-        JsonElement element,
-        string transport,
-        CancellationToken cancellationToken = default)
-    {
-        object? id = null;
-        
-        try
-        {
-            // Parse JSON-RPC message
-            if (!JsonRpcMessage.TryGetFromJsonElement(element, out var message) || message is null)
-            {
-                return ToolResponse.Error(
-                    null,
-                    -32600,
-                    "Invalid Request",
-                    "Must be valid JSON-RPC 2.0 message");
-            }
-
-            id = message.Id;
-
-            // Only process requests and notifications
-            if (!message.IsRequest && !message.IsNotification)
-            {
-                return ToolResponse.Error(
-                    id,
-                    -32600,
-                    "Invalid Request",
-                    "Message must be a request or notification");
-            }
-
-            // MCP protocol methods (check BEFORE GetToolDetails!)
-            if (message.Method == "initialize")
-            {
-                return HandleInitialize(message);
-            }
-            
-            if (message.Method == "tools/list")
-            {
-                // Use transport-aware filtering
-                return HandleToolsList(message, transport);
-            }
-            
-            if (message.Method == "tools/call")
-            {
-                return await HandleToolsCallAsync(message, cancellationToken);
-            }
-
-            // MCP notifications (client → server, no response expected)
-            if (message.Method?.StartsWith("notifications/") == true)
-            {
-                // Log and ignore MCP notifications (e.g., "notifications/initialized")
-                _logger.LogInformation("Received MCP notification: {Method}", message.Method);
-                return null; // No response for notifications
-            }
-
-            // Get tool details
-            var toolDetails = _toolService.GetToolDetails(message.Method);
-            
-            // Check if this is a ToolConnector-based tool (streaming)
-            if (toolDetails.ToolArgumentType.IsToolConnector)
-            {
-                // ToolConnector tools should be initiated via StreamMessage start, not JSON-RPC
-                return ToolResponse.Error(
-                    id,
-                    -32601,
-                    "Use StreamMessage to initiate streaming",
-                    "Send a StreamMessage with type='start' to begin streaming");
-            }
-            
-            // Build arguments for tool method
-            object[] args = [message];
-
-            // Invoke the tool
-            var result = _toolService.InvokeToolDelegate(
-                message.Method,
-                toolDetails,
-                args);
-
-            // Handle different return types
-            return await ProcessToolResultAsync(result, toolDetails, message.IsNotification, id, cancellationToken);
-        }
-        catch (ToolNotFoundException ex)
-        {
-            _logger.LogWarning(ex, "Tool not found: {Method}", ex.Message);
-            return ToolResponse.Error(id, -32601, "Method not found", new { detail = ex.Message });
-        }
-        catch (ToolInvalidParamsException ex)
-        {
-            _logger.LogWarning(ex, "Invalid params for tool");
-            return ToolResponse.Error(id, -32602, "Invalid params", new { detail = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error invoking tool");
-            return ToolResponse.Error(id, -32603, "Internal error", new { detail = ex.Message });
-        }
+        // Delegate to existing InvokeSingleAsync
+        // (it already handles MCP protocol, tool invocation, etc.)
+        return await InvokeSingleAsync(element, cancellationToken);
     }
 
     /// <summary>
@@ -585,7 +480,7 @@ public class ToolInvoker
             
             if (message.Method == "tools/list")
             {
-                return HandleToolsList(message, "ws");
+                return HandleToolsList(message);
             }
             
             if (message.Method == "tools/call")
@@ -691,65 +586,6 @@ public class ToolInvoker
         try
         {
             var tools = _toolService.GetAllToolDefinitions();
-            var toolsList = tools.Select(t =>
-            {
-                object? schema = null;
-                try
-                {
-                    schema = JsonSerializer.Deserialize<object>(t.InputSchema, JsonOptions.Default);
-                }
-                catch
-                {
-                    // Fallback to empty object schema if deserialization fails
-                    schema = new { type = "object", properties = new { } };
-                }
-
-                return new
-                {
-                    name = t.Name,
-                    description = t.Description,
-                    inputSchema = schema
-                };
-            }).ToList();
-
-            return ToolResponse.Success(request.Id, new
-            {
-                tools = toolsList
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in tools/list");
-            return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = ex.Message });
-        }
-    }
-
-    /// <summary>
-    /// Detects the transport type from HttpContext.
-    /// Used for capability-based tool filtering.
-    /// </summary>
-    /// <param name="context">HttpContext (null for stdio)</param>
-    /// <returns>Transport type: "stdio", "http", "ws", or "sse"</returns>
-    private static string DetectTransport(HttpContext? context)
-    {
-        if (context == null) return "stdio";
-        if (context.WebSockets.IsWebSocketRequest) return "ws";
-        if (context.Request.Headers.Accept.ToString().Contains("text/event-stream")) return "sse";
-        return "http";
-    }
-
-    /// <summary>
-    /// Handles MCP tools/list request with transport filtering.
-    /// Filters tools based on transport capabilities to prevent clients from seeing incompatible tools.
-    /// </summary>
-    /// <param name="request">The JSON-RPC request</param>
-    /// <param name="transport">Transport type: "stdio", "http", "ws", or "sse"</param>
-    private JsonRpcMessage HandleToolsList(JsonRpcMessage request, string transport)
-    {
-        try
-        {
-            // Get filtered tools for this transport
-            var tools = _toolService.GetToolsForTransport(transport);
             var toolsList = tools.Select(t =>
             {
                 object? schema = null;
@@ -953,7 +789,7 @@ public class ToolInvoker
             {
                 foreach (var element in doc.RootElement.EnumerateArray())
                 {
-                    var response = await InvokeSingleAsync(element, "sse", cancellationToken);
+                    var response = await InvokeSingleAsync(element, cancellationToken);
                     if (response != null)
                     {
                         // Log outgoing response
@@ -967,7 +803,7 @@ public class ToolInvoker
             // Single request
             else
             {
-                var response = await InvokeSingleAsync(doc.RootElement, "sse", cancellationToken);
+                var response = await InvokeSingleAsync(doc.RootElement, cancellationToken);
                 if (response != null)
                 {
                     // Log outgoing response

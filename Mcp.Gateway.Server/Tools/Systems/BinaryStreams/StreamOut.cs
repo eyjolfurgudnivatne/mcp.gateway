@@ -7,7 +7,8 @@ public class StreamOut
     [McpTool("system_binary_streams_out", 
         Title = "Binary Stream Out", 
         Description = "Streams binary data to client (use StreamMessage start, not tools/call)",
-        InputSchema = @"{""type"":""object"",""properties"":{}}")]
+        InputSchema = @"{""type"":""object"",""properties"":{}}",
+        Capabilities = ToolCapabilities.BinaryStreaming | ToolCapabilities.RequiresWebSocket)]
     public static async Task StreamOutTool(ToolConnector connector)
     {
         var meta = new StreamMessageMeta(

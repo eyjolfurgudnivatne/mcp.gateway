@@ -292,7 +292,11 @@ public class ToolService(IServiceProvider serviceProvider)
     /// <summary>
     /// Tool definition for MCP protocol (used by tools/list)
     /// </summary>
-    public record ToolDefinition(string Name, string Description, string InputSchema);
+    public record ToolDefinition(
+        string Name, 
+        string Description, 
+        string InputSchema,
+        ToolCapabilities Capabilities = ToolCapabilities.Standard);
 
     /// <summary>
     /// Returns all registered tools with their metadata for MCP tools/list
@@ -312,6 +316,7 @@ public class ToolService(IServiceProvider serviceProvider)
             
             var description = attr?.Description ?? "No description available";
             var inputSchema = attr?.InputSchema ?? @"{""type"":""object"",""properties"":{}}";
+            var capabilities = attr?.Capabilities ?? ToolCapabilities.Standard;  // NEW!
             
             // Validate InputSchema at runtime
             if (!string.IsNullOrEmpty(inputSchema))
@@ -368,8 +373,41 @@ public class ToolService(IServiceProvider serviceProvider)
             return new ToolDefinition(
                 Name: toolName,
                 Description: description,
-                InputSchema: inputSchema
+                InputSchema: inputSchema,
+                Capabilities: capabilities  // NEW!
             );
+        });
+    }
+    
+    /// <summary>
+    /// Returns tools filtered by transport capabilities.
+    /// This ensures clients only see tools they can actually use.
+    /// </summary>
+    /// <param name="transport">Transport type: "stdio", "http", "sse", or "ws"</param>
+    /// <returns>List of tools compatible with the specified transport</returns>
+    public IEnumerable<ToolDefinition> GetToolsForTransport(string transport)
+    {
+        var allTools = GetAllToolDefinitions();
+        
+        // Determine allowed capabilities based on transport
+        var allowedCapabilities = transport switch
+        {
+            "stdio" => ToolCapabilities.Standard,
+            "http" => ToolCapabilities.Standard,
+            "sse" => ToolCapabilities.Standard | ToolCapabilities.TextStreaming,
+            "ws" => ToolCapabilities.Standard | ToolCapabilities.TextStreaming | ToolCapabilities.BinaryStreaming,
+            _ => ToolCapabilities.Standard
+        };
+        
+        // Filter tools based on capabilities
+        return allTools.Where(tool =>
+        {
+            // If tool is Standard (default), it works on all transports
+            if (tool.Capabilities == ToolCapabilities.Standard)
+                return true;
+            
+            // Check if tool's capabilities are supported by this transport
+            return (tool.Capabilities & allowedCapabilities) != 0;
         });
     }
 }

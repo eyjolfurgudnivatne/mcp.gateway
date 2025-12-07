@@ -58,7 +58,7 @@ public class McpProtocolTests(McpGatewayFixture fixture)
         Assert.True(result.TryGetProperty("tools", out var toolsElement));
         
         var tools = toolsElement.EnumerateArray().ToList();
-        Assert.True(tools.Count >= 6, $"Expected at least 6 tools, got {tools.Count}"); // Ping, Echo, Notification, StreamOut, StreamIn, StreamDuplex
+        Assert.True(tools.Count >= 3, $"Expected at least 3 standard tools, got {tools.Count}"); // Ping, Echo, Notification (streaming excluded on HTTP)
 
         // Check that ping tool is present with correct schema
         var pingTool = tools.FirstOrDefault(t => t.GetProperty("name").GetString() == "system_ping");
@@ -70,14 +70,14 @@ public class McpProtocolTests(McpGatewayFixture fixture)
     }
 
     [Fact]
-    public async Task ToolsList_IncludesStreamingTools()
+    public async Task ToolsList_ViaHttp_ExcludesBinaryStreamingTools()
     {
         // Arrange
         var request = new
         {
             jsonrpc = "2.0",
             method = "tools/list",
-            id = "list-2"
+            id = "list-filtered"
         };
 
         // Act
@@ -93,12 +93,19 @@ public class McpProtocolTests(McpGatewayFixture fixture)
         
         var tools = toolsElement.EnumerateArray().ToList();
 
-        // Verify streaming tools are included with notes
-        var streamIn = tools.FirstOrDefault(t => t.GetProperty("name").GetString() == "system_binary_streams_in");
-        Assert.True(streamIn.ValueKind != JsonValueKind.Undefined, "StreamIn tool not found");
-        
-        var description = streamIn.GetProperty("description").GetString();
-        Assert.Contains("StreamMessage", description); // Should have note about StreamMessage
+        // Verify binary streaming tools are NOT included (HTTP transport)
+        var hasBinaryStreamIn = tools.Any(t => t.GetProperty("name").GetString() == "system_binary_streams_in");
+        Assert.False(hasBinaryStreamIn, "Binary streaming tools should NOT be visible via HTTP transport");
+
+        var hasBinaryStreamOut = tools.Any(t => t.GetProperty("name").GetString() == "system_binary_streams_out");
+        Assert.False(hasBinaryStreamOut, "Binary streaming tools should NOT be visible via HTTP transport");
+
+        var hasBinaryStreamDuplex = tools.Any(t => t.GetProperty("name").GetString() == "system_binary_streams_duplex");
+        Assert.False(hasBinaryStreamDuplex, "Binary streaming tools should NOT be visible via HTTP transport");
+
+        // Verify standard tools ARE still included
+        var hasPing = tools.Any(t => t.GetProperty("name").GetString() == "system_ping");
+        Assert.True(hasPing, "Standard tools like system_ping should be visible via HTTP transport");
     }
 
     [Fact]

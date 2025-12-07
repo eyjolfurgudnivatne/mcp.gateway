@@ -176,3 +176,39 @@ public sealed record JsonRpcError(
         return true;
     }
 }
+
+// -----------------------------------------------------------------------------
+// ToolCapabilities
+// Defines capabilities required by a tool (transport compatibility)
+// -----------------------------------------------------------------------------
+/// <summary>
+/// Defines capabilities required by a tool.
+/// Used to filter tools based on transport capabilities (stdio, http, ws, sse).
+/// </summary>
+[Flags]
+public enum ToolCapabilities
+{
+    /// <summary>
+    /// Standard JSON-RPC tool (works on all transports: stdio, http, ws, sse).
+    /// This is the default capability for tools that don't require streaming.
+    /// </summary>
+    Standard = 1,
+    
+    /// <summary>
+    /// Requires text streaming support (WebSocket or SSE).
+    /// Tools with this capability can send JSON chunks in real-time.
+    /// </summary>
+    TextStreaming = 2,
+    
+    /// <summary>
+    /// Requires binary streaming support (WebSocket only).
+    /// Tools with this capability send raw binary data via WebSocket frames.
+    /// </summary>
+    BinaryStreaming = 4,
+    
+    /// <summary>
+    /// Must use WebSocket transport (no HTTP/stdio support).
+    /// Typically combined with BinaryStreaming.
+    /// </summary>
+    RequiresWebSocket = 8
+}
