@@ -68,14 +68,59 @@ This is a Model Context Protocol (MCP) Gateway implementation that supports:
 - **Protocol Version:** 2025-06-18
 - **Methods Implemented:**
   - `initialize` - Protocol handshake
-  - `tools/list` - Tool discovery
+  - `tools/list` - Tool discovery (with transport-aware filtering)
   - `tools/call` - Tool invocation
 - **Transports:** HTTP (`/rpc`), WebSocket (`/ws`), SSE (`/sse`), stdio
 - **Tool Naming:** `^[a-zA-Z0-9_-]{1,128}$` (enforced by validator)
 - **Documentation:** See `docs/MCP-Protocol.md` and `docs/MCP-Protocol-Verification.md`
 
+### Tool Capabilities (v1.2.0+)
+- **Transport filtering:** Tools are filtered based on transport capabilities
+  - `stdio/http`: Standard tools only
+  - `sse`: Standard + TextStreaming tools
+  - `ws`: All tools (Standard + TextStreaming + BinaryStreaming)
+- **ToolCapabilities enum:** Standard, TextStreaming, BinaryStreaming, RequiresWebSocket
+- **Implementation:** See `.internal/notes/v.1.2.0/phase-0-tool-capabilities.md`
+
+### Repository Organization
+
+#### `.github/` - GitHub Configuration
+- `workflows/` - CI/CD pipelines (test.yml, release.yml)
+- `copilot-instructions.md` - This file (Copilot context and conventions)
+
+#### `.internal/` - Development Notes & Guides
+**Visible in Git** - Share development philosophy and progress
+- `guides/` - Process documentation
+  - `GitHub-Actions-Testing.md` - CI/CD testing guide
+  - `GitHub-Actions-Trusted-Publishing.md` - Automated NuGet publishing
+  - `NuGet-Publishing-Guide.md` - Manual NuGet package publishing
+  - `RELEASE_INSTRUCTIONS.md` - Release process checklist
+  - `GitHub-Release-Automation.md` - Release workflow guide
+- `notes/` - Development notes and decisions
+  - `attributes.md` - Tool attribute design notes
+  - `Auto-Generated-Tool-Names.md` - Auto-naming feature documentation
+  - `ArrayPool-Implementation.md` - ArrayPool optimization (v1.0.1)
+  - `HybridToolAPI-Plan.md` - Hybrid API design (deferred to v2.0)
+  - `Performance-Optimization-Plan.md` - Performance roadmap
+  - `Quick-Wins-Session-Summary.md` - Quick wins session notes
+  - `v.1.2.0/` - Version-specific implementation notes
+    - `README.md` - Overview of v1.2.0 changes
+    - `implementation-plan.md` - Ollama integration plan
+    - `phase-0-progress.md` - Tool capabilities implementation progress
+    - `phase-0-tool-capabilities.md` - Design document
+    - `ollama-integration.md` - Ollama provider design
+    - `ollama-reverse-integration.md` - Alternative integration approach
+- `releases/` - Release-specific documentation
+  - `v1.0.1/` - Release notes and checklists
+    - `RELEASE_CHECKLIST.md`
+    - `v1.0.1-Release-Summary.md`
+  - `v1.1.0/` - Release notes
+    - `release-notes.md`
+- `README.md` - Overview of internal documentation structure
+
 ### Important Notes
 - GitHub Copilot integration verified and working
-- All 45+ tests passing
-- Production-ready for v1.0 release
+- All 70 tests passing (v1.2.0)
+- Production-ready (v1.1.0 released, v1.2.0 in development)
 - Breaking change from earlier versions: Tool names changed from dots to underscores
+- **Phase 0 complete:** Transport-aware tool filtering implemented and tested

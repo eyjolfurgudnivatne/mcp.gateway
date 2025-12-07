@@ -498,11 +498,6 @@ test-*.json
 StdioTest/
 TestResults/
 
-# Internal documentation (local only, not in Git)
-.internal/*
-!.internal/README.md
-!.internal/.gitkeep
-
 # stdio mode log files (generated in %LOCALAPPDATA%\MCP-Gateway\)
 # Note: Not in repo, but documented for reference
 # %LOCALAPPDATA%\MCP-Gateway\stdio-*.log

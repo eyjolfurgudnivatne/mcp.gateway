@@ -21,24 +21,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.Tests", "Mcp.Ga
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{74DBB65B-8717-4BC6-B042-79FDA377A533}"
 	ProjectSection(SolutionItems) = preProject
-		docs\ArrayPool-Implementation.md = docs\ArrayPool-Implementation.md
-		docs\Auto-Generated-Tool-Names.md = docs\Auto-Generated-Tool-Names.md
-		docs\GitHub-Release-Automation.md = docs\GitHub-Release-Automation.md
-		docs\HybridToolAPI-Plan.md = docs\HybridToolAPI-Plan.md
 		docs\JSON-RPC-2.0-spec.md = docs\JSON-RPC-2.0-spec.md
 		docs\MCP-Protocol-Verification.md = docs\MCP-Protocol-Verification.md
 		docs\MCP-Protocol.md = docs\MCP-Protocol.md
-		docs\NuGet-Trusted-Publishing.md = docs\NuGet-Trusted-Publishing.md
-		docs\Performance-Optimization-Plan.md = docs\Performance-Optimization-Plan.md
-		docs\Quick-Wins-Session-Summary.md = docs\Quick-Wins-Session-Summary.md
 		docs\StreamingProtocol.md = docs\StreamingProtocol.md
-		docs\v1.0.1-Release-Summary.md = docs\v1.0.1-Release-Summary.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{2073C2C6-7C99-46FE-90E3-E845EEF2FD6C}"
 	ProjectSection(SolutionItems) = preProject
 		.github\copilot-instructions.md = .github\copilot-instructions.md
-		.github\release-notes.md = .github\release-notes.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.GCCServer", "Mcp.Gateway.GCCServer\Mcp.Gateway.GCCServer.csproj", "{661516DD-0891-4129-9588-BE54922DA529}"
@@ -53,8 +44,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".internal", ".internal", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "notes", "notes", "{CC761499-6044-48DF-9E01-744F32E64955}"
 	ProjectSection(SolutionItems) = preProject
+		.internal\notes\ArrayPool-Implementation.md = .internal\notes\ArrayPool-Implementation.md
 		.internal\notes\attributes.md = .internal\notes\attributes.md
-		.internal\notes\auto-naming.md = .internal\notes\auto-naming.md
+		.internal\notes\Auto-Generated-Tool-Names.md = .internal\notes\Auto-Generated-Tool-Names.md
+		.internal\notes\HybridToolAPI-Plan.md = .internal\notes\HybridToolAPI-Plan.md
+		.internal\notes\Performance-Optimization-Plan.md = .internal\notes\Performance-Optimization-Plan.md
+		.internal\notes\Quick-Wins-Session-Summary.md = .internal\notes\Quick-Wins-Session-Summary.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{D9842DC7-A4E0-4990-8C20-F27C0424D473}"
@@ -71,6 +66,28 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.2.0", "v1.2.0", "{C8687C
 		.internal\notes\v.1.2.0\phase-0-progress.md = .internal\notes\v.1.2.0\phase-0-progress.md
 		.internal\notes\v.1.2.0\phase-0-tool-capabilities.md = .internal\notes\v.1.2.0\phase-0-tool-capabilities.md
 		.internal\notes\v.1.2.0\README.md = .internal\notes\v.1.2.0\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "guides", "guides", "{21C726F2-FA45-4A7D-A2F8-4DBFA66DC69A}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\guides\GitHub-Actions-Testing.md = .internal\guides\GitHub-Actions-Testing.md
+		.internal\guides\GitHub-Actions-Trusted-Publishing.md = .internal\guides\GitHub-Actions-Trusted-Publishing.md
+		.internal\guides\GitHub-Release-Automation.md = .internal\guides\GitHub-Release-Automation.md
+		.internal\guides\NuGet-Publishing-Guide.md = .internal\guides\NuGet-Publishing-Guide.md
+		.internal\guides\RELEASE_INSTRUCTIONS.md = .internal\guides\RELEASE_INSTRUCTIONS.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "releases", "releases", "{D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.0.1", "v1.0.1", "{F53B772B-6966-40C1-9B53-5AEBB10833A5}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\releases\v1.0.1\RELEASE_CHECKLIST.md = .internal\releases\v1.0.1\RELEASE_CHECKLIST.md
+		.internal\releases\v1.0.1\v1.0.1-Release-Summary.md = .internal\releases\v1.0.1\v1.0.1-Release-Summary.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.1.0", "v1.1.0", "{6D9854D0-9A0F-4AFE-A72B-E865351BD45B}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\releases\v1.1.0\release-notes.md = .internal\releases\v1.1.0\release-notes.md
 	EndProjectSection
 EndProject
 Global
@@ -110,6 +127,10 @@ Global
 		{CC761499-6044-48DF-9E01-744F32E64955} = {ECD71231-234D-434A-9891-059749093AC1}
 		{D9842DC7-A4E0-4990-8C20-F27C0424D473} = {2073C2C6-7C99-46FE-90E3-E845EEF2FD6C}
 		{C8687C11-EA0D-401B-AD02-315FDD9E5FED} = {CC761499-6044-48DF-9E01-744F32E64955}
+		{21C726F2-FA45-4A7D-A2F8-4DBFA66DC69A} = {ECD71231-234D-434A-9891-059749093AC1}
+		{D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88} = {ECD71231-234D-434A-9891-059749093AC1}
+		{F53B772B-6966-40C1-9B53-5AEBB10833A5} = {D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}
+		{6D9854D0-9A0F-4AFE-A72B-E865351BD45B} = {D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}
