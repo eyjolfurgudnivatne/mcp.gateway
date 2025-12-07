@@ -90,6 +90,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.1.0", "v1.1.0", "{6D9854
 		.internal\releases\v1.1.0\release-notes.md = .internal\releases\v1.1.0\release-notes.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{261EEC25-A03C-4DA7-98BF-CD7D4B045362}"
+	ProjectSection(SolutionItems) = preProject
+		docs\examples\client-examples.md = docs\examples\client-examples.md
+		docs\examples\toolconnector-usage.md = docs\examples\toolconnector-usage.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -131,6 +137,7 @@ Global
 		{D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88} = {ECD71231-234D-434A-9891-059749093AC1}
 		{F53B772B-6966-40C1-9B53-5AEBB10833A5} = {D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}
 		{6D9854D0-9A0F-4AFE-A72B-E865351BD45B} = {D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}
+		{261EEC25-A03C-4DA7-98BF-CD7D4B045362} = {74DBB65B-8717-4BC6-B042-79FDA377A533}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}
