@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Net.WebSockets;
 using System.Text.Json;
+using Mcp.Gateway.Tools.Formatters;
 
 /// <summary>
 /// Handles JSON-RPC tool invocation over HTTP and WebSocket.
@@ -333,97 +334,9 @@ public class ToolInvoker
         JsonElement element,
         CancellationToken cancellationToken)
     {
-        object? id = null;
-        
-        try
-        {
-            // Parse JSON-RPC message
-            if (!JsonRpcMessage.TryGetFromJsonElement(element, out var message) || message is null)
-            {
-                return ToolResponse.Error(
-                    null,
-                    -32600,
-                    "Invalid Request",
-                    "Must be valid JSON-RPC 2.0 message");
-            }
-
-            id = message.Id;
-
-            // Only process requests and notifications
-            if (!message.IsRequest && !message.IsNotification)
-            {
-                return ToolResponse.Error(
-                    id,
-                    -32600,
-                    "Invalid Request",
-                    "Message must be a request or notification");
-            }
-
-            // MCP protocol methods (check BEFORE GetToolDetails!)
-            if (message.Method == "initialize")
-            {
-                return HandleInitialize(message);
-            }
-            
-            if (message.Method == "tools/list")
-            {
-                return HandleToolsList(message);
-            }
-            
-            if (message.Method == "tools/call")
-            {
-                return await HandleToolsCallAsync(message, cancellationToken);
-            }
-
-            // MCP notifications (client → server, no response expected)
-            if (message.Method?.StartsWith("notifications/") == true)
-            {
-                // Log and ignore MCP notifications (e.g., "notifications/initialized")
-                _logger.LogInformation("Received MCP notification: {Method}", message.Method);
-                return null; // No response for notifications
-            }
-
-            // Get tool details
-            var toolDetails = _toolService.GetToolDetails(message.Method);
-            
-            // Check if this is a ToolConnector-based tool (streaming)
-            if (toolDetails.ToolArgumentType.IsToolConnector)
-            {
-                // ToolConnector tools should be initiated via StreamMessage start, not JSON-RPC
-                return ToolResponse.Error(
-                    id,
-                    -32601,
-                    "Use StreamMessage to initiate streaming",
-                    "Send a StreamMessage with type='start' to begin streaming");
-            }
-            
-            // Build arguments for tool method
-            object[] args = [message];
-
-            // Invoke the tool
-            var result = _toolService.InvokeToolDelegate(
-                message.Method,
-                toolDetails,
-                args);
-
-            // Handle different return types
-            return await ProcessToolResultAsync(result, toolDetails, message.IsNotification, id, cancellationToken);
-        }
-        catch (ToolNotFoundException ex)
-        {
-            _logger.LogWarning(ex, "Tool not found: {Method}", ex.Message);
-            return ToolResponse.Error(id, -32601, "Method not found", new { detail = ex.Message });
-        }
-        catch (ToolInvalidParamsException ex)
-        {
-            _logger.LogWarning(ex, "Invalid params for tool");
-            return ToolResponse.Error(id, -32602, "Invalid params", new { detail = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error invoking tool");
-            return ToolResponse.Error(id, -32603, "Internal error", new { detail = ex.Message });
-        }
+        // Delegate to overloaded method with default transport detection
+        // This method is used by WebSocket (non-WS specific) path
+        return await InvokeSingleAsync(element, "http", cancellationToken);
     }
 
     /// <summary>
@@ -483,6 +396,12 @@ public class ToolInvoker
             {
                 // Use transport-aware filtering
                 return HandleToolsList(message, transport);
+            }
+            
+            // NEW: Formatted tool lists (tools/list/{format})
+            if (message.Method?.StartsWith("tools/list/") == true)
+            {
+                return HandleFormattedToolsList(message, transport);
             }
             
             if (message.Method == "tools/call")
@@ -779,6 +698,62 @@ public class ToolInvoker
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in tools/list");
+            return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Handles formatted tool list requests (tools/list/{format}).
+    /// Supports multiple AI platform formats: ollama, microsoft-ai, openai, etc.
+    /// </summary>
+    /// <param name="request">The JSON-RPC request</param>
+    /// <param name="transport">Transport type for capability filtering</param>
+    /// <returns>Formatted tool list in the requested format</returns>
+    private JsonRpcMessage HandleFormattedToolsList(JsonRpcMessage request, string transport)
+    {
+        try
+        {
+            // Extract format from method name (e.g., "tools/list/ollama" → "ollama")
+            var format = request.Method?.Replace("tools/list/", "") ?? "";
+            
+            if (string.IsNullOrEmpty(format))
+            {
+                return ToolResponse.Error(
+                    request.Id,
+                    -32600,
+                    "Invalid Request",
+                    "Format must be specified (e.g., tools/list/ollama)");
+            }
+            
+            // Get filtered tools for this transport
+            var tools = _toolService.GetToolsForTransport(transport);
+            
+            // Get appropriate formatter
+            IToolListFormatter formatter = format.ToLowerInvariant() switch
+            {
+                "ollama" => new OllamaToolListFormatter(),
+                "microsoft-ai" => new MicrosoftAIToolListFormatter(),
+                "mcp" => new McpToolListFormatter(),
+                _ => throw new ToolNotFoundException($"Unknown format: {format}")
+            };
+            
+            // Format tools
+            var formattedTools = formatter.FormatToolList(tools);
+            
+            return ToolResponse.Success(request.Id, formattedTools);
+        }
+        catch (ToolNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Unknown tool list format: {Method}", request.Method);
+            return ToolResponse.Error(
+                request.Id,
+                -32601,
+                "Unknown format",
+                new { detail = ex.Message, supportedFormats = new[] { "ollama", "microsoft-ai", "mcp" } });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in formatted tools/list");
             return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = ex.Message });
         }
     }
