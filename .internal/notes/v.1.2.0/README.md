@@ -1,4 +1,4 @@
-# 📘 Ollama Integration - Quick Reference (v1.2.0)
+# 📕 Ollama Integration - Detailed Implementation Notes (v1.2.0)
 
 **Created:** 7. desember 2025  
 **Branch:** `feat/ollama`  
@@ -243,67 +243,219 @@ git checkout feat/ollama
 
 ---
 
-## 📚 Additional Resources
+## 📚 v1.2.0 Implementation Notes
 
-### Official Documentation:
-- **Ollama:** https://github.com/ollama/ollama
-- **Ollama API:** https://github.com/ollama/ollama/blob/main/docs/api.md
-- **Microsoft.Extensions.AI:** https://learn.microsoft.com/en-us/dotnet/ai/
-
-### Internal Documentation:
-- **MCP Protocol:** `docs/MCP-Protocol.md`
-- **Tool Creation:** `Mcp.Gateway.Tools/README.md`
-- **Streaming:** `docs/StreamingProtocol.md`
+**Version:** 1.2.0  
+**Status:** 🟢 Phase 0 Complete → Phase 1 Ready  
+**Branch:** `feat/ollama`  
+**Focus:** MCP Gateway as **tool bridge** for AI systems
 
 ---
 
-## 🤔 FAQ
+## 🎯 Vision
 
-**Q: Do we need to change `ToolExtensions.cs`?**  
-A: No! We keep transport layer clean. Ollama integration is in separate namespace.
+**MCP Gateway is a bridge between AI and tools**
 
-**Q: Can Web UI and Ollama agent use same tools?**  
-A: Yes! That's the beauty of this design. Same `ToolService`, different clients.
+We provide the **tool layer**, not the communication layer to AI systems.
 
-**Q: What happens to existing tools?**  
-A: Nothing! They continue to work exactly as before. We're just adding new ones.
+```
+┌─────────────────────────────────────┐
+│  Your App (OllamaSharp, etc.)       │
+│                                     │
+│  // Get formatted tool list         │
+│  POST /rpc                          │
+│  {                                  │
+│    "method": "tools/list/ollama"    │
+│  }                                  │
+│                                     │
+│  var chat = new Chat(ollama);       │
+│  chat.Tools = tools;                │
+└──────────┬──────────────────────────┘
+           │
+           │ JSON-RPC (formatted tool list)
+           │ JSON-RPC (tool invocation)
+           │
+    ┌──────▼───────────────────┐
+    │  MCP Gateway             │
+    │                          │
+    │  - Tool discovery        │
+    │  - Format conversion     │
+    │  - Tool execution        │
+    │  - Transport filtering   │
+    └──────────────────────────┘
+```
 
-**Q: Is this a breaking change?**  
-A: No! 100% backward compatible.
+**We provide:**
+- ✅ Easy tool creation (`[McpTool]` attribute)
+- ✅ Tool discovery (`tools/list`)
+- ✅ **Format conversion** (`tools/list/{format}`) - **NEW in v1.2.0!**
+- ✅ Transport filtering (stdio/http/sse/ws)
 
-**Q: When will this be released?**  
-A: Target: v1.2.0 (after Phase 1+2 complete)
-
----
-
-## 🚦 Current Status
-
-**Phase:** Planning → Implementation  
-**Next action:** Create `OllamaTools.cs` (see `implementation-plan.md` for checklist)  
-**Branch:** `feat/ollama` ✅  
-**Documentation:** ✅ Complete  
-**Ready to start:** ✅ YES!
-
----
-
-## 📞 Need Help?
-
-**Stuck?** Check:
-1. `implementation-plan.md` - Detailed steps
-2. `ollama-integration.md` - Pattern 1 details
-3. `ollama-reverse-integration.md` - Pattern 2 details
-4. GitHub issues - Report problems
-5. This README - Quick reference
-
----
-
-**Last Updated:** 7. desember 2025  
-**Status:** 📋 Planning complete, ready to implement  
-**Branch:** feat/ollama  
-**Target:** v1.2.0 🚀
+**We DON'T provide:**
+- ❌ Communication WITH AI systems (use OllamaSharp, Anthropic SDK, etc.)
+- ❌ AI client libraries (external libraries handle this better)
 
 ---
 
-**Happy coding! 🎉**
+## 📅 Phases
 
-**Forfatter:** ARKo AS - AHelse Development Team
+### ✅ Phase 0: Tool Capabilities & Filtering (COMPLETE!)
+
+**Goal:** Filter tools based on transport capabilities
+
+**Status:** 🎉 **DONE** - All 70 tests passing!
+
+**Implementation:**
+- Added `ToolCapabilities` enum
+- Updated `McpToolAttribute` with `Capabilities` property
+- Implemented `ToolService.GetToolsForTransport()`
+- Updated `ToolInvoker` with transport detection
+- Marked binary streaming tools with capabilities
+
+**Result:**
+- stdio/http → Standard tools only
+- sse → Standard + text streaming
+- ws → All tools (including binary streaming)
+
+**Documentation:**
+- [phase-0-tool-capabilities.md](phase-0-tool-capabilities.md) - Design document
+- [phase-0-progress.md](phase-0-progress.md) - Implementation progress
+
+---
+
+### 🎯 Phase 1: Tool List Formatters (IN PROGRESS)
+
+**Goal:** Provide tool lists in AI-platform-specific formats via JSON-RPC
+
+**Timeline:** 1-2 dager
+
+**Deliverables:**
+1. 🔜 `Formatters/` directory with clean organization
+2. 🔜 `tools/list/ollama` - Ollama-formatted tool list
+3. 🔜 `tools/list/microsoft-ai` - Microsoft.AI-formatted tool list
+4. 🔜 Example app - Full integration with OllamaSharp
+5. 🔜 Documentation - Usage guide
+
+**What's in scope:**
+- ✅ JSON-RPC methods for formatted tool lists
+- ✅ Automatic transport filtering
+- ✅ Clean formatter architecture (`Formatters/` directory)
+
+**What's NOT in scope:**
+- ❌ GET `/tools` endpoint (use JSON-RPC instead)
+- ❌ Client-side converters (server handles formatting)
+- ❌ `ollama_chat` tool (use OllamaSharp directly)
+
+---
+
+## 📁 Key Files
+
+### Implementation Plan
+- [implementation-plan.md](implementation-plan.md) - Full implementation plan (revised with Formatters!)
+
+### Research Documents (Archive)
+- [ollama-integration.md](ollama-integration.md) - Pattern 1 research (archived - superseded by formatters)
+- [ollama-reverse-integration.md](ollama-reverse-integration.md) - Pattern 2 research (archived - not needed)
+
+### Progress Tracking
+- [phase-0-progress.md](phase-0-progress.md) - Phase 0 implementation log
+
+---
+
+## 🚀 Quick Start (After v1.2.0 Release)
+
+### Use MCP Gateway tools with Ollama:
+
+```csharp
+using OllamaSharp;
+using System.Net.Http.Json;
+using System.Text.Json;
+
+var httpClient = new HttpClient();
+
+// 1. Get tools in Ollama format (via JSON-RPC)
+var response = await httpClient.PostAsJsonAsync(
+    "http://localhost:5000/rpc",
+    new {
+        jsonrpc = "2.0",
+        method = "tools/list/ollama",  // ← Ollama format!
+        id = 1
+    });
+
+var json = await response.Content.ReadFromJsonAsync<JsonRpcMessage>();
+var tools = JsonSerializer.Deserialize<List<Tool>>(
+    json.Result.GetProperty("tools").GetRawText());
+
+// 2. Use with Ollama
+var ollama = new OllamaApiClient("http://localhost:11434");
+var chat = new Chat(ollama)
+{
+    Model = "llama3.2",
+    Tools = tools  // ← Already in Ollama format!
+};
+
+// 3. Ollama can now call your MCP tools!
+var result = await chat.Send("What's the weather?");
+```
+
+### Use with Microsoft.Extensions.AI:
+
+```csharp
+using Microsoft.Extensions.AI;
+
+// 1. Get tools in Microsoft.AI format
+var response = await httpClient.PostAsJsonAsync(
+    "http://localhost:5000/rpc",
+    new {
+        jsonrpc = "2.0",
+        method = "tools/list/microsoft-ai",  // ← Microsoft.AI format!
+        id = 1
+    });
+
+var json = await response.Content.ReadFromJsonAsync<JsonRpcMessage>();
+// Tools are already in Microsoft.AI format!
+```
+
+**See:** [Example app](../../Examples/OllamaIntegration/) for complete integration (coming soon!)
+
+---
+
+## 📁 New Architecture (v1.2.0)
+
+### Formatters Directory:
+```
+Mcp.Gateway.Tools/Formatters/
+├── IToolListFormatter.cs           (Interface)
+├── McpToolListFormatter.cs         (Standard MCP format)
+├── OllamaToolListFormatter.cs      (Ollama format)
+└── MicrosoftAIToolListFormatter.cs (Microsoft.AI format)
+```
+
+### Supported Formats:
+
+| JSON-RPC Method | Format | Use Case |
+|----------------|--------|----------|
+| `tools/list` | MCP (standard) | GitHub Copilot, Claude Desktop |
+| `tools/list/ollama` | Ollama | OllamaSharp, Ollama function calling |
+| `tools/list/microsoft-ai` | Microsoft.Extensions.AI | Semantic Kernel, Microsoft.AI |
+| `tools/list/openai` | OpenAI | OpenAI SDK, LangChain (future) |
+
+---
+
+## 🎯 Next Steps
+
+1. ✅ Phase 0 complete
+2. 🔜 Create `Formatters/` directory and interfaces
+3. 🔜 Implement `OllamaToolListFormatter`
+4. 🔜 Implement `MicrosoftAIToolListFormatter`
+5. 🔜 Update `ToolInvoker` with `HandleFormattedToolsList`
+6. 🔜 Build example app
+7. 🔜 Write documentation
+8. 🔜 Release v1.2.0
+
+---
+
+**Last Updated:** 7. desember 2025 (kl. 23:30)  
+**Status:** Phase 0 complete, Phase 1 starting  
+**Target Release:** v1.2.0  
+**Key Change:** Formatters architecture for clean organization
