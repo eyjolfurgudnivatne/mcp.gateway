@@ -172,32 +172,32 @@ Mcp.Gateway/
 ### Phase 1: Tool List Formatters
 
 #### Step 1.1: Create Formatter Infrastructure (1 time)
-- [ ] Create `Mcp.Gateway.Tools/Formatters/` directory
-- [ ] Create `IToolListFormatter.cs` interface
-- [ ] Create `McpToolListFormatter.cs` (standard MCP format)
-- [ ] Create `OllamaToolListFormatter.cs` (Ollama format)
-- [ ] Create `MicrosoftAIToolListFormatter.cs` (Microsoft.AI format)
+- [x] Create `Mcp.Gateway.Tools/Formatters/` directory
+- [x] Create `IToolListFormatter.cs` interface
+- [x] Create `McpToolListFormatter.cs` (standard MCP format)
+- [x] Create `OllamaToolListFormatter.cs` (Ollama format)
+- [x] Create `MicrosoftAIToolListFormatter.cs` (Microsoft.AI format)
 
 #### Step 1.2: Update ToolInvoker (30 min)
-- [ ] Add `HandleFormattedToolsList()` method
-- [ ] Update `InvokeSingleAsync()` to handle `tools/list/{format}` methods
-- [ ] Add error handling for unknown formats
+- [x] Add `HandleFormattedToolsList()` method
+- [x] Update `InvokeSingleAsync()` to handle `tools/list/{format}` methods
+- [x] Add error handling for unknown formats
 
 #### Step 1.3: Unit Tests (1 time)
-- [ ] Create `Mcp.Gateway.Tests/Formatters/OllamaToolListFormatterTests.cs`
-  - [ ] Test basic conversion
-  - [ ] Test with complex schemas
-  - [ ] Test edge cases
-- [ ] Create `Mcp.Gateway.Tests/Formatters/MicrosoftAIToolListFormatterTests.cs`
-  - [ ] Test basic conversion
-  - [ ] Test parameter mapping
-  - [ ] Test edge cases
+- [x] Create `Mcp.Gateway.Tests/Formatters/OllamaToolListFormatterTests.cs`
+  - [x] Test basic conversion
+  - [x] Test with complex schemas
+  - [x] Test edge cases
+- [x] Create `Mcp.Gateway.Tests/Formatters/MicrosoftAIToolListFormatterTests.cs`
+  - [x] Test basic conversion
+  - [x] Test parameter mapping
+  - [x] Test edge cases
 
 #### Step 1.4: Integration Tests (30 min)
-- [ ] Test `tools/list/ollama` via HTTP
-- [ ] Test `tools/list/microsoft-ai` via HTTP
-- [ ] Test transport filtering still works
-- [ ] Test unknown format returns error
+- [x] Test `tools/list/ollama` via HTTP
+- [x] Test `tools/list/microsoft-ai` via HTTP
+- [x] Test transport filtering still works
+- [x] Test unknown format returns error
 
 #### Step 1.5: Example Application (2-3 timer)
 - [ ] Create `Examples/OllamaIntegration/` project
@@ -338,7 +338,7 @@ Mcp.Gateway/
 
 ### Pre-release Checklist:
 - [x] Phase 0 complete (tool filtering)
-- [ ] Phase 1 complete (formatters)
+- [x] Phase 1 complete (formatters)
 - [ ] All tests passing
 - [ ] Documentation complete
 - [ ] Example app verified
@@ -391,9 +391,9 @@ Mcp.Gateway/
 
 ---
 
-**Last Updated:** 7. desember 2025 (kl. 23:30)  
-**Status:** 🟢 Phase 0 Complete → Phase 1 Ready  
-**Next Action:** Create Formatters directory and infrastructure
+**Last Updated:** 8. desember 2025 (kl. 17:50)  
+**Status:** 🟢 Phase 0 Complete → Phase 1: 70% Complete  
+**Next Action:** Manual testing and example application
 
 ---
 
