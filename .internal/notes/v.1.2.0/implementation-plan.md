@@ -307,10 +307,10 @@ Mcp.Gateway/
 
 ### Manual Testing
 
-1. [ ] Start MCP Gateway: `dotnet run --project Mcp.Gateway.Server`
-2. [ ] Test standard: `curl -X POST http://localhost:5000/rpc -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'`
-3. [ ] Test Ollama: `curl -X POST http://localhost:5000/rpc -d '{"jsonrpc":"2.0","method":"tools/list/ollama","id":1}'`
-4. [ ] Test Microsoft.AI: `curl -X POST http://localhost:5000/rpc -d '{"jsonrpc":"2.0","method":"tools/list/microsoft-ai","id":1}'`
+1. [x] Start MCP Gateway: `dotnet run --project Mcp.Gateway.Server`
+2. [x] Test standard: `curl -X POST http://localhost:5000/rpc -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'`
+3. [x] Test Ollama: `curl -X POST http://localhost:5000/rpc -d '{"jsonrpc":"2.0","method":"tools/list/ollama","id":1}'`
+4. [x] Test Microsoft.AI: `curl -X POST http://localhost:5000/rpc -d '{"jsonrpc":"2.0","method":"tools/list/microsoft-ai","id":1}'`
 5. [ ] Start Ollama: `ollama serve`
 6. [ ] Run example: `dotnet run --project Examples/OllamaIntegration`
 7. [ ] Verify Ollama kan call MCP tools
