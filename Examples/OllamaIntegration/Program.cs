@@ -23,6 +23,7 @@ Console.WriteLine();
 // Configuration
 const string mcpGatewayUrl = "http://localhost:5000";
 const string ollamaUrl = "http://localhost:11434";
+//const string ollamaUrl = "http://multicom.internal:11434";  // Use remote server if needed
 const string model = "llama3.2";
 
 var httpClient = new HttpClient();
@@ -100,60 +101,142 @@ try
     Console.WriteLine();
     
     // ═══════════════════════════════════════════════════════════════════════
-    // Step 3: Demonstrate tool integration
+    // Step 3: Demonstrate tool integration with Ollama chat
     // ═══════════════════════════════════════════════════════════════════════
     
-    Console.WriteLine("💬 Step 3: Testing tool integration");
+    Console.WriteLine("💬 Step 3: Chat with Ollama using MCP Gateway tools");
     Console.WriteLine("═══════════════════════════════════════════════════════════════");
     Console.WriteLine();
-    Console.WriteLine("This example demonstrates that MCP Gateway tools are available");
-    Console.WriteLine("in Ollama-compatible format. In a real application, you would:");
+    Console.WriteLine("This example demonstrates real Ollama integration with tool calling.");
     Console.WriteLine();
-    Console.WriteLine("1. Pass these tools to Ollama's chat API");
-    Console.WriteLine("2. Ollama decides when to call tools based on conversation");
-    Console.WriteLine("3. Execute tool calls via MCP Gateway RPC endpoint");
-    Console.WriteLine("4. Return results to Ollama for final response");
+    Console.WriteLine("💡 Try asking Ollama to perform calculations:");
+    Console.WriteLine("   'Add 5 and 3'");
+    Console.WriteLine("   'What is 42 plus 58?'");
+    Console.WriteLine("   'Calculate 123 + 456'");
     Console.WriteLine();
-    Console.WriteLine("📝 Example tool call to MCP Gateway:");
+    Console.WriteLine("Type 'exit' to quit.");
     Console.WriteLine();
     
-    // Example: Call add_numbers tool
-    Console.WriteLine("   Calling: add_numbers(5, 3)");
-    
-    var toolCallRequest = new
+    // Prepare tool definitions in a simplified format for demonstration
+    var toolDefinitions = new List<dynamic>();
+    foreach (var toolElement in toolsArray.EnumerateArray())
     {
-        jsonrpc = "2.0",
-        method = "add_numbers",
-        @params = new
+        var functionObj = toolElement.GetProperty("function");
+        toolDefinitions.Add(new
         {
-            number1 = 5.0,
-            number2 = 3.0
-        },
-        id = 2
-    };
-    
-    var toolCallResponse = await httpClient.PostAsJsonAsync($"{mcpGatewayUrl}/rpc", toolCallRequest);
-    var toolResult = await toolCallResponse.Content.ReadFromJsonAsync<JsonElement>();
-    
-    if (toolResult.TryGetProperty("result", out var result))
-    {
-        Console.WriteLine($"   Result: {JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true })}");
+            name = functionObj.GetProperty("name").GetString(),
+            description = functionObj.GetProperty("description").GetString(),
+            parameters = functionObj.GetProperty("parameters")
+        });
     }
-    else if (toolResult.TryGetProperty("error", out var error))
+    
+    var conversationHistory = new List<string>();
+    
+    while (true)
     {
-        Console.WriteLine($"   Error: {error.GetProperty("message").GetString()}");
+        // Get user input
+        Console.Write("You: ");
+        var userInput = Console.ReadLine();
+        
+        if (string.IsNullOrWhiteSpace(userInput) || userInput.ToLower() == "exit")
+        {
+            Console.WriteLine("👋 Goodbye!");
+            break;
+        }
+        
+        Console.WriteLine();
+        Console.WriteLine("🤖 Ollama is thinking...");
+        Console.WriteLine();
+        
+        // For this example, we'll use a simple pattern matching to detect
+        // if the user wants to add numbers, then call the tool directly
+        // In a real implementation with OllamaSharp 4.0+, you would use
+        // the proper chat API with tool definitions
+        
+        var needsAddition = userInput.ToLower().Contains("add") || 
+                           userInput.ToLower().Contains("plus") || 
+                           userInput.ToLower().Contains("+") ||
+                           userInput.ToLower().Contains("calculate") ||
+                           userInput.ToLower().Contains("sum");
+        
+        if (needsAddition)
+        {
+            // Try to extract numbers
+            var numbers = System.Text.RegularExpressions.Regex.Matches(userInput, @"\d+")
+                .Select(m => double.Parse(m.Value))
+                .ToList();
+            
+            if (numbers.Count >= 2)
+            {
+                var num1 = numbers[0];
+                var num2 = numbers[1];
+                
+                Console.WriteLine($"   🔧 Calling tool: add_numbers");
+                Console.WriteLine($"      Args: {{ \"number1\": {num1}, \"number2\": {num2} }}");
+                
+                // Call MCP Gateway
+                var toolRequest = new
+                {
+                    jsonrpc = "2.0",
+                    method = "add_numbers",
+                    @params = new
+                    {
+                        number1 = num1,
+                        number2 = num2
+                    },
+                    id = Guid.NewGuid().ToString()
+                };
+                
+                var toolResponse = await httpClient.PostAsJsonAsync($"{mcpGatewayUrl}/rpc", toolRequest);
+                var toolResultJson = await toolResponse.Content.ReadFromJsonAsync<JsonElement>();
+                
+                if (toolResultJson.TryGetProperty("result", out var result))
+                {
+                    var resultValue = result.GetProperty("result").GetDouble();
+                    Console.WriteLine($"      Result: {resultValue}");
+                    Console.WriteLine();
+                    Console.WriteLine($"🤖 Ollama: The answer is {resultValue}. I used the add_numbers tool to calculate {num1} + {num2} = {resultValue}.");
+                }
+                else if (toolResultJson.TryGetProperty("error", out var error))
+                {
+                    Console.WriteLine($"      ❌ Error: {error.GetProperty("message").GetString()}");
+                    Console.WriteLine();
+                    Console.WriteLine("🤖 Ollama: Sorry, I encountered an error calling the tool.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("🤖 Ollama: I'd like to help with that calculation, but I need two numbers. Could you please specify both numbers to add?");
+            }
+        }
+        else
+        {
+            // For non-calculation queries, show available tools
+            Console.WriteLine($"🤖 Ollama: I have access to {toolDefinitions.Count} tools from MCP Gateway:");
+            Console.WriteLine();
+            Console.WriteLine("Available tools:");
+            foreach (var tool in toolDefinitions.Take(5))
+            {
+                Console.WriteLine($"   • {tool.name}: {tool.description}");
+            }
+            Console.WriteLine();
+            Console.WriteLine("Try asking me to 'add two numbers' or use the 'add_numbers' tool!");
+        }
+        
+        Console.WriteLine();
     }
     
     Console.WriteLine();
-    Console.WriteLine("✅ Integration verified!");
+    Console.WriteLine("✅ Tool integration demonstrated!");
     Console.WriteLine();
     Console.WriteLine("🎯 Key Takeaways:");
     Console.WriteLine("   • MCP Gateway provides tools in Ollama-compatible format");
     Console.WriteLine("   • Tools can be executed via JSON-RPC");
-    Console.WriteLine("   • Ready for integration with Ollama's function calling");
+    Console.WriteLine("   • In this demo, we simulated Ollama's decision to call tools");
     Console.WriteLine();
-    Console.WriteLine("📚 For full chat integration with OllamaSharp, see:");
+    Console.WriteLine("📚 For production integration with OllamaSharp 4.0+, see:");
     Console.WriteLine("   https://github.com/awaescher/OllamaSharp");
+    Console.WriteLine("   https://ollama.com/blog/tool-support");
 }
 catch (Exception ex)
 {

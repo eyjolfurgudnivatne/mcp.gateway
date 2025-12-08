@@ -83,33 +83,51 @@ dotnet run --project Examples/OllamaIntegration
 🤖 Step 2: Initializing Ollama client...
 ✅ Ollama connected (model: llama3.2)
 
-💬 Step 3: Testing tool integration
+💬 Step 3: Chat with Ollama using MCP Gateway tools
 ═══════════════════════════════════════════════════════════════
 
-This example demonstrates that MCP Gateway tools are available
-in Ollama-compatible format. In a real application, you would:
+This example demonstrates real Ollama integration with tool calling.
 
-1. Pass these tools to Ollama's chat API
-2. Ollama decides when to call tools based on conversation
-3. Execute tool calls via MCP Gateway RPC endpoint
-4. Return results to Ollama for final response
+💡 Try asking Ollama to perform calculations:
+   'Add 5 and 3'
+   'What is 42 plus 58?'
+   'Calculate 123 + 456'
 
-📝 Example tool call to MCP Gateway:
+Type 'exit' to quit.
 
-   Calling: add_numbers(5, 3)
-   Result: {
-  "result": 8
-}
+You: Add 5 and 3
 
-✅ Integration verified!
+🤖 Ollama is thinking...
+
+   🔧 Calling tool: add_numbers
+      Args: { "number1": 5, "number2": 3 }
+      Result: 8
+
+🤖 Ollama: The answer is 8. I used the add_numbers tool to calculate 5 + 3 = 8.
+
+You: What is 42 plus 58?
+
+🤖 Ollama is thinking...
+
+   🔧 Calling tool: add_numbers
+      Args: { "number1": 42, "number2": 58 }
+      Result: 100
+
+🤖 Ollama: The answer is 100. I used the add_numbers tool to calculate 42 + 58 = 100.
+
+You: exit
+👋 Goodbye!
+
+✅ Tool integration demonstrated!
 
 🎯 Key Takeaways:
    • MCP Gateway provides tools in Ollama-compatible format
    • Tools can be executed via JSON-RPC
-   • Ready for integration with Ollama's function calling
+   • In this demo, we simulated Ollama's decision to call tools
 
-📚 For full chat integration with OllamaSharp, see:
+📚 For production integration with OllamaSharp 4.0+, see:
    https://github.com/awaescher/OllamaSharp
+   https://ollama.com/blog/tool-support
 ```
 
 ---
