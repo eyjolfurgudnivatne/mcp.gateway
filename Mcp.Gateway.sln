@@ -3,13 +3,10 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.0.11205.157
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.Server", "Mcp.Gateway.Server\Mcp.Gateway.Server.csproj", "{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Folder", "Solution Folder", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
-		.mcp.json = .mcp.json
 		CHANGELOG.md = CHANGELOG.md
 		LICENSE = LICENSE
 		README.md = README.md
@@ -31,8 +28,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{2073
 	ProjectSection(SolutionItems) = preProject
 		.github\copilot-instructions.md = .github\copilot-instructions.md
 	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.GCCServer", "Mcp.Gateway.GCCServer\Mcp.Gateway.GCCServer.csproj", "{661516DD-0891-4129-9588-BE54922DA529}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.Benchmarks", "Mcp.Gateway.Benchmarks\Mcp.Gateway.Benchmarks.csproj", "{5AD7C004-0D72-EB71-C28B-8686BC69A566}"
 EndProject
@@ -58,37 +53,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\test.yml = .github\workflows\test.yml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.2.0", "v1.2.0", "{C8687C11-EA0D-401B-AD02-315FDD9E5FED}"
-	ProjectSection(SolutionItems) = preProject
-		.internal\notes\v.1.2.0\implementation-plan.md = .internal\notes\v.1.2.0\implementation-plan.md
-		.internal\notes\v.1.2.0\ollama-integration.md = .internal\notes\v.1.2.0\ollama-integration.md
-		.internal\notes\v.1.2.0\ollama-reverse-integration.md = .internal\notes\v.1.2.0\ollama-reverse-integration.md
-		.internal\notes\v.1.2.0\phase-0-progress.md = .internal\notes\v.1.2.0\phase-0-progress.md
-		.internal\notes\v.1.2.0\phase-0-tool-capabilities.md = .internal\notes\v.1.2.0\phase-0-tool-capabilities.md
-		.internal\notes\v.1.2.0\README.md = .internal\notes\v.1.2.0\README.md
-	EndProjectSection
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.2", "v1.2", "{C8687C11-EA0D-401B-AD02-315FDD9E5FED}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "guides", "guides", "{21C726F2-FA45-4A7D-A2F8-4DBFA66DC69A}"
-	ProjectSection(SolutionItems) = preProject
-		.internal\guides\GitHub-Actions-Testing.md = .internal\guides\GitHub-Actions-Testing.md
-		.internal\guides\GitHub-Actions-Trusted-Publishing.md = .internal\guides\GitHub-Actions-Trusted-Publishing.md
-		.internal\guides\GitHub-Release-Automation.md = .internal\guides\GitHub-Release-Automation.md
-		.internal\guides\NuGet-Publishing-Guide.md = .internal\guides\NuGet-Publishing-Guide.md
-		.internal\guides\RELEASE_INSTRUCTIONS.md = .internal\guides\RELEASE_INSTRUCTIONS.md
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "releases", "releases", "{D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.0.1", "v1.0.1", "{F53B772B-6966-40C1-9B53-5AEBB10833A5}"
-	ProjectSection(SolutionItems) = preProject
-		.internal\releases\v1.0.1\RELEASE_CHECKLIST.md = .internal\releases\v1.0.1\RELEASE_CHECKLIST.md
-		.internal\releases\v1.0.1\v1.0.1-Release-Summary.md = .internal\releases\v1.0.1\v1.0.1-Release-Summary.md
-	EndProjectSection
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.0", "v1.0", "{F53B772B-6966-40C1-9B53-5AEBB10833A5}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.1.0", "v1.1.0", "{6D9854D0-9A0F-4AFE-A72B-E865351BD45B}"
-	ProjectSection(SolutionItems) = preProject
-		.internal\releases\v1.1.0\release-notes.md = .internal\releases\v1.1.0\release-notes.md
-	EndProjectSection
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.1", "v1.1", "{6D9854D0-9A0F-4AFE-A72B-E865351BD45B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{261EEC25-A03C-4DA7-98BF-CD7D4B045362}"
 	ProjectSection(SolutionItems) = preProject
@@ -102,16 +75,22 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OllamaIntegration", "Exampl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OllamaIntegrationTests", "Examples\OllamaIntegrationTests\OllamaIntegrationTests.csproj", "{426E85F2-5FB2-4C0A-9F2C-82433DB3DF6E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DateTimeMcpServer", "Examples\DateTimeMcpServer\DateTimeMcpServer.csproj", "{1579CBDE-9C24-473F-B6DD-417D71F97C2B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DateTimeMcpServerTests", "Examples\DateTimeMcpServerTests\DateTimeMcpServerTests.csproj", "{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorMcpServer", "Examples\CalculatorMcpServer\CalculatorMcpServer.csproj", "{654DEA13-FFEF-4409-8719-255176B3CAB3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorMcpServerTests", "Examples\CalculatorMcpServerTests\CalculatorMcpServerTests.csproj", "{407A66C2-9148-4AD2-9B48-B940C5E282FB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevTestServer", "DevTestServer\DevTestServer.csproj", "{4BFAB8A9-E6CF-94B8-775B-C274DE130B98}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BC5B75A5-7BC5-4ECA-8EA0-A027A86776BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BC5B75A5-7BC5-4ECA-8EA0-A027A86776BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BC5B75A5-7BC5-4ECA-8EA0-A027A86776BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -120,10 +99,6 @@ Global
 		{1922CEEB-EA6A-497E-F01D-8263B11438FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1922CEEB-EA6A-497E-F01D-8263B11438FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1922CEEB-EA6A-497E-F01D-8263B11438FF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{661516DD-0891-4129-9588-BE54922DA529}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{661516DD-0891-4129-9588-BE54922DA529}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{661516DD-0891-4129-9588-BE54922DA529}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{661516DD-0891-4129-9588-BE54922DA529}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5AD7C004-0D72-EB71-C28B-8686BC69A566}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5AD7C004-0D72-EB71-C28B-8686BC69A566}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5AD7C004-0D72-EB71-C28B-8686BC69A566}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -136,6 +111,26 @@ Global
 		{426E85F2-5FB2-4C0A-9F2C-82433DB3DF6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{426E85F2-5FB2-4C0A-9F2C-82433DB3DF6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{426E85F2-5FB2-4C0A-9F2C-82433DB3DF6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1579CBDE-9C24-473F-B6DD-417D71F97C2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1579CBDE-9C24-473F-B6DD-417D71F97C2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1579CBDE-9C24-473F-B6DD-417D71F97C2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1579CBDE-9C24-473F-B6DD-417D71F97C2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{654DEA13-FFEF-4409-8719-255176B3CAB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{654DEA13-FFEF-4409-8719-255176B3CAB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{654DEA13-FFEF-4409-8719-255176B3CAB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{654DEA13-FFEF-4409-8719-255176B3CAB3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{407A66C2-9148-4AD2-9B48-B940C5E282FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{407A66C2-9148-4AD2-9B48-B940C5E282FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{407A66C2-9148-4AD2-9B48-B940C5E282FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{407A66C2-9148-4AD2-9B48-B940C5E282FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4BFAB8A9-E6CF-94B8-775B-C274DE130B98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BFAB8A9-E6CF-94B8-775B-C274DE130B98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BFAB8A9-E6CF-94B8-775B-C274DE130B98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BFAB8A9-E6CF-94B8-775B-C274DE130B98}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -154,6 +149,10 @@ Global
 		{261EEC25-A03C-4DA7-98BF-CD7D4B045362} = {74DBB65B-8717-4BC6-B042-79FDA377A533}
 		{5BFCF882-622C-B8D2-008C-76CD9475AB09} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 		{426E85F2-5FB2-4C0A-9F2C-82433DB3DF6E} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
+		{1579CBDE-9C24-473F-B6DD-417D71F97C2B} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
+		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
+		{654DEA13-FFEF-4409-8719-255176B3CAB3} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
+		{407A66C2-9148-4AD2-9B48-B940C5E282FB} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}

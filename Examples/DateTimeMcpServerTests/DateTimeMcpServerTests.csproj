@@ -19,11 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DevTestServer\DevTestServer.csproj" />
+    <Using Include="Xunit" />
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="Xunit" />
+    <ProjectReference Include="..\DateTimeMcpServer\DateTimeMcpServer.csproj" />
   </ItemGroup>
 
 </Project>

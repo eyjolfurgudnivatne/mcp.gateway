@@ -22,7 +22,7 @@ if (isStdioMode)
 {
     var logPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "OllamaIntegration",
+        "DateTimeMcpServer",
         $"stdio-{DateTime.Now:yyyyMMdd-HHmmss}.log");
 
     Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
