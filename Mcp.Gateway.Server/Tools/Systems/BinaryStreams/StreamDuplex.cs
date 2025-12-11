@@ -7,7 +7,8 @@ public class StreamDuplex
     [McpTool("system_binary_streams_duplex", 
         Title = "Binary Stream Duplex", 
         Description = "Bidirectional binary streaming - echoes data back (use StreamMessage start, not tools/call)",
-        InputSchema = @"{""type"":""object"",""properties"":{}}")]
+        InputSchema = @"{""type"":""object"",""properties"":{}}",
+        Capabilities = ToolCapabilities.BinaryStreaming | ToolCapabilities.RequiresWebSocket)]
     public static async Task StreamDuplexTool(ToolConnector connector)
     {
         var tcs = new TaskCompletionSource();

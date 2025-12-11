@@ -1,143 +1,209 @@
 # 📂 Internal Documentation
 
-**Local-only documentation for MCP Gateway development**
+**Development notes and guides for MCP Gateway**
 
-This folder contains internal notes, checklists, and guides that are:
-- ✅ **Not committed to Git** (via `.gitignore`)
-- ✅ **Local reference only** (historical notes)
-- ✅ **Development helpers** (release checklists, etc.)
+This folder contains internal notes, guides, and release documentation that are:
+- ✅ **Committed to Git** (visible to contributors)
+- ✅ **Development philosophy** (share approach and decisions)
+- ✅ **Process guides** (release, CI/CD, publishing)
+- ✅ **Historical context** (session notes, design decisions)
+
+**Note:** Changed from `.gitignore` to **visible in Git** to share development insights with contributors!
 
 ---
 
 ## 📋 What's Here
 
-### Release Management
-- `RELEASE_CHECKLIST.md` - Step-by-step release checklist
-- `RELEASE_INSTRUCTIONS.md` - Detailed release instructions
-- `NuGet-Publishing-Guide.md` - How to publish to NuGet.org
-- `GitHub-Actions-Trusted-Publishing.md` - Trusted publishing setup
+### `guides/` - Process Documentation
+- `GitHub-Actions-Testing.md` - CI/CD testing guide
+- `GitHub-Actions-Trusted-Publishing.md` - Automated NuGet publishing with OIDC
+- `GitHub-Release-Automation.md` - Automated release workflow guide
+- `NuGet-Publishing-Guide.md` - Manual NuGet package publishing
+- `RELEASE_INSTRUCTIONS.md` - Release process checklist
 
-### Development Notes
-- Session summaries
-- Performance analysis notes
-- Design decisions
-- Quick reference guides
+### `notes/` - Development Notes & Decisions
+- `attributes.md` - Tool attribute design notes
+- `Auto-Generated-Tool-Names.md` - Auto-naming feature documentation
+- `ArrayPool-Implementation.md` - ArrayPool optimization (v1.0.1)
+- `HybridToolAPI-Plan.md` - Hybrid API design (deferred to v2.0)
+- `Performance-Optimization-Plan.md` - Performance roadmap and benchmarks
+- `Quick-Wins-Session-Summary.md` - Quick wins session notes
+- `v.1.2.0/` - Version-specific implementation notes
+  - `README.md` - Overview of v1.2.0 changes
+  - `implementation-plan.md` - Ollama integration plan
+  - `phase-0-progress.md` - Tool capabilities implementation progress
+  - `phase-0-tool-capabilities.md` - Design document
+  - `ollama-integration.md` - Ollama provider design
+  - `ollama-reverse-integration.md` - Alternative integration approach
+
+### `releases/` - Release-Specific Documentation
+- `v1.0.1/` - v1.0.1 release notes
+  - `RELEASE_CHECKLIST.md` - Release checklist
+  - `v1.0.1-Release-Summary.md` - Release summary
+- `v1.1.0/` - v1.1.0 release notes
+  - `release-notes.md` - Release notes
 
 ---
 
-## 🔒 Privacy Note
+## 🎯 Purpose
 
-**This folder is in `.gitignore`** - contents are never pushed to GitHub.
+**Why these docs are in Git:**
+- Share development philosophy with contributors
+- Document design decisions and trade-offs
+- Provide historical context for future development
+- Show thought process behind features
+- Help new contributors understand the project
 
-Use this for:
-- ✅ Personal notes
-- ✅ Sensitive information (API keys, credentials)
-- ✅ Work-in-progress drafts
-- ✅ Historical reference documents
-- ✅ Quick checklists
+**These docs don't belong in `docs/`** because they are:
+- Development-focused (not user-focused)
+- Process-oriented (not feature documentation)
+- Historical/contextual (not current API docs)
 
 ---
 
 ## 📚 Public Documentation
 
-For public-facing docs, use:
-- `docs/` - Main documentation folder (committed to Git)
-- `README.md` - Project overview
+For user-facing documentation, see:
+- `docs/` - Public documentation (MCP protocol, streaming, JSON-RPC)
+- `README.md` - Project overview and quick start
 - `CONTRIBUTING.md` - Contribution guidelines
 - `CHANGELOG.md` - Version history
 
 ---
 
-## 🗂️ Organization Tips
+## 🗂️ Organization Philosophy
 
-### Recommended Structure
+### Clear Separation
 
 ```
-.internal/
-├── README.md (this file)
-├── releases/
-│   ├── v1.0.0/
-│   │   ├── checklist.md
-│   │   └── notes.md
-│   └── v1.0.1/
-│       ├── checklist.md
-│       └── performance-notes.md
-├── guides/
-│   ├── NuGet-Publishing-Guide.md
-│   └── GitHub-Actions-Trusted-Publishing.md
-└── notes/
-    ├── session-2025-12-05.md
-    └── ideas.md
+docs/              # Public: User/API documentation
+  ├── MCP-Protocol.md
+  ├── StreamingProtocol.md
+  └── JSON-RPC-2.0-spec.md
+
+.internal/         # Development: Process & decisions
+  ├── guides/      # How-to guides (release, CI/CD)
+  ├── notes/       # Design decisions, session notes
+  └── releases/    # Version-specific release docs
 ```
 
 ### File Naming
 
 - Use descriptive names
-- Include dates when relevant
-- Use lowercase-with-dashes or PascalCase
+- Include version numbers when relevant (`v1.0.1-Release-Summary.md`)
+- Use kebab-case (`performance-optimization-plan.md`) or PascalCase (`ArrayPool-Implementation.md`)
+- Prefer markdown (`.md`) for all documentation
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Contributing
 
-### Move Existing Docs
+### Adding New Notes
 
-```bash
-# Create folder structure
-mkdir -p .internal/guides
-mkdir -p .internal/releases/v1.0.1
-
-# Move existing docs (if any)
-mv RELEASE_CHECKLIST.md .internal/releases/v1.0.1/
-mv NuGet-Publishing-Guide.md .internal/guides/
-```
-
-### Create New Note
-
+**Session notes:**
 ```bash
 # Create a new session note
-code .internal/notes/session-2025-12-06.md
+code .internal/notes/session-$(date +%Y-%m-%d).md
+```
+
+**Version-specific notes:**
+```bash
+# Add to version folder
+code .internal/notes/v.1.3.0/feature-implementation.md
+```
+
+**Process guides:**
+```bash
+# Add new guide
+code .internal/guides/new-process-guide.md
+```
+
+### Adding Release Documentation
+
+```bash
+# Create release folder
+mkdir -p .internal/releases/v1.2.0
+
+# Add release docs
+code .internal/releases/v1.2.0/release-notes.md
+code .internal/releases/v1.2.0/RELEASE_CHECKLIST.md
 ```
 
 ---
 
-## 📝 Example: Session Notes Template
+## 📝 Templates
+
+### Session Notes Template
 
 ```markdown
 # Session Notes - [Date]
 
-**Topics:**
-- Topic 1
-- Topic 2
+**Focus:** [Main topic/feature]
 
-**Decisions:**
-- Decision 1
-- Decision 2
+## Decisions Made
+- Decision 1: [Rationale]
+- Decision 2: [Rationale]
 
-**Action Items:**
-- [ ] Action 1
-- [ ] Action 2
+## Implementation Notes
+- Note 1
+- Note 2
 
-**References:**
-- Link 1
-- Link 2
+## Deferred/Blocked
+- Item 1: [Reason]
+
+## References
+- [Link to PR/issue]
+- [Link to documentation]
 ```
+
+### Release Checklist Template
+
+See `.internal/releases/v1.0.1/RELEASE_CHECKLIST.md` for example.
 
 ---
 
-## 🔐 Security Reminder
+## 🔍 Finding Information
 
-**DO NOT COMMIT:**
-- ❌ API keys
-- ❌ Passwords
-- ❌ Credentials
+### By Version
+- Check `.internal/releases/v[version]/` for release-specific docs
+- Check `.internal/notes/v.[version]/` for implementation notes
+
+### By Topic
+- **Performance:** `Performance-Optimization-Plan.md`, `ArrayPool-Implementation.md`
+- **Features:** `Auto-Generated-Tool-Names.md`, `HybridToolAPI-Plan.md`
+- **Process:** `guides/` folder
+- **Design:** `notes/attributes.md`, phase documents
+
+### By Date
+- Session notes include dates in filename or metadata
+- Release folders organized by version/date
+
+---
+
+## 🔐 What NOT to Commit
+
+Even though this folder is in Git, **DO NOT COMMIT:**
+- ❌ API keys or secrets
+- ❌ Passwords or credentials
 - ❌ Personal information
 - ❌ Sensitive data
+- ❌ Large binary files
 
-**This folder is gitignored**, but double-check before committing!
+**Use GitHub Secrets** for sensitive data in CI/CD workflows.
+
+---
+
+## 🎯 Goals
+
+1. **Transparency** - Share development process openly
+2. **Context** - Preserve decision-making rationale
+3. **Learning** - Help contributors understand the "why"
+4. **History** - Document evolution of features
+5. **Collaboration** - Make it easy for others to contribute
 
 ---
 
 **Created:** 6. desember 2025  
-**Status:** Active (local only)  
-**Purpose:** Internal development reference
+**Updated:** 7. desember 2025  
+**Status:** Active (visible in Git)  
+**Purpose:** Share development philosophy and process with contributors

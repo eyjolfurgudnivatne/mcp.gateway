@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Net.WebSockets;
 using System.Text.Json;
+using Mcp.Gateway.Tools.Formatters;
 
 /// <summary>
 /// Handles JSON-RPC tool invocation over HTTP and WebSocket.
@@ -35,13 +36,16 @@ public class ToolInvoker
         {
             using var doc = await JsonDocument.ParseAsync(request.Body, cancellationToken: cancellationToken);
 
+            // Detect transport for capability-based filtering
+            var transport = DetectTransport(request.HttpContext);
+
             // Batch request (array)
             if (doc.RootElement.ValueKind == JsonValueKind.Array)
             {
                 var responses = new List<object>();
                 foreach (var element in doc.RootElement.EnumerateArray())
                 {
-                    var response = await InvokeSingleAsync(element, cancellationToken);
+                    var response = await InvokeSingleAsync(element, transport, cancellationToken);
                     if (response is not null)
                         responses.Add(response);
                 }
@@ -55,7 +59,7 @@ public class ToolInvoker
             // Single request
             else
             {
-                var response = await InvokeSingleAsync(doc.RootElement, cancellationToken);
+                var response = await InvokeSingleAsync(doc.RootElement, transport, cancellationToken);
                 
                 // Notification (no response)
                 if (response is null)
@@ -326,9 +330,35 @@ public class ToolInvoker
     /// Invokes a single JSON-RPC request.
     /// Returns null for notifications (no response expected).
     /// </summary>
-    private async Task<object?> InvokeSingleAsync(
+    public async Task<object?> InvokeSingleAsync(
         JsonElement element,
         CancellationToken cancellationToken)
+    {
+        // Delegate to overloaded method with default transport detection
+        // This method is used by WebSocket (non-WS specific) path
+        return await InvokeSingleAsync(element, "http", cancellationToken);
+    }
+
+    /// <summary>
+    /// Invokes a single JSON-RPC request from stdio transport.
+    /// Delegates to InvokeSingleAsync - stdio is just a different event loop.
+    /// </summary>
+    public async Task<object?> InvokeSingleStdioAsync(
+        JsonElement element,
+        CancellationToken cancellationToken = default)
+    {
+        // Delegate to transport-aware InvokeSingleAsync with stdio transport
+        return await InvokeSingleAsync(element, "stdio", cancellationToken);
+    }
+
+    /// <summary>
+    /// Invokes a single JSON-RPC request with transport filtering.
+    /// Returns null for notifications (no response expected).
+    /// </summary>
+    public async Task<object?> InvokeSingleAsync(
+        JsonElement element,
+        string transport,
+        CancellationToken cancellationToken = default)
     {
         object? id = null;
         
@@ -364,7 +394,14 @@ public class ToolInvoker
             
             if (message.Method == "tools/list")
             {
-                return HandleToolsList(message);
+                // Use transport-aware filtering
+                return HandleToolsList(message, transport);
+            }
+            
+            // NEW: Formatted tool lists (tools/list/{format})
+            if (message.Method?.StartsWith("tools/list/") == true)
+            {
+                return HandleFormattedToolsList(message, transport);
             }
             
             if (message.Method == "tools/call")
@@ -380,7 +417,15 @@ public class ToolInvoker
                 return null; // No response for notifications
             }
 
-            // Get tool details
+            // Fix for CS8604: Add null check for message.Method before calling GetToolDetails
+            if (string.IsNullOrEmpty(message.Method))
+            {
+                return ToolResponse.Error(
+                    id,
+                    -32600,
+                    "Invalid Request",
+                    "Method name must not be null or empty");
+            }
             var toolDetails = _toolService.GetToolDetails(message.Method);
             
             // Check if this is a ToolConnector-based tool (streaming)
@@ -421,19 +466,6 @@ public class ToolInvoker
             _logger.LogError(ex, "Error invoking tool");
             return ToolResponse.Error(id, -32603, "Internal error", new { detail = ex.Message });
         }
-    }
-
-    /// <summary>
-    /// Invokes a single JSON-RPC request from stdio transport.
-    /// Delegates to InvokeSingleAsync - stdio is just a different event loop.
-    /// </summary>
-    public async Task<object?> InvokeSingleStdioAsync(
-        JsonElement element,
-        CancellationToken cancellationToken = default)
-    {
-        // Delegate to existing InvokeSingleAsync
-        // (it already handles MCP protocol, tool invocation, etc.)
-        return await InvokeSingleAsync(element, cancellationToken);
     }
 
     /// <summary>
@@ -480,7 +512,7 @@ public class ToolInvoker
             
             if (message.Method == "tools/list")
             {
-                return HandleToolsList(message);
+                return HandleToolsList(message, "ws");
             }
             
             if (message.Method == "tools/call")
@@ -496,7 +528,15 @@ public class ToolInvoker
                 return null; // No response for notifications
             }
 
-            // Get tool details
+            // Fix for CS8604: Add null check for message.Method before calling GetToolDetails
+            if (string.IsNullOrEmpty(message.Method))
+            {
+                return ToolResponse.Error(
+                    id,
+                    -32600,
+                    "Invalid Request",
+                    "Method name must not be null or empty");
+            }
             var toolDetails = _toolService.GetToolDetails(message.Method);
             
             // Check if this is a ToolConnector-based tool (streaming)
@@ -620,6 +660,121 @@ public class ToolInvoker
     }
 
     /// <summary>
+    /// Detects the transport type from HttpContext.
+    /// Used for capability-based tool filtering.
+    /// </summary>
+    /// <param name="context">HttpContext (null for stdio)</param>
+    /// <returns>Transport type: "stdio", "http", "ws", or "sse"</returns>
+    private static string DetectTransport(HttpContext? context)
+    {
+        if (context == null) return "stdio";
+        if (context.WebSockets.IsWebSocketRequest) return "ws";
+        if (context.Request.Headers.Accept.ToString().Contains("text/event-stream")) return "sse";
+        return "http";
+    }
+
+    /// <summary>
+    /// Handles MCP tools/list request with transport filtering.
+    /// Filters tools based on transport capabilities to prevent clients from seeing incompatible tools.
+    /// </summary>
+    /// <param name="request">The JSON-RPC request</param>
+    /// <param name="transport">Transport type: "stdio", "http", "ws", or "sse"</param>
+    private JsonRpcMessage HandleToolsList(JsonRpcMessage request, string transport)
+    {
+        try
+        {
+            // Get filtered tools for this transport
+            var tools = _toolService.GetToolsForTransport(transport);
+            var toolsList = tools.Select(t =>
+            {
+                object? schema = null;
+                try
+                {
+                    schema = JsonSerializer.Deserialize<object>(t.InputSchema, JsonOptions.Default);
+                }
+                catch
+                {
+                    // Fallback to empty object schema if deserialization fails
+                    schema = new { type = "object", properties = new { } };
+                }
+
+                return new
+                {
+                    name = t.Name,
+                    description = t.Description,
+                    inputSchema = schema
+                };
+            }).ToList();
+
+            return ToolResponse.Success(request.Id, new
+            {
+                tools = toolsList
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in tools/list");
+            return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Handles formatted tool list requests (tools/list/{format}).
+    /// Supports multiple AI platform formats: ollama, microsoft-ai, openai, etc.
+    /// </summary>
+    /// <param name="request">The JSON-RPC request</param>
+    /// <param name="transport">Transport type for capability filtering</param>
+    /// <returns>Formatted tool list in the requested format</returns>
+    private JsonRpcMessage HandleFormattedToolsList(JsonRpcMessage request, string transport)
+    {
+        try
+        {
+            // Extract format from method name (e.g., "tools/list/ollama" → "ollama")
+            var format = request.Method?.Replace("tools/list/", "") ?? "";
+            
+            if (string.IsNullOrEmpty(format))
+            {
+                return ToolResponse.Error(
+                    request.Id,
+                    -32600,
+                    "Invalid Request",
+                    "Format must be specified (e.g., tools/list/ollama)");
+            }
+            
+            // Get filtered tools for this transport
+            var tools = _toolService.GetToolsForTransport(transport);
+            
+            // Get appropriate formatter
+            IToolListFormatter formatter = format.ToLowerInvariant() switch
+            {
+                "ollama" => new OllamaToolListFormatter(),
+                "microsoft-ai" => new MicrosoftAIToolListFormatter(),
+                "mcp" => new McpToolListFormatter(),
+                _ => throw new ToolNotFoundException($"Unknown format: {format}")
+            };
+            
+            // Format tools
+            var formattedTools = formatter.FormatToolList(tools);
+            
+            return ToolResponse.Success(request.Id, formattedTools);
+        }
+        catch (ToolNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Unknown tool list format: {Method}", request.Method);
+            return ToolResponse.Error(
+                request.Id,
+                -32601,
+                "Unknown format",
+                new { detail = ex.Message, supportedFormats = new[] { "ollama", "microsoft-ai", "mcp" } });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in formatted tools/list");
+            return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Handles MCP tools/call request
     /// </summary>
     private async Task<JsonRpcMessage> HandleToolsCallAsync(JsonRpcMessage request, CancellationToken cancellationToken)
@@ -643,7 +798,15 @@ public class ToolInvoker
             // Build tool request
             var toolRequest = JsonRpcMessage.CreateRequest(toolName, request.Id, args);
 
-            // Get tool details and invoke
+            // Fix for CS8604: Add null check for toolName before calling GetToolDetails
+            if (string.IsNullOrEmpty(toolName))
+            {
+                return ToolResponse.Error(
+                    request.Id,
+                    -32602,
+                    "Invalid params",
+                    "Tool name must not be null or empty");
+            }
             var toolDetails = _toolService.GetToolDetails(toolName);
             
             if (toolDetails.ToolArgumentType.IsToolConnector)
@@ -789,7 +952,7 @@ public class ToolInvoker
             {
                 foreach (var element in doc.RootElement.EnumerateArray())
                 {
-                    var response = await InvokeSingleAsync(element, cancellationToken);
+                    var response = await InvokeSingleAsync(element, "sse", cancellationToken);
                     if (response != null)
                     {
                         // Log outgoing response
@@ -803,7 +966,7 @@ public class ToolInvoker
             // Single request
             else
             {
-                var response = await InvokeSingleAsync(doc.RootElement, cancellationToken);
+                var response = await InvokeSingleAsync(doc.RootElement, "sse", cancellationToken);
                 if (response != null)
                 {
                     // Log outgoing response

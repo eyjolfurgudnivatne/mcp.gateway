@@ -44,8 +44,10 @@ public class InputSchemaValidationTests
     public void MalformedSchema_Throws()
     {
         // Arrange - Malformed JSON (missing quotes)
+#pragma warning disable JSON001 // Invalid JSON pattern
         var malformedSchema = @"{type:object}";
-        
+#pragma warning restore JSON001 // Invalid JSON pattern
+
         // Act & Assert - Should throw
         Assert.ThrowsAny<Exception>(() =>
         {

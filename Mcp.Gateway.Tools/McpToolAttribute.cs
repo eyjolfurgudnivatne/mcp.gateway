@@ -43,4 +43,17 @@ public class McpToolAttribute : Attribute
     /// If null, will be auto-generated from method parameters (future feature).
     /// </summary>
     public string? InputSchema { get; set; }
+    
+    /// <summary>
+    /// Capabilities required by this tool.
+    /// Used to filter tools based on transport capabilities (stdio, http, ws, sse).
+    /// Default: Standard (works on all transports).
+    /// </summary>
+    /// <remarks>
+    /// Examples:
+    /// - Standard tool (default): Capabilities = ToolCapabilities.Standard
+    /// - Binary streaming: Capabilities = ToolCapabilities.BinaryStreaming | ToolCapabilities.RequiresWebSocket
+    /// - Text streaming: Capabilities = ToolCapabilities.TextStreaming
+    /// </remarks>
+    public ToolCapabilities Capabilities { get; init; } = ToolCapabilities.Standard;
 }
