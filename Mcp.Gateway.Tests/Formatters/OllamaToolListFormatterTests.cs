@@ -17,7 +17,7 @@ public class OllamaToolListFormatterTests
         var formatter = new OllamaToolListFormatter();
         var tools = new List<ToolService.ToolDefinition>
         {
-            new ToolService.ToolDefinition(
+            new(
                 Name: "add_numbers",
                 Description: "Adds two numbers",
                 InputSchema: """
@@ -68,7 +68,7 @@ public class OllamaToolListFormatterTests
         var formatter = new OllamaToolListFormatter();
         var tools = new List<ToolService.ToolDefinition>
         {
-            new ToolService.ToolDefinition(
+            new(
                 Name: "greet",
                 Description: "Greets someone",
                 InputSchema: """
@@ -100,7 +100,7 @@ public class OllamaToolListFormatterTests
         var formatter = new OllamaToolListFormatter();
         var tools = new List<ToolService.ToolDefinition>
         {
-            new ToolService.ToolDefinition(
+            new(
                 Name: "complex_tool",
                 Description: "Complex tool with nested properties",
                 InputSchema: """
@@ -149,9 +149,9 @@ public class OllamaToolListFormatterTests
         var formatter = new OllamaToolListFormatter();
         var tools = new List<ToolService.ToolDefinition>
         {
-            new ToolService.ToolDefinition("tool1", "First tool", """{"type":"object","properties":{}}"""),
-            new ToolService.ToolDefinition("tool2", "Second tool", """{"type":"object","properties":{}}"""),
-            new ToolService.ToolDefinition("tool3", "Third tool", """{"type":"object","properties":{}}""")
+            new("tool1", "First tool", """{"type":"object","properties":{}}"""),
+            new("tool2", "Second tool", """{"type":"object","properties":{}}"""),
+            new("tool3", "Third tool", """{"type":"object","properties":{}}""")
         };
 
         // Act

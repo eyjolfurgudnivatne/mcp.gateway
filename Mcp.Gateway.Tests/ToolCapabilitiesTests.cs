@@ -24,6 +24,7 @@ public class ToolCapabilitiesTests : IDisposable
     public void Dispose()
     {
         _serviceProvider?.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
@@ -168,7 +169,7 @@ public class ToolCapabilitiesTestTools
         Description = "Standard tool (works on all transports)",
         InputSchema = @"{""type"":""object"",""properties"":{}}",
         Capabilities = ToolCapabilities.Standard)]
-    public Task<JsonRpcMessage> StandardTool(JsonRpcMessage request)
+    public static Task<JsonRpcMessage> StandardTool(JsonRpcMessage request)
     {
         return Task.FromResult(ToolResponse.Success(request.Id, new { message = "standard" }));
     }

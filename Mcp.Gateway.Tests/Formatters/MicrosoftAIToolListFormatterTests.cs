@@ -17,7 +17,7 @@ public class MicrosoftAIToolListFormatterTests
         var formatter = new MicrosoftAIToolListFormatter();
         var tools = new List<ToolService.ToolDefinition>
         {
-            new ToolService.ToolDefinition(
+            new(
                 Name: "add_numbers",
                 Description: "Adds two numbers",
                 InputSchema: """
@@ -64,7 +64,7 @@ public class MicrosoftAIToolListFormatterTests
         var formatter = new MicrosoftAIToolListFormatter();
         var tools = new List<ToolService.ToolDefinition>
         {
-            new ToolService.ToolDefinition(
+            new(
                 Name: "greet",
                 Description: "Greets someone",
                 InputSchema: """
@@ -98,7 +98,7 @@ public class MicrosoftAIToolListFormatterTests
         var formatter = new MicrosoftAIToolListFormatter();
         var tools = new List<ToolService.ToolDefinition>
         {
-            new ToolService.ToolDefinition(
+            new(
                 Name: "create_user",
                 Description: "Creates a user",
                 InputSchema: """
@@ -135,7 +135,7 @@ public class MicrosoftAIToolListFormatterTests
         var formatter = new MicrosoftAIToolListFormatter();
         var tools = new List<ToolService.ToolDefinition>
         {
-            new ToolService.ToolDefinition(
+            new(
                 Name: "simple_tool",
                 Description: "Simple tool",
                 InputSchema: """
@@ -173,9 +173,9 @@ public class MicrosoftAIToolListFormatterTests
         var formatter = new MicrosoftAIToolListFormatter();
         var tools = new List<ToolService.ToolDefinition>
         {
-            new ToolService.ToolDefinition("tool1", "First", """{"type":"object","properties":{}}"""),
-            new ToolService.ToolDefinition("tool2", "Second", """{"type":"object","properties":{}}"""),
-            new ToolService.ToolDefinition("tool3", "Third", """{"type":"object","properties":{}}""")
+            new("tool1", "First", """{"type":"object","properties":{}}"""),
+            new("tool2", "Second", """{"type":"object","properties":{}}"""),
+            new("tool3", "Third", """{"type":"object","properties":{}}""")
         };
 
         // Act
@@ -209,7 +209,7 @@ public class MicrosoftAIToolListFormatterTests
         var formatter = new MicrosoftAIToolListFormatter();
         var tools = new List<ToolService.ToolDefinition>
         {
-            new ToolService.ToolDefinition(
+            new(
                 Name: "no_params",
                 Description: "Tool with no parameters",
                 InputSchema: """{"type":"object","properties":{}}"""
@@ -224,6 +224,6 @@ public class MicrosoftAIToolListFormatterTests
         // Assert
         var parameters = parsed.RootElement.GetProperty("tools")[0].GetProperty("parameters");
         Assert.Equal(JsonValueKind.Object, parameters.ValueKind);
-        Assert.Equal(0, parameters.EnumerateObject().Count());
+        Assert.Empty(parameters.EnumerateObject());
     }
 }

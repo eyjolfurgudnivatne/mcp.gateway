@@ -4,21 +4,14 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Xunit;
-using Mcp.Gateway.Server;
-using Mcp.Gateway.Tools;
 
 /// <summary>
 /// Integration tests for formatted tool lists via JSON-RPC methods.
 /// Tests tools/list/{format} endpoints without requiring external dependencies (e.g., Ollama).
 /// </summary>
-public class FormattedToolsListIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class FormattedToolsListIntegrationTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
 {
-    private readonly HttpClient _client;
-
-    public FormattedToolsListIntegrationTests(WebApplicationFactory<Program> factory)
-    {
-        _client = factory.CreateClient();
-    }
+    private readonly HttpClient _client = factory.CreateClient();
 
     [Fact]
     public async Task ToolsList_Ollama_ReturnsOllamaFormat()
@@ -32,12 +25,12 @@ public class FormattedToolsListIntegrationTests : IClassFixture<WebApplicationFa
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/rpc", request);
+        var response = await _client.PostAsJsonAsync("/rpc", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
         
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("2.0", json.GetProperty("jsonrpc").GetString());
         Assert.Equal(1, json.GetProperty("id").GetInt32());
         
@@ -74,12 +67,12 @@ public class FormattedToolsListIntegrationTests : IClassFixture<WebApplicationFa
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/rpc", request);
+        var response = await _client.PostAsJsonAsync("/rpc", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
         
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("2.0", json.GetProperty("jsonrpc").GetString());
         Assert.Equal(2, json.GetProperty("id").GetInt32());
         
@@ -112,12 +105,12 @@ public class FormattedToolsListIntegrationTests : IClassFixture<WebApplicationFa
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/rpc", request);
+        var response = await _client.PostAsJsonAsync("/rpc", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
         
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: TestContext.Current.CancellationToken);
         var result = json.GetProperty("result");
         Assert.True(result.TryGetProperty("tools", out var tools));
         
@@ -146,12 +139,12 @@ public class FormattedToolsListIntegrationTests : IClassFixture<WebApplicationFa
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/rpc", request);
+        var response = await _client.PostAsJsonAsync("/rpc", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode(); // Still 200 OK, but with JSON-RPC error
         
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("2.0", json.GetProperty("jsonrpc").GetString());
         Assert.Equal(4, json.GetProperty("id").GetInt32());
         
@@ -178,12 +171,12 @@ public class FormattedToolsListIntegrationTests : IClassFixture<WebApplicationFa
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/rpc", request);
+        var response = await _client.PostAsJsonAsync("/rpc", request, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
         
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: TestContext.Current.CancellationToken);
         var result = json.GetProperty("result");
         Assert.True(result.TryGetProperty("tools", out var tools));
         Assert.Equal(JsonValueKind.Array, tools.ValueKind);
@@ -210,12 +203,12 @@ public class FormattedToolsListIntegrationTests : IClassFixture<WebApplicationFa
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/rpc", ollamaRequest);
+        var response = await _client.PostAsJsonAsync("/rpc", ollamaRequest, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
         
-        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: TestContext.Current.CancellationToken);
         var result = json.GetProperty("result");
         var tools = result.GetProperty("tools");
         
@@ -238,12 +231,12 @@ public class FormattedToolsListIntegrationTests : IClassFixture<WebApplicationFa
         var ollamaRequest = new { jsonrpc = "2.0", method = "tools/list/ollama", id = 8 };
 
         // Act
-        var standardResponse = await _client.PostAsJsonAsync("/rpc", standardRequest);
-        var ollamaResponse = await _client.PostAsJsonAsync("/rpc", ollamaRequest);
+        var standardResponse = await _client.PostAsJsonAsync("/rpc", standardRequest, cancellationToken: TestContext.Current.CancellationToken);
+        var ollamaResponse = await _client.PostAsJsonAsync("/rpc", ollamaRequest, cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert - both should return same number of tools (just different format)
-        var standardJson = await standardResponse.Content.ReadFromJsonAsync<JsonElement>();
-        var ollamaJson = await ollamaResponse.Content.ReadFromJsonAsync<JsonElement>();
+        var standardJson = await standardResponse.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: TestContext.Current.CancellationToken);
+        var ollamaJson = await ollamaResponse.Content.ReadFromJsonAsync<JsonElement>(cancellationToken: TestContext.Current.CancellationToken);
         
         var standardTools = standardJson.GetProperty("result").GetProperty("tools");
         var ollamaTools = ollamaJson.GetProperty("result").GetProperty("tools");
