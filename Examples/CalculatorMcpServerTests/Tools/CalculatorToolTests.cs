@@ -32,7 +32,7 @@ public class CalculatorToolTests(CalculatorMcpServerFixture fixture)
     }
 
     [Fact]
-    public async Task MultiplyNumbers_ReturnsSum()
+    public async Task MultiplyNumbers_ReturnsProduct()
     {
         // Arrange
         var request = JsonRpcMessage.CreateRequest(
