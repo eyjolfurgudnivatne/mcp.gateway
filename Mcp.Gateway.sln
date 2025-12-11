@@ -9,7 +9,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Folder", "Solution
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
-		.mcp.json = .mcp.json
 		CHANGELOG.md = CHANGELOG.md
 		LICENSE = LICENSE
 		README.md = README.md
@@ -58,43 +57,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\test.yml = .github\workflows\test.yml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.2.0", "v1.2.0", "{C8687C11-EA0D-401B-AD02-315FDD9E5FED}"
-	ProjectSection(SolutionItems) = preProject
-		.internal\notes\v.1.2.0\implementation-plan.md = .internal\notes\v.1.2.0\implementation-plan.md
-		.internal\notes\v.1.2.0\ollama-integration.md = .internal\notes\v.1.2.0\ollama-integration.md
-		.internal\notes\v.1.2.0\ollama-reverse-integration.md = .internal\notes\v.1.2.0\ollama-reverse-integration.md
-		.internal\notes\v.1.2.0\phase-0-progress.md = .internal\notes\v.1.2.0\phase-0-progress.md
-		.internal\notes\v.1.2.0\phase-0-tool-capabilities.md = .internal\notes\v.1.2.0\phase-0-tool-capabilities.md
-		.internal\notes\v.1.2.0\README.md = .internal\notes\v.1.2.0\README.md
-	EndProjectSection
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.2", "v1.2", "{C8687C11-EA0D-401B-AD02-315FDD9E5FED}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "guides", "guides", "{21C726F2-FA45-4A7D-A2F8-4DBFA66DC69A}"
-	ProjectSection(SolutionItems) = preProject
-		.internal\guides\GitHub-Actions-Testing.md = .internal\guides\GitHub-Actions-Testing.md
-		.internal\guides\GitHub-Actions-Trusted-Publishing.md = .internal\guides\GitHub-Actions-Trusted-Publishing.md
-		.internal\guides\GitHub-Release-Automation.md = .internal\guides\GitHub-Release-Automation.md
-		.internal\guides\NuGet-Publishing-Guide.md = .internal\guides\NuGet-Publishing-Guide.md
-		.internal\guides\RELEASE_INSTRUCTIONS.md = .internal\guides\RELEASE_INSTRUCTIONS.md
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "releases", "releases", "{D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.0.1", "v1.0.1", "{F53B772B-6966-40C1-9B53-5AEBB10833A5}"
-	ProjectSection(SolutionItems) = preProject
-		.internal\releases\v1.0.1\RELEASE_CHECKLIST.md = .internal\releases\v1.0.1\RELEASE_CHECKLIST.md
-		.internal\releases\v1.0.1\v1.0.1-Release-Summary.md = .internal\releases\v1.0.1\v1.0.1-Release-Summary.md
-	EndProjectSection
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.0", "v1.0", "{F53B772B-6966-40C1-9B53-5AEBB10833A5}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.1.0", "v1.1.0", "{6D9854D0-9A0F-4AFE-A72B-E865351BD45B}"
-	ProjectSection(SolutionItems) = preProject
-		.internal\releases\v1.1.0\release-notes.md = .internal\releases\v1.1.0\release-notes.md
-	EndProjectSection
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.1", "v1.1", "{6D9854D0-9A0F-4AFE-A72B-E865351BD45B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{261EEC25-A03C-4DA7-98BF-CD7D4B045362}"
-	ProjectSection(SolutionItems) = preProject
-		docs\examples\client-examples.md = docs\examples\client-examples.md
-		docs\examples\toolconnector-usage.md = docs\examples\toolconnector-usage.md
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{6A8723BD-3073-45B4-AAC3-AA46A1973400}"
 EndProject
