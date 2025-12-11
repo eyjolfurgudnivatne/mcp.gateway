@@ -31,20 +31,20 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{2073
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.Benchmarks", "Mcp.Gateway.Benchmarks\Mcp.Gateway.Benchmarks.csproj", "{5AD7C004-0D72-EB71-C28B-8686BC69A566}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "internal", "internal", "{ECD71231-234D-434A-9891-059749093AC1}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".internal", ".internal", "{ECD71231-234D-434A-9891-059749093AC1}"
 	ProjectSection(SolutionItems) = preProject
-		internal\.gitkeep = internal\.gitkeep
-		internal\README.md = internal\README.md
+		.internal\.gitkeep = .internal\.gitkeep
+		.internal\README.md = .internal\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "notes", "notes", "{CC761499-6044-48DF-9E01-744F32E64955}"
 	ProjectSection(SolutionItems) = preProject
-		internal\notes\ArrayPool-Implementation.md = internal\notes\ArrayPool-Implementation.md
-		internal\notes\attributes.md = internal\notes\attributes.md
-		internal\notes\Auto-Generated-Tool-Names.md = internal\notes\Auto-Generated-Tool-Names.md
-		internal\notes\HybridToolAPI-Plan.md = internal\notes\HybridToolAPI-Plan.md
-		internal\notes\Performance-Optimization-Plan.md = internal\notes\Performance-Optimization-Plan.md
-		internal\notes\Quick-Wins-Session-Summary.md = internal\notes\Quick-Wins-Session-Summary.md
+		.internal\notes\ArrayPool-Implementation.md = .internal\notes\ArrayPool-Implementation.md
+		.internal\notes\attributes.md = .internal\notes\attributes.md
+		.internal\notes\Auto-Generated-Tool-Names.md = .internal\notes\Auto-Generated-Tool-Names.md
+		.internal\notes\HybridToolAPI-Plan.md = .internal\notes\HybridToolAPI-Plan.md
+		.internal\notes\Performance-Optimization-Plan.md = .internal\notes\Performance-Optimization-Plan.md
+		.internal\notes\Quick-Wins-Session-Summary.md = .internal\notes\Quick-Wins-Session-Summary.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{D9842DC7-A4E0-4990-8C20-F27C0424D473}"
@@ -55,34 +55,34 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.2.0", "v1.2.0", "{C8687C11-EA0D-401B-AD02-315FDD9E5FED}"
 	ProjectSection(SolutionItems) = preProject
-		internal\notes\v.1.2.0\implementation-plan.md = internal\notes\v.1.2.0\implementation-plan.md
-		internal\notes\v.1.2.0\ollama-integration.md = internal\notes\v.1.2.0\ollama-integration.md
-		internal\notes\v.1.2.0\ollama-reverse-integration.md = internal\notes\v.1.2.0\ollama-reverse-integration.md
-		internal\notes\v.1.2.0\phase-0-progress.md = internal\notes\v.1.2.0\phase-0-progress.md
-		internal\notes\v.1.2.0\phase-0-tool-capabilities.md = internal\notes\v.1.2.0\phase-0-tool-capabilities.md
-		internal\notes\v.1.2.0\README.md = internal\notes\v.1.2.0\README.md
+		.internal\notes\v.1.2.0\implementation-plan.md = .internal\notes\v.1.2.0\implementation-plan.md
+		.internal\notes\v.1.2.0\ollama-integration.md = .internal\notes\v.1.2.0\ollama-integration.md
+		.internal\notes\v.1.2.0\ollama-reverse-integration.md = .internal\notes\v.1.2.0\ollama-reverse-integration.md
+		.internal\notes\v.1.2.0\phase-0-progress.md = .internal\notes\v.1.2.0\phase-0-progress.md
+		.internal\notes\v.1.2.0\phase-0-tool-capabilities.md = .internal\notes\v.1.2.0\phase-0-tool-capabilities.md
+		.internal\notes\v.1.2.0\README.md = .internal\notes\v.1.2.0\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "guides", "guides", "{21C726F2-FA45-4A7D-A2F8-4DBFA66DC69A}"
 	ProjectSection(SolutionItems) = preProject
-		internal\guides\GitHub-Actions-Testing.md = internal\guides\GitHub-Actions-Testing.md
-		internal\guides\GitHub-Actions-Trusted-Publishing.md = internal\guides\GitHub-Actions-Trusted-Publishing.md
-		internal\guides\GitHub-Release-Automation.md = internal\guides\GitHub-Release-Automation.md
-		internal\guides\NuGet-Publishing-Guide.md = internal\guides\NuGet-Publishing-Guide.md
-		internal\guides\RELEASE_INSTRUCTIONS.md = internal\guides\RELEASE_INSTRUCTIONS.md
+		.internal\guides\GitHub-Actions-Testing.md = .internal\guides\GitHub-Actions-Testing.md
+		.internal\guides\GitHub-Actions-Trusted-Publishing.md = .internal\guides\GitHub-Actions-Trusted-Publishing.md
+		.internal\guides\GitHub-Release-Automation.md = .internal\guides\GitHub-Release-Automation.md
+		.internal\guides\NuGet-Publishing-Guide.md = .internal\guides\NuGet-Publishing-Guide.md
+		.internal\guides\RELEASE_INSTRUCTIONS.md = .internal\guides\RELEASE_INSTRUCTIONS.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "releases", "releases", "{D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.0.1", "v1.0.1", "{F53B772B-6966-40C1-9B53-5AEBB10833A5}"
 	ProjectSection(SolutionItems) = preProject
-		internal\releases\v1.0.1\RELEASE_CHECKLIST.md = internal\releases\v1.0.1\RELEASE_CHECKLIST.md
-		internal\releases\v1.0.1\v1.0.1-Release-Summary.md = internal\releases\v1.0.1\v1.0.1-Release-Summary.md
+		.internal\releases\v1.0.1\RELEASE_CHECKLIST.md = .internal\releases\v1.0.1\RELEASE_CHECKLIST.md
+		.internal\releases\v1.0.1\v1.0.1-Release-Summary.md = .internal\releases\v1.0.1\v1.0.1-Release-Summary.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.1.0", "v1.1.0", "{6D9854D0-9A0F-4AFE-A72B-E865351BD45B}"
 	ProjectSection(SolutionItems) = preProject
-		internal\releases\v1.1.0\release-notes.md = internal\releases\v1.1.0\release-notes.md
+		.internal\releases\v1.1.0\release-notes.md = .internal\releases\v1.1.0\release-notes.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{261EEC25-A03C-4DA7-98BF-CD7D4B045362}"
@@ -109,7 +109,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevTestServer", "DevTestSer
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.2.0", "v1.2.0", "{F5C540EC-FE47-400E-8D27-806115FB3ACB}"
 	ProjectSection(SolutionItems) = preProject
-		internal\releases\v1.2.0\releaase-note.md = internal\releases\v1.2.0\releaase-note.md
+		.internal\releases\v1.2.0\releaase-note.md = .internal\releases\v1.2.0\releaase-note.md
 	EndProjectSection
 EndProject
 Global
