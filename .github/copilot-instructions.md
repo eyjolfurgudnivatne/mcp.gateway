@@ -30,13 +30,6 @@
 - Use descriptive test method names: `FeatureName_Scenario_ExpectedResult`
 - Match the structure used in existing tests (e.g., `StreamsInTests.cs`, `StreamsDuplexTests.cs`)
 
-### Date and Time Context
-- **Current context:** User has a datetime MCP server registered globally
-- When needing current date/time, you can use the datetime MCP tools available
-- Timezone preference: `Europe/Oslo` (Norwegian time)
-- Always use ISO 8601 format for timestamps in code and documentation
-- When documenting: Use full date format (e.g., "4. desember 2025" in Norwegian, "December 4, 2025" in English)
-
 ## Project Structure
 
 ### MCP Gateway
@@ -123,4 +116,3 @@ This is a Model Context Protocol (MCP) Gateway implementation that supports:
 - All 70 tests passing (v1.2.0)
 - Production-ready (v1.1.0 released, v1.2.0 in development)
 - Breaking change from earlier versions: Tool names changed from dots to underscores
-- **Phase 0 complete:** Transport-aware tool filtering implemented and tested
