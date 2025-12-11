@@ -27,8 +27,8 @@ public class Calculator
         InputSchema = @"{
             ""type"":""object"",
             ""properties"":{
-                ""number1"":{""type"":""number"",""description"":""First number to add. This must be a number. Not string.""},
-                ""number2"":{""type"":""number"",""description"":""Second number to add. This must be a number. Not string.""}
+                ""number1"":{""type"":""number"",""description"":""First number to add""},
+                ""number2"":{""type"":""number"",""description"":""Second number to add""}
             },
             ""required"":[""number1"",""number2""]
         }")]
