@@ -31,8 +31,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{2073
 		.github\copilot-instructions.md = .github\copilot-instructions.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.GCCServer", "Mcp.Gateway.GCCServer\Mcp.Gateway.GCCServer.csproj", "{661516DD-0891-4129-9588-BE54922DA529}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.Benchmarks", "Mcp.Gateway.Benchmarks\Mcp.Gateway.Benchmarks.csproj", "{5AD7C004-0D72-EB71-C28B-8686BC69A566}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".internal", ".internal", "{ECD71231-234D-434A-9891-059749093AC1}"
@@ -79,6 +77,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DateTimeMcpServer", "Exampl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DateTimeMcpServerTests", "Examples\DateTimeMcpServerTests\DateTimeMcpServerTests.csproj", "{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorMcpServer", "Examples\CalculatorMcpServer\CalculatorMcpServer.csproj", "{654DEA13-FFEF-4409-8719-255176B3CAB3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorMcpServerTests", "Examples\CalculatorMcpServerTests\CalculatorMcpServerTests.csproj", "{407A66C2-9148-4AD2-9B48-B940C5E282FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -97,10 +99,6 @@ Global
 		{1922CEEB-EA6A-497E-F01D-8263B11438FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1922CEEB-EA6A-497E-F01D-8263B11438FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1922CEEB-EA6A-497E-F01D-8263B11438FF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{661516DD-0891-4129-9588-BE54922DA529}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{661516DD-0891-4129-9588-BE54922DA529}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{661516DD-0891-4129-9588-BE54922DA529}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{661516DD-0891-4129-9588-BE54922DA529}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5AD7C004-0D72-EB71-C28B-8686BC69A566}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5AD7C004-0D72-EB71-C28B-8686BC69A566}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5AD7C004-0D72-EB71-C28B-8686BC69A566}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -121,6 +119,14 @@ Global
 		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{654DEA13-FFEF-4409-8719-255176B3CAB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{654DEA13-FFEF-4409-8719-255176B3CAB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{654DEA13-FFEF-4409-8719-255176B3CAB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{654DEA13-FFEF-4409-8719-255176B3CAB3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{407A66C2-9148-4AD2-9B48-B940C5E282FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{407A66C2-9148-4AD2-9B48-B940C5E282FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{407A66C2-9148-4AD2-9B48-B940C5E282FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{407A66C2-9148-4AD2-9B48-B940C5E282FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -141,6 +147,8 @@ Global
 		{426E85F2-5FB2-4C0A-9F2C-82433DB3DF6E} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 		{1579CBDE-9C24-473F-B6DD-417D71F97C2B} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
+		{654DEA13-FFEF-4409-8719-255176B3CAB3} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
+		{407A66C2-9148-4AD2-9B48-B940C5E282FB} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}

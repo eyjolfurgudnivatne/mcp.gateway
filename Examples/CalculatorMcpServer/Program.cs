@@ -22,11 +22,11 @@ if (isStdioMode)
 {
     var logPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "GCCServer",
+        "CalculatorMcpServer",
         $"stdio-{DateTime.Now:yyyyMMdd-HHmmss}.log");
-    
+
     Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
-    
+
     await StdioMode.RunAsync(app.Services, logPath);
     return;
 }
@@ -45,4 +45,3 @@ app.MapWsRpcEndpoint("/ws");
 app.MapSseRpcEndpoint("/sse");
 
 app.Run();
-
