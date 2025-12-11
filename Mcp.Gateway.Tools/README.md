@@ -1,241 +1,309 @@
 # 🛠️ Mcp.Gateway.Tools
 
-> .NET library for building MCP servers - NuGet Package
+> Core library for building MCP servers in .NET 10
 
 [![NuGet](https://img.shields.io/nuget/v/Mcp.Gateway.Tools.svg)](https://www.nuget.org/packages/Mcp.Gateway.Tools/)
 [![.NET 10](https://img.shields.io/badge/.NET-10-purple)](https://dotnet.microsoft.com/)
 [![MCP Protocol](https://img.shields.io/badge/MCP-2025--06--18-green)](https://modelcontextprotocol.io/)
 
-**Mcp.Gateway.Tools** is a production-ready library for building Model Context Protocol (MCP) servers in .NET. Enable AI assistants like GitHub Copilot and Claude Desktop to discover and invoke your custom tools.
+`Mcp.Gateway.Tools` contains the infrastructure for MCP tools:
+
+- JSON‑RPC models (`JsonRpcMessage`, `JsonRpcError`)
+- Attributes (`McpToolAttribute`)
+- Tool registration (`ToolService`)
+- Invocation and protocol implementation (`ToolInvoker`)
+- Streaming (`ToolConnector`, `ToolCapabilities`)
+- ASP.NET Core extensions for endpoints (`MapHttpRpcEndpoint`, `MapWsRpcEndpoint`, `MapSseRpcEndpoint`, `AddToolsService`)
+
+This README focuses on **how to use the library in your own server**.  
+See the root `README.md` for a high‑level overview and client integration.
 
 ---
 
-## ⚡ Quick Start
+## 🔧 Register tool infrastructure
 
-```bash
-dotnet add package Mcp.Gateway.Tools
+In your `Program.cs`:
+
 ```
-
-### Create Your First Tool
-
-```csharp
-using Mcp.Gateway.Tools;
-
-public class MyTools
-{
-    [McpTool("greet")]
-    public JsonRpcMessage Greet(JsonRpcMessage request)
-    {
-        var name = request.GetParams().GetProperty("name").GetString();
-        return ToolResponse.Success(request.Id, new { message = $"Hello, {name}!" });
-    }
-}
-```
-
-### Setup Server
-
-```csharp
 using Mcp.Gateway.Tools;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Register ToolService + ToolInvoker
 builder.AddToolsService();
 
 var app = builder.Build();
 
-// stdio support for GitHub Copilot
-if (args.Contains("--stdio"))
-{
-    await ToolInvoker.RunStdioModeAsync(app.Services);
-    return;
-}
+// Custom: stdio, logging, etc. (see DevTestServer for a full example)
 
+// WebSockets must be enabled before WS/SSE routes
 app.UseWebSockets();
+
+// MCP endpoints
 app.MapHttpRpcEndpoint("/rpc");
 app.MapWsRpcEndpoint("/ws");
+app.MapSseRpcEndpoint("/sse");
+
 app.Run();
 ```
 
-**That's it!** Your MCP server is ready. 🎉
+`AddToolsService` registers:
+
+- `ToolService` as a singleton (discovers/validates tools)
+- `ToolInvoker` as scoped (handles JSON‑RPC and MCP methods)
 
 ---
 
-## ✨ Features (v1.2.0)
+## 🧩 Defining tools
 
-### Transport Support
-- ✅ **HTTP** - Simple JSON-RPC over POST
-- ✅ **WebSocket** - Full-duplex streaming
-- ✅ **SSE** - Server-Sent Events
-- ✅ **stdio** - GitHub Copilot integration
+### Basic tool
 
-### Smart Filtering (v1.2.0+)
-- ✅ **Transport-aware** - Tools filtered by transport capabilities
-- ✅ **stdio/http** - Standard tools only
-- ✅ **sse** - Standard + text streaming
-- ✅ **ws** - All tools (including binary streaming)
+Based on `Examples/CalculatorMcpServer/Tools/CalculatorTools.cs`:
 
-### Developer Experience
-- ✅ **Auto-discovery** - Tools found automatically via `[McpTool]`
-- ✅ **Auto-naming** - Optional tool name generation from method names
-- ✅ **Type-safe** - Strong typing with C# records
-- ✅ **DI support** - Full dependency injection
-- ✅ **Production-ready** - 70+ tests passing
+```
+using CalculatorMcpServer.Models;
+using Mcp.Gateway.Tools;
 
-### Performance
-- ⚡ **ArrayPool buffers** - 90% GC reduction for WebSocket streaming
-- ⚡ **Zero-copy** - Efficient buffer reuse
-- ⚡ **Benchmarked** - Comprehensive testing with BenchmarkDotNet
-
----
-
-## 📚 Documentation
-
-### Getting Started
-- **[Main Documentation](../README.md)** - Complete guide
-- **[Code Examples](../docs/examples/)** - Real-world examples
-  - [Client Examples](../docs/examples/client-examples.md) - HTTP, WebSocket, SSE clients
-  - [ToolConnector Usage](../docs/examples/toolconnector-usage.md) - Streaming tools
-
-### Reference
-- **[MCP Protocol](../docs/MCP-Protocol.md)** - Protocol specification
-- **[Streaming Protocol](../docs/StreamingProtocol.md)** - Binary/text streaming
-- **[JSON-RPC 2.0](../docs/JSON-RPC-2.0-spec.md)** - JSON-RPC standard
-
----
-
-## 💡 Examples
-
-### Auto-Named Tool (v1.2+)
-
-```csharp
-[McpTool]  // Name: "add_numbers"
-public JsonRpcMessage AddNumbers(JsonRpcMessage request)
+public class CalculatorTools
 {
-    var a = request.GetParams().GetProperty("a").GetInt32();
-    var b = request.GetParams().GetProperty("b").GetInt32();
-    return ToolResponse.Success(request.Id, new { result = a + b });
+    [McpTool("add_numbers",
+        Title = "Add Numbers",
+        Description = "Adds two numbers and returns the result.",
+        InputSchema = @"{
+            ""type"":""object"",
+            ""properties"":{
+                ""number1"":{""type"":""number"",""description"":""First number""},
+                ""number2"":{""type"":""number"",""description"":""Second number""}
+            },
+            ""required"": [""number1"",""number2""]
+        }")]
+    public JsonRpcMessage AddNumbersTool(JsonRpcMessage request)
+    {
+        var args = request.GetParams<AddNumbersRequest>()
+            ?? throw new ToolInvalidParamsException(
+                "Parameters 'number1' and 'number2' are required and must be numbers.");
+
+        return ToolResponse.Success(
+            request.Id,
+            new AddNumbersResponse(args.Number1 + args.Number2));
+    }
 }
 ```
 
-### Streaming Tool
+### With validation and DI (from `DevTestServer/Tools/Calculator.cs`)
 
-```csharp
-[McpTool("stream_data", 
-    Capabilities = ToolCapabilities.BinaryStreaming)]
+```
+using DevTestServer.MyServices;
+using Mcp.Gateway.Tools;
+using System.Text.Json;
+
+public class Calculator
+{
+    public sealed record NumbersRequest(double Number1, double Number2);
+    public sealed record NumbersResponse(double Result);
+
+    [McpTool("add_numbers",
+        Title = "Add Numbers",
+        Description = "Adds two numbers and return result. Example: 5 + 3 = 8",
+        InputSchema = @"{
+            ""type"":""object"",
+            ""properties"":{
+                ""number1"":{""type"":""number"",""description"":""First number to add""},
+                ""number2"":{""type"":""number"",""description"":""Second number to add""}
+            },
+            ""required"": [""number1"",""number2""]
+        }")]
+    public async Task<JsonRpcMessage> AddNumbersTool(
+        JsonRpcMessage request,
+        CalculatorService calculatorService)
+    {
+        await Task.CompletedTask; // placeholder for async work
+
+        var @params = request.GetParams();
+
+        if (@params.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null ||
+            !@params.TryGetProperty("number1", out _) ||
+            !@params.TryGetProperty("number2", out _))
+        {
+            throw new ToolInvalidParamsException(
+                "Parameters 'number1' and 'number2' are required and must be numbers.");
+        }
+
+        var args = request.GetParams<NumbersRequest>()!;
+        var result = calculatorService.Add(args.Number1, args.Number2);
+
+        return ToolResponse.Success(request.Id, new NumbersResponse(result));
+    }
+}
+```
+
+Register the DI service in `Program.cs`:
+
+```
+builder.Services.AddScoped<CalculatorService>();
+```
+
+---
+
+## 🕒 Date/time tools (example)
+
+From `Examples/DateTimeMcpServer/Tools/DateTimeTools.cs`:
+
+```
+using DateTimeMcpServer.Models;
+using Mcp.Gateway.Tools;
+
+public class DateTimeTools
+{
+    [McpTool("get_current_datetime",
+        Title = "Get current date and time",
+        Description = "Get current date and time in specified timezone (default: local).",
+        InputSchema = @"{
+            ""type"":""object"",
+            ""properties"":{
+                ""timezoneName"":{
+                    ""type"":""string"",
+                    ""description"":""Timezone name (e.g., 'Europe/Oslo', 'UTC')"",
+                    ""default"":""UTC""
+                }
+            }
+        }")]
+    public JsonRpcMessage GetCurrentDateTime(JsonRpcMessage message)
+    {
+        var request = message.GetParams<CurrentDateTimeRequest>();
+        TimeZoneInfo tz;
+
+        try
+        {
+            tz = string.IsNullOrWhiteSpace(request?.TimezoneName)
+                ? TimeZoneInfo.Local
+                : TimeZoneInfo.FindSystemTimeZoneById(request.TimezoneName);
+        }
+        catch
+        {
+            tz = TimeZoneInfo.Local;
+        }
+
+        var now = TimeZoneInfo.ConvertTime(DateTime.Now, tz);
+
+        return ToolResponse.Success(
+            message.Id,
+            new CurrentDateTimeResponse(
+                now.ToString("o"),
+                now.ToString("yyyy-MM-dd"),
+                now.ToString("HH:mm:ss"),
+                tz.Id,
+                now.ToString("dddd"),
+                System.Globalization.ISOWeek.GetWeekOfYear(now),
+                now.Year,
+                now.Month,
+                now.Day));
+    }
+}
+```
+
+---
+
+## 🧵 Streaming and `ToolCapabilities`
+
+### Capabilities
+
+`ToolCapabilities` is used to filter tools per transport:
+
+```
+[Flags]
+public enum ToolCapabilities
+{
+    Standard        = 1,
+    TextStreaming   = 2,
+    BinaryStreaming = 4,
+    RequiresWebSocket = 8
+}
+```
+
+- HTTP/stdio: `Standard` only
+- SSE: `Standard` + `TextStreaming`
+- WebSocket: all (incl. `BinaryStreaming` and `RequiresWebSocket`)
+
+### Simple text streaming tool
+
+```
+[McpTool("stream_data",
+    Description = "Streams incremental data to the client.",
+    Capabilities = ToolCapabilities.TextStreaming)]
 public async Task StreamData(ToolConnector connector)
 {
-    var handle = connector.OpenWrite(
-        new StreamMessageMeta("stream_data", Binary: true));
-    
-    var data = File.ReadAllBytes("file.bin");
-    await handle.WriteAsync(data);
-    await handle.CompleteAsync(new { size = data.Length });
+    var meta = new StreamMessageMeta(
+        Method: "stream_data",
+        Binary: false);
+
+    using var handle = (ToolConnector.TextStreamHandle)connector.OpenWrite(meta);
+
+    for (int i = 0; i < 5; i++)
+    {
+        await handle.WriteAsync(new { chunk = i });
+    }
+
+    await handle.CompleteAsync(new { done = true });
 }
 ```
 
-### With Dependency Injection
+See `docs/StreamingProtocol.md` and `docs/examples/toolconnector-usage.md` for more details.
 
-```csharp
-[McpTool("get_user")]
-public JsonRpcMessage GetUser(
-    JsonRpcMessage request, 
-    IUserRepository repo)  // ← Injected!
+---
+
+## 🧱 JSON models
+
+Core models live in `ToolModels.cs`:
+
+- `JsonRpcMessage` – JSON‑RPC 2.0 messages
+- `JsonRpcError` – structured errors
+- `JsonOptions.Default` – shared `JsonSerializerOptions` (camelCase, etc.)
+
+Typical usage:
+
+```
+public JsonRpcMessage Echo(JsonRpcMessage message)
 {
-    var userId = request.GetParams().GetProperty("userId").GetInt32();
-    var user = repo.GetById(userId);
-    return ToolResponse.Success(request.Id, user);
+    var raw = message.GetParams();
+    return JsonRpcMessage.CreateSuccess(message.Id, raw);
 }
 ```
 
 ---
 
-## ⚠️ Tool Naming Rules
+## 🧪 Verification and tests
 
-Tool names **MUST** match: `^[a-zA-Z0-9_-]{1,128}$`
+The library itself is tested via `DevTestServer` + `Mcp.Gateway.Tests`:
 
-### ✅ Valid
-```csharp
-✅ "ping"
-✅ "add_numbers"
-✅ "get-user-id"
-✅ "my_tool_v2"
-```
+- Protocol tests: `Mcp.Gateway.Tests/Endpoints/Http/McpProtocolTests.cs`
+- Streaming tests: `Mcp.Gateway.Tests/Endpoints/Ws/*`, `.../Sse/*`
+- stdio tests: `Mcp.Gateway.Tests/Endpoints/Stdio/*`
 
-### ❌ Invalid
-```csharp
-❌ "system.ping"        // NO dots!
-❌ "get current time"   // NO spaces
-❌ "hello@world"        // NO special chars
-```
-
-**Why?** GitHub Copilot and MCP clients enforce strict validation.
-
-**Fix:** Use underscores (`_`) or hyphens (`-`) instead.
-
----
-
-## 🏗️ Architecture
+For your own development:
 
 ```
-ToolInvoker (JSON-RPC)
-    ↓
-ToolService (Discovery)
-    ↓
-Your Tools (Auto-registered)
-```
-
-### Key Components
-
-| Component | Purpose |
-|-----------|---------|
-| **ToolInvoker** | Routes requests to tools |
-| **ToolService** | Scans and registers tools |
-| **ToolConnector** | Manages streaming |
-| **JsonRpcMessage** | Type-safe messages |
-
----
-
-## 🧪 Testing
-
-```bash
 dotnet test
 ```
 
-**70+ tests** covering all transports and protocols.
+---
+
+## 📌 Summary
+
+To use `Mcp.Gateway.Tools` in your project:
+
+1. Add the NuGet package
+2. Call `builder.AddToolsService()` in `Program.cs`
+3. Map `MapHttpRpcEndpoint`, `MapWsRpcEndpoint`, `MapSseRpcEndpoint` as needed
+4. Define tools by annotating methods with `[McpTool]`
+5. Connect the server to an MCP client (GitHub Copilot, Claude, etc.)
+
+For complete examples, see:
+
+- `Examples/CalculatorMcpServer`
+- `Examples/DateTimeMcpServer`
+- `DevTestServer` (used by the tests)
 
 ---
 
-## 📦 What's Included
-
-| Class/Type | Purpose |
-|------------|---------|
-| `McpToolAttribute` | Mark methods as MCP tools |
-| `ToolInvoker` | Core invocation logic |
-| `ToolService` | Tool registration and discovery |
-| `ToolConnector` | Streaming support |
-| `JsonRpcMessage` | JSON-RPC 2.0 messages |
-| `ToolResponse` | Helper for responses |
-
----
-
-## 🤝 Contributing
-
-See [CONTRIBUTING.md](../CONTRIBUTING.md)
-
----
-
-## 📜 License
-
-MIT © 2024 ARKo AS - AHelse Development Team
-
----
-
-## 📞 Support
-
-- **NuGet**: [Mcp.Gateway.Tools](https://www.nuget.org/packages/Mcp.Gateway.Tools/)
-- **Issues**: [GitHub](https://github.com/eyjolfurgudnivatne/mcp.gateway/issues)
-- **Docs**: [Full Documentation](../README.md)
-
----
-
-**Version:** 1.2.0-dev  
-**Last Updated:** 7. desember 2025
+**License:** MIT – see root `LICENSE`.
