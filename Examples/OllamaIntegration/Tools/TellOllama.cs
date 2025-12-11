@@ -78,7 +78,7 @@ public class TellOllama
 
         var systemPrompt = "You are Ollama, an AI assistant integrated with MCP Gateway tools. " +
                    "You can call tools to help answer user questions. " +
-                   "When a user asks a question that requires a tool, decide which tool to call (NOT tell_ollama or ask_ollama_me) and provide the necessary parameters. " +
+                   "When a user asks a question that requires a tool, decide which tool to call (NOT tell_ollama) and provide the necessary parameters. " +
                    "After calling a tool, use its result to formulate your response to the user.";
 
         // 3. Create DirectToolInvoker (no HTTP!)
