@@ -63,7 +63,7 @@ public class TellOllama
             {
                 Console.WriteLine($"Model '{model}' not found locally");
                 Console.WriteLine($"Pull model: ollama pull {model}");
-                return ToolResponse.Error(message.Id, new JsonRpcError(-32603, $"Model '{model}' not found", null));
+                throw new ToolInternalErrorException($"Model '{model}' not found locally");
             }
 
             Console.WriteLine($"Ollama connected (model: {model})");
@@ -72,7 +72,7 @@ public class TellOllama
         {
             Console.WriteLine("Failed to connect to Ollama");
             Console.WriteLine("Make sure Ollama is running: ollama serve");
-            return ToolResponse.Error(message.Id, new JsonRpcError(-32603, $"Make sure Ollama is running: ollama serve", null));
+            throw new ToolInternalErrorException($"Failed to connect to Ollama. Make sure Ollama is running: ollama serve");
         }
         ollama.SelectedModel = model;
 
