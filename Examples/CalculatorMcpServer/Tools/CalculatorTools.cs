@@ -16,8 +16,7 @@ public class CalculatorTools
             },
             ""required"":[""number1"",""number2""]
         }")]
-
-    public async Task<JsonRpcMessage> AddNumbersTool(JsonRpcMessage request)
+    public JsonRpcMessage AddNumbersTool(JsonRpcMessage request)
     {
         var args = request.GetParams<AddNumbersRequest>()
             ?? throw new ToolInvalidParamsException(
@@ -39,7 +38,7 @@ public class CalculatorTools
             },
             ""required"":[""number1"",""number2""]
         }")]
-    public async Task<JsonRpcMessage> MultiplyTool(JsonRpcMessage request)
+    public JsonRpcMessage MultiplyTool(JsonRpcMessage request)
     {
         var args = request.GetParams<MultiplyRequest>()
             ?? throw new ToolInvalidParamsException(
