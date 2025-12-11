@@ -27,6 +27,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{2073C2C6-7C99-46FE-90E3-E845EEF2FD6C}"
 	ProjectSection(SolutionItems) = preProject
 		.github\copilot-instructions.md = .github\copilot-instructions.md
+		.github\release-notes.md = .github\release-notes.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.Benchmarks", "Mcp.Gateway.Benchmarks\Mcp.Gateway.Benchmarks.csproj", "{5AD7C004-0D72-EB71-C28B-8686BC69A566}"
