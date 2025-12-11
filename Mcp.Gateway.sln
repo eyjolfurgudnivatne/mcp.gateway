@@ -109,7 +109,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevTestServer", "DevTestSer
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.2.0", "v1.2.0", "{F5C540EC-FE47-400E-8D27-806115FB3ACB}"
 	ProjectSection(SolutionItems) = preProject
-		.internal\releases\v1.2.0\releaase-note.md = .internal\releases\v1.2.0\releaase-note.md
+		.internal\releases\v1.2.0\release-note.md = .internal\releases\v1.2.0\release-note.md
 	EndProjectSection
 EndProject
 Global

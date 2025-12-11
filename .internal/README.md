@@ -66,7 +66,7 @@ Release notes and checklists per version:
 - `v1.1.0/`
   - `release-notes.md` – v1.1.0 release notes
 - `v1.2.0/`
-  - `releaase-note.md` – v1.2.0 release notes (internal, used as basis for GitHub release text)
+  - `release-note.md` – v1.2.0 release notes (internal, used as basis for GitHub release text)
 
 Use this folder when you:
 - Prepare a new release (copy from a previous version folder)
