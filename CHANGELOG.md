@@ -7,11 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Planned for v1.2
-- Additional example tools
-- Performance optimizations (parameter caching)
-- Enhanced documentation
-
 ### Planned for v2.0
 - MCP Resources support (official MCP spec feature)
 - MCP Prompts support (official MCP spec feature)
@@ -19,6 +14,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tool lifecycle hooks for monitoring
 - Custom transport provider API
 - Enhanced streaming (compression, flow control, multiplexing)
+
+---
+
+## [1.2.0] - 2025-12-12
+
+### Added
+- **Transport-aware tool capabilities (v1.2.0)**
+  - Introduced `ToolCapabilities` enum (`Standard`, `TextStreaming`, `BinaryStreaming`, `RequiresWebSocket`).
+  - Tools are now filtered per transport:
+    - HTTP / stdio: `Standard` tools only
+    - SSE: `Standard` + `TextStreaming` tools
+    - WebSocket: all tools (including `BinaryStreaming` and `RequiresWebSocket`).
+- **New example servers and tests**
+  - `Examples/CalculatorMcpServer` and `Examples/CalculatorMcpServerTests`.
+  - `Examples/DateTimeMcpServer` and `Examples/DateTimeMcpServerTests`.
+  - `Examples/OllamaIntegration` and `Examples/OllamaIntegrationTests` for Ollama MCP integration scenarios.
+  - `DevTestServer` as an internal host used by `Mcp.Gateway.Tests` for end-to-end testing.
+
+### Changed
+- **Documentation overhaul**
+  - Rewrote root `README.md` to focus on the MCP Gateway product, quick start, transports, and integration with GitHub Copilot / Claude.
+  - Rewrote `Mcp.Gateway.Tools/README.md` to focus on the library API (tool attributes, `JsonRpcMessage`, streaming, DI, and examples).
+  - Updated `.internal/README.md` and internal notes to be committed to Git, sharing design decisions, performance work, and release process with contributors.
+  - Updated `CONTRIBUTING.md` to clarify project structure (core library vs `DevTestServer` and examples), .NET 10 / C# 14.0 usage, and test layout.
+- **Health/diagnostics**
+  - Improved `DevTestServer` health endpoint to negotiate `text/plain` vs `application/json` based on `Accept` header and to always send no-cache headers.
+
+### Performance
+- **WebSocket streaming optimizations**
+  - `ToolConnector` now uses `JsonSerializer.SerializeToUtf8Bytes` instead of `Serialize` + `Encoding.UTF8.GetBytes`, removing an intermediate string allocation per message.
+  - WebSocket receive buffers are now rented from `ArrayPool<byte>.Shared` instead of allocating new arrays:
+    - Eliminates ~64 KB allocation per WebSocket connection.
+    - Benchmarks show ~159x faster buffer allocation and ~99–100% reduction in GC pressure for streaming scenarios.
+- **Performance planning and notes**
+  - Added/updated internal performance docs: `Quick-Wins-Session-Summary.md`, `Performance-Optimization-Plan.md`, `ArrayPool-Implementation.md`.
+  - Analysed parameter parsing cache and Hybrid Tool API and explicitly deferred them to later versions to avoid premature complexity.
+
+### Fixed
+- Clarified separation between product and development infrastructure:
+  - Documented that only `Mcp.Gateway.Tools` is intended as a published NuGet package.
+  - Marked `DevTestServer` and the example projects as development / verification artifacts, not part of the NuGet surface.
 
 ---
 
