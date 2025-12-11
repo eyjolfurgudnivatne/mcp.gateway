@@ -53,15 +53,37 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 		.github\workflows\test.yml = .github\workflows\test.yml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.2", "v1.2", "{C8687C11-EA0D-401B-AD02-315FDD9E5FED}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.2.0", "v1.2.0", "{C8687C11-EA0D-401B-AD02-315FDD9E5FED}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\notes\v.1.2.0\implementation-plan.md = .internal\notes\v.1.2.0\implementation-plan.md
+		.internal\notes\v.1.2.0\ollama-integration.md = .internal\notes\v.1.2.0\ollama-integration.md
+		.internal\notes\v.1.2.0\ollama-reverse-integration.md = .internal\notes\v.1.2.0\ollama-reverse-integration.md
+		.internal\notes\v.1.2.0\phase-0-progress.md = .internal\notes\v.1.2.0\phase-0-progress.md
+		.internal\notes\v.1.2.0\phase-0-tool-capabilities.md = .internal\notes\v.1.2.0\phase-0-tool-capabilities.md
+		.internal\notes\v.1.2.0\README.md = .internal\notes\v.1.2.0\README.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "guides", "guides", "{21C726F2-FA45-4A7D-A2F8-4DBFA66DC69A}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\guides\GitHub-Actions-Testing.md = .internal\guides\GitHub-Actions-Testing.md
+		.internal\guides\GitHub-Actions-Trusted-Publishing.md = .internal\guides\GitHub-Actions-Trusted-Publishing.md
+		.internal\guides\GitHub-Release-Automation.md = .internal\guides\GitHub-Release-Automation.md
+		.internal\guides\NuGet-Publishing-Guide.md = .internal\guides\NuGet-Publishing-Guide.md
+		.internal\guides\RELEASE_INSTRUCTIONS.md = .internal\guides\RELEASE_INSTRUCTIONS.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "releases", "releases", "{D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.0", "v1.0", "{F53B772B-6966-40C1-9B53-5AEBB10833A5}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.0.1", "v1.0.1", "{F53B772B-6966-40C1-9B53-5AEBB10833A5}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\releases\v1.0.1\RELEASE_CHECKLIST.md = .internal\releases\v1.0.1\RELEASE_CHECKLIST.md
+		.internal\releases\v1.0.1\v1.0.1-Release-Summary.md = .internal\releases\v1.0.1\v1.0.1-Release-Summary.md
+	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.1", "v1.1", "{6D9854D0-9A0F-4AFE-A72B-E865351BD45B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.1.0", "v1.1.0", "{6D9854D0-9A0F-4AFE-A72B-E865351BD45B}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\releases\v1.1.0\release-notes.md = .internal\releases\v1.1.0\release-notes.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{261EEC25-A03C-4DA7-98BF-CD7D4B045362}"
 	ProjectSection(SolutionItems) = preProject
@@ -84,6 +106,11 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorMcpServerTests", "Examples\CalculatorMcpServerTests\CalculatorMcpServerTests.csproj", "{407A66C2-9148-4AD2-9B48-B940C5E282FB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevTestServer", "DevTestServer\DevTestServer.csproj", "{4BFAB8A9-E6CF-94B8-775B-C274DE130B98}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.2.0", "v1.2.0", "{F5C540EC-FE47-400E-8D27-806115FB3ACB}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\releases\v1.2.0\release-note.md = .internal\releases\v1.2.0\release-note.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -153,6 +180,7 @@ Global
 		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 		{654DEA13-FFEF-4409-8719-255176B3CAB3} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 		{407A66C2-9148-4AD2-9B48-B940C5E282FB} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
+		{F5C540EC-FE47-400E-8D27-806115FB3ACB} = {D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}

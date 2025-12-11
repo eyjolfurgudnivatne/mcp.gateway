@@ -1,6 +1,6 @@
-# 🚀 MCP Gateway
+# 🚀 Mcp.Gateway.Tools
 
-> Build MCP servers in .NET 10 - Production-ready in 5 minutes
+> Build MCP servers in .NET 10 – production-ready in minutes
 
 [![.NET 10](https://img.shields.io/badge/.NET-10-purple)](https://dotnet.microsoft.com/)
 [![NuGet](https://img.shields.io/nuget/v/Mcp.Gateway.Tools.svg)](https://www.nuget.org/packages/Mcp.Gateway.Tools/)
@@ -8,283 +8,203 @@
 [![MCP Protocol](https://img.shields.io/badge/MCP-2025--06--18-green)](https://modelcontextprotocol.io/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**MCP Gateway** enables AI assistants like **GitHub Copilot** and **Claude Desktop** to discover and invoke your custom tools. High-performance, extensible library for building Model Context Protocol (MCP) servers in .NET.
+**Mcp.Gateway.Tools** is a .NET library for building Model Context Protocol (MCP) servers. It makes it easy to expose C# code as tools that can be discovered and invoked by clients like **GitHub Copilot** and **Claude Desktop**.
+
+The main product in this repo is `Mcp.Gateway.Tools`.  
+`DevTestServer` and `Mcp.Gateway.Tests` are used for development and verification only – they are not part of the product.
 
 ---
 
-## ⚡ Quick Start
+## ⚡ Getting started
 
-### 1. Install Package
+### 1. Install the package
 
-```bash
+```
 dotnet new web -n MyMcpServer
 cd MyMcpServer
 dotnet add package Mcp.Gateway.Tools
 ```
 
-### 2. Setup Server (`Program.cs`)
+### 2. Configure the server (`Program.cs`)
 
-```csharp
+Minimal HTTP + WebSocket server:
+
+```
 using Mcp.Gateway.Tools;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Register ToolService + ToolInvoker
 builder.AddToolsService();
 
 var app = builder.Build();
 
-// Support stdio for GitHub Copilot
+// stdio mode for GitHub Copilot (optional)
 if (args.Contains("--stdio"))
 {
     await ToolInvoker.RunStdioModeAsync(app.Services);
     return;
 }
 
+// WebSockets for streaming
 app.UseWebSockets();
+
+// MCP endpoints
 app.MapHttpRpcEndpoint("/rpc");
 app.MapWsRpcEndpoint("/ws");
+app.MapSseRpcEndpoint("/sse");
+
 app.Run();
 ```
 
-### 3. Create Your First Tool
+See `DevTestServer/Program.cs` for a more complete setup with health endpoint and stdio logging.
 
-```csharp
+### 3. Create your first tool
+
+```
 using Mcp.Gateway.Tools;
 
 public class MyTools
 {
-    [McpTool("greet")]
-    public JsonRpcMessage Greet(JsonRpcMessage request)
+    [McpTool("greet",
+        Title = "Greet user",
+        Description = "Greets a user by name.",
+        InputSchema = @"{
+            ""type"":""object"",
+            ""properties"":{
+                ""name"":{ ""type"":""string"", ""description"":""Name of the user"" }
+            },
+            ""required"": [""name""]
+        }")]
+    public JsonRpcMessage Greet(JsonRpcMessage message)
     {
-        var name = request.GetParams().GetProperty("name").GetString();
-        return ToolResponse.Success(request.Id, new { message = $"Hello, {name}!" });
+        var name = message.GetParams().GetProperty("name").GetString();
+        return ToolResponse.Success(
+            message.Id,
+            new { message = $"Hello, {name}!" });
     }
 }
 ```
 
-### 4. Run & Test
+More complete tool examples:
 
-```bash
-dotnet run
-
-# Test
-curl -X POST http://localhost:5000/rpc \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'
-```
-
-**That's it!** 🎉 Your MCP server is running.
+- `Examples/CalculatorMcpServer/Tools/CalculatorTools.cs`
+- `Examples/DateTimeMcpServer/Tools/DateTimeTools.cs`
+- `DevTestServer/Tools/Calculator.cs` (with DI)
 
 ---
 
-## 🔌 Connect to AI Assistants
+## 🔌 Connect from MCP clients
 
-### GitHub Copilot
+### GitHub Copilot (VS Code / Visual Studio)
 
-Create `.mcp.json` in `%APPDATA%\Code\User\globalStorage\github.copilot-chat\`:
+Create or update `.mcp.json` for Copilot (global or per workspace):
 
-```json
+```
 {
   "mcpServers": {
     "my_server": {
       "command": "dotnet",
-      "args": ["run", "--project", "C:\\path\\to\\MyMcpServer", "--", "--stdio"]
+      "args": [
+        "run",
+        "--project",
+        "C:\\path\\to\\MyMcpServer",
+        "--",
+        "--stdio"
+      ]
     }
   }
 }
 ```
 
-**Use in VS Code:**
+Then in Copilot Chat:
+
 ```
-@my_server greet me with name "Alice"
+@my_server call greet with name = "Alice"
 ```
 
 ### Claude Desktop
 
-```json
+Point Claude to your HTTP endpoint:
+
+```
 {
   "mcpServers": {
     "my_server": {
-      "url": "https://your-server.com/rpc",
-      "transport": "http"
+      "transport": "http",
+      "url": "https://your-server.example.com/rpc"
     }
   }
 }
 ```
 
----
-
-## 💡 Examples
-
-### Auto-Named Tool (v1.2+)
-
-```csharp
-[McpTool]  // Name: "add_numbers"
-public JsonRpcMessage AddNumbers(JsonRpcMessage request)
-{
-    var a = request.GetParams().GetProperty("a").GetInt32();
-    var b = request.GetParams().GetProperty("b").GetInt32();
-    return ToolResponse.Success(request.Id, new { result = a + b });
-}
-```
-
-### Streaming Tool
-
-```csharp
-[McpTool("stream_data")]
-public async Task StreamData(ToolConnector connector)
-{
-    var handle = connector.OpenWrite(new StreamMessageMeta("stream_data", Binary: false));
-    
-    for (int i = 0; i < 10; i++)
-        await handle.WriteChunkAsync(new { chunk = i });
-    
-    await handle.CompleteAsync(new { done = true });
-}
-```
-
-### With Dependency Injection
-
-```csharp
-[McpTool("process")]
-public JsonRpcMessage Process(JsonRpcMessage request, MyService service)
-{
-    var result = service.DoWork(request.GetParams());
-    return ToolResponse.Success(request.Id, result);
-}
-```
-
-**Register service:**
-```csharp
-builder.Services.AddScoped<MyService>();
-```
+Claude can also use WebSocket (`/ws`) for full duplex and binary streaming.
 
 ---
 
-## ✨ Features
+## 💡 Features
 
-- ✅ **Auto-discovery** - Tools found via `[McpTool]` attribute
-- ✅ **Multiple transports** - HTTP, WebSocket, SSE, stdio
-- ✅ **Streaming** - Binary and text streaming support
-- ✅ **Type-safe** - Full C# type checking
-- ✅ **DI support** - ASP.NET Core dependency injection
-- ✅ **Production-ready** - 70+ tests, optimized performance
-
----
-
-## 📚 Documentation
-
-### Getting Started
-- **[Complete Guide](docs/MCP-Protocol.md)** - Full walkthrough and protocol details
-- **[Tool Creation](Mcp.Gateway.Tools/README.md)** - How to create tools
-- **[Code Examples](docs/examples/)** - Real-world examples
-  - [Client Examples](docs/examples/client-examples.md) - HTTP, WebSocket, SSE clients
-  - [ToolConnector Usage](docs/examples/toolconnector-usage.md) - Streaming tools
-
-### Reference
-- **[MCP Protocol](docs/MCP-Protocol.md)** - Protocol specification (2025-06-18)
-- **[Streaming Protocol](docs/StreamingProtocol.md)** - Binary/text streaming
-- **[JSON-RPC 2.0](docs/JSON-RPC-2.0-spec.md)** - JSON-RPC standard
-
-### Examples
-- **Calculator** - `Mcp.Gateway.GCCServer/Tools/Calculator.cs`
-- **System Tools** - `Mcp.Gateway.Server/Tools/Systems/`
-- **Full Server** - `Mcp.Gateway.Server/Program.cs`
+- ✅ **MCP 2025‑06‑18** – up to date with the current MCP specification
+- ✅ **Transports** – HTTP (`/rpc`), WebSocket (`/ws`), SSE (`/sse`), stdio
+- ✅ **Auto‑discovery** – tools discovered via `[McpTool]`
+- ✅ **Transport‑aware filtering (v1.2.0)**  
+  - HTTP/stdio: standard tools only  
+  - SSE: standard + text streaming  
+  - WebSocket: all tools (incl. binary streaming)
+- ✅ **Streaming** – text and binary streaming via `ToolConnector`
+- ✅ **DI support** – tools can take services as parameters
+- ✅ **Tested** – 70+ tests covering HTTP, WS, SSE and stdio
 
 ---
 
-## 🏗️ Architecture
+## 📚 Learn more
 
-```
-MCP Clients (Copilot, Claude)
-         ↓
-  Transport (stdio/HTTP/WS/SSE)
-         ↓
-    ToolInvoker (JSON-RPC)
-         ↓
-    ToolService (Discovery)
-         ↓
-   Your Custom Tools
-```
-
-**See [MCP Protocol](docs/MCP-Protocol.md) for detailed architecture.**
+- **Library README:** `Mcp.Gateway.Tools/README.md`  
+  Details for the tools API (attributes, JsonRpc models, etc.)
+- **MCP protocol:** `docs/MCP-Protocol.md`
+- **Streaming protocol:** `docs/StreamingProtocol.md`
+- **JSON‑RPC 2.0:** `docs/JSON-RPC-2.0-spec.md`
+- **Examples:**
+  - `Examples/CalculatorMcpServer` – calculator server
+  - `Examples/DateTimeMcpServer` – date/time tools
 
 ---
 
 ## 🧪 Testing
 
-```bash
-# All tests
+```
 dotnet test
-
-# Specific transport
-dotnet test --filter "FullyQualifiedName~Http"
 ```
 
-**70+ tests** covering all transports and protocols.
+The tests use `DevTestServer` as the host for end‑to‑end scenarios:
+
+- HTTP: `Mcp.Gateway.Tests/Endpoints/Http/*`
+- WebSocket: `Mcp.Gateway.Tests/Endpoints/Ws/*`
+- SSE: `Mcp.Gateway.Tests/Endpoints/Sse/*`
+- stdio: `Mcp.Gateway.Tests/Endpoints/Stdio/*`
 
 ---
 
-## 🚀 Try Example Server
+## 📦 Projects in this repo
 
-```bash
-git clone https://github.com/eyjolfurgudnivatne/mcp.gateway.git
-cd mcp.gateway
-dotnet run --project Mcp.Gateway.Server
+| Project                  | Description                                         |
+|--------------------------|-----------------------------------------------------|
+| `Mcp.Gateway.Tools`      | Core library / published NuGet package              |
+| `DevTestServer`          | Internal test server used by the tests              |
+| `Mcp.Gateway.Tests`      | Test project (70+ integration tests)                |
+| `Examples/*`             | Small focused sample servers (calculator, datetime) |
 
-# Test: http://localhost:5000/rpc
-```
+Only `Mcp.Gateway.Tools` is intended as a product / NuGet dependency. The other projects are for development, verification and examples.
 
 ---
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) - We welcome contributions!
-
----
-
-## 📦 Projects
-
-| Project | Purpose |
-|---------|---------|
-| **Mcp.Gateway.Tools** | Core library (NuGet package) |
-| **Mcp.Gateway.Server** | Full example server |
-| **Mcp.Gateway.GCCServer** | GitHub Copilot example |
-| **Mcp.Gateway.Tests** | Test suite (70+ tests) |
-
----
-
-## 📈 Roadmap
-
-### v1.2.0 (In Development)
-- ✅ **Transport filtering** - Tools filtered by transport capabilities
-- 🔜 **Ollama provider** - Local LLM integration
-
-### v2.0 (Planned)
-- 🔮 **MCP Resources** - Full Resources support
-- 🔮 **MCP Prompts** - Full Prompts support
-- 🔮 **Hybrid Tool API** - Simplified tool authoring
-
-**See [full roadmap](.internal/notes/v.1.2.0/README.md) for details.**
+See `CONTRIBUTING.md` for guidelines, code style and test requirements.
 
 ---
 
 ## 📜 License
 
-MIT © 2024 ARKo AS - AHelse Development Team
-
----
-
-## 📞 Support
-
-- **NuGet**: [Mcp.Gateway.Tools](https://www.nuget.org/packages/Mcp.Gateway.Tools/)
-- **Issues**: [GitHub Issues](https://github.com/eyjolfurgudnivatne/mcp.gateway/issues)
-- **Docs**: [Full Documentation](docs/)
-
----
-
-**Built with ❤️ using .NET 10 and C# 14.0**
-
-**Version:** 1.2.0-dev  
-**Last Updated:** 7. desember 2025  
-**License:** MIT  
+MIT © 2024–2025 ARKo AS – AHelse Development Team
 
