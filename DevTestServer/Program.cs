@@ -1,5 +1,5 @@
-using Mcp.Gateway.Server.Endpoints;
-using Mcp.Gateway.Server.MyServices;
+using DevTestServer.Endpoints;
+using DevTestServer.MyServices;
 using Mcp.Gateway.Tools;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,7 +21,7 @@ if (isStdioMode)
     // Create log file path
     logPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "MCP-Gateway",
+        "DevTestServer",
         $"stdio-{DateTime.Now:yyyyMMdd-HHmmss}.log");
     
     Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);

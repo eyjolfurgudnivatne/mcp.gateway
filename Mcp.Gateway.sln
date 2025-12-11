@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
 VisualStudioVersion = 18.0.11205.157
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.Server", "Mcp.Gateway.Server\Mcp.Gateway.Server.csproj", "{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Folder", "Solution Folder", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
@@ -66,6 +64,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.1", "v1.1", "{6D9854D0-9A0F-4AFE-A72B-E865351BD45B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{261EEC25-A03C-4DA7-98BF-CD7D4B045362}"
+	ProjectSection(SolutionItems) = preProject
+		docs\examples\client-examples.md = docs\examples\client-examples.md
+		docs\examples\toolconnector-usage.md = docs\examples\toolconnector-usage.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{6A8723BD-3073-45B4-AAC3-AA46A1973400}"
 EndProject
@@ -81,16 +83,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorMcpServer", "Exam
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CalculatorMcpServerTests", "Examples\CalculatorMcpServerTests\CalculatorMcpServerTests.csproj", "{407A66C2-9148-4AD2-9B48-B940C5E282FB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevTestServer", "DevTestServer\DevTestServer.csproj", "{4BFAB8A9-E6CF-94B8-775B-C274DE130B98}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D6FF2398-048F-DD38-C52E-20E68C8D3F4A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BC5B75A5-7BC5-4ECA-8EA0-A027A86776BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BC5B75A5-7BC5-4ECA-8EA0-A027A86776BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BC5B75A5-7BC5-4ECA-8EA0-A027A86776BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -127,6 +127,10 @@ Global
 		{407A66C2-9148-4AD2-9B48-B940C5E282FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{407A66C2-9148-4AD2-9B48-B940C5E282FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{407A66C2-9148-4AD2-9B48-B940C5E282FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4BFAB8A9-E6CF-94B8-775B-C274DE130B98}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BFAB8A9-E6CF-94B8-775B-C274DE130B98}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BFAB8A9-E6CF-94B8-775B-C274DE130B98}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BFAB8A9-E6CF-94B8-775B-C274DE130B98}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

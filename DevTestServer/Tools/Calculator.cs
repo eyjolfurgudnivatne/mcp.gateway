@@ -1,6 +1,6 @@
-namespace Mcp.Gateway.Server.Tools;
+namespace DevTestServer.Tools;
 
-using Mcp.Gateway.Server.MyServices;
+using DevTestServer.MyServices;
 using Mcp.Gateway.Tools;
 using System.Text.Json;
 using System.Text.Json.Serialization;

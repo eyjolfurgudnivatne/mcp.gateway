@@ -1,4 +1,4 @@
-namespace Mcp.Gateway.Server.Tools.Systems.Notification;
+namespace DevTestServer.Tools.Systems.Notification;
 
 using Mcp.Gateway.Tools;
 

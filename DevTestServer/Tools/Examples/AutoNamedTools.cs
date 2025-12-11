@@ -1,4 +1,4 @@
-namespace Mcp.Gateway.Server.Tools.Examples;
+namespace DevTestServer.Tools.Examples;
 
 using Mcp.Gateway.Tools;
 

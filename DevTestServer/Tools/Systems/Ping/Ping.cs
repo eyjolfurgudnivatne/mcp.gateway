@@ -1,4 +1,4 @@
-namespace Mcp.Gateway.Server.Tools.Systems.Ping;
+namespace DevTestServer.Tools.Systems.Ping;
 
 using Mcp.Gateway.Tools;
 using System.Text.Json.Serialization;

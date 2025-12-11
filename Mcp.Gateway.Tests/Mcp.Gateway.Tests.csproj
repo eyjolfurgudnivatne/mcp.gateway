@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Mcp.Gateway.Server\Mcp.Gateway.Server.csproj" />
+    <ProjectReference Include="..\DevTestServer\DevTestServer.csproj" />
   </ItemGroup>
 
   <ItemGroup>

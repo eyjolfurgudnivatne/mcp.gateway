@@ -1,4 +1,4 @@
-namespace Mcp.Gateway.Server.Tools.Systems.Echo;
+namespace DevTestServer.Tools.Systems.Echo;
 
 using Mcp.Gateway.Tools;
 

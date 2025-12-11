@@ -1,4 +1,4 @@
-namespace Mcp.Gateway.Server.Tools.Systems.BinaryStreams;
+namespace DevTestServer.Tools.Systems.BinaryStreams;
 
 using Mcp.Gateway.Tools;
 

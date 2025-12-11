@@ -1,4 +1,4 @@
-namespace Mcp.Gateway.Server.MyServices;
+namespace DevTestServer.MyServices;
 
 public class CalculatorService
 {

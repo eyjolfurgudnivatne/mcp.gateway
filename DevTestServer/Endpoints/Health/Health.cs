@@ -1,6 +1,5 @@
-﻿namespace Mcp.Gateway.Server.Endpoints.Health;
+namespace DevTestServer.Endpoints.Health;
 
-using System.Reflection;
 using System.Text.Json;
 
 internal static class Health

@@ -1,6 +1,6 @@
-namespace Mcp.Gateway.Server.Endpoints;
+namespace DevTestServer.Endpoints;
 
-using Mcp.Gateway.Server.Endpoints.Health;
+using DevTestServer.Endpoints.Health;
 using Mcp.Gateway.Tools;
 
 internal static class Routes
