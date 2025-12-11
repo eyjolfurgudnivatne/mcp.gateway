@@ -330,7 +330,7 @@ public class ToolInvoker
     /// Invokes a single JSON-RPC request.
     /// Returns null for notifications (no response expected).
     /// </summary>
-    private async Task<object?> InvokeSingleAsync(
+    public async Task<object?> InvokeSingleAsync(
         JsonElement element,
         CancellationToken cancellationToken)
     {
@@ -355,7 +355,7 @@ public class ToolInvoker
     /// Invokes a single JSON-RPC request with transport filtering.
     /// Returns null for notifications (no response expected).
     /// </summary>
-    private async Task<object?> InvokeSingleAsync(
+    public async Task<object?> InvokeSingleAsync(
         JsonElement element,
         string transport,
         CancellationToken cancellationToken = default)

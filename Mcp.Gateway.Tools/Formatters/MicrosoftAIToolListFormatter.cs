@@ -19,6 +19,23 @@ using System.Text.Json;
 ///     }
 ///   }
 /// }
+/// 
+/// ⚠️ WARNING: Integration with Microsoft.Extensions.AI v10+ and OllamaSharp
+/// 
+/// While this formatter produces valid Microsoft.Extensions.AI format, there are
+/// known compatibility issues when using UseFunctionInvocation() middleware with
+/// OllamaSharp 5.x:
+/// 
+/// - UseFunctionInvocation() may not properly intercept OllamaSharp tool calls
+/// - Tool call routing between M.E.AI and OllamaSharp can fail silently
+/// - Recommended: Use OllamaToolListFormatter + DirectToolInvoker instead
+/// 
+/// This formatter is provided for:
+/// 1. Future M.E.AI API stabilization
+/// 2. Non-Ollama AI providers using Microsoft.Extensions.AI
+/// 3. Documentation and reference purposes
+/// 
+/// For OllamaSharp integration, see OllamaToolListFormatter and DirectToolInvoker.
 /// </remarks>
 public class MicrosoftAIToolListFormatter : IToolListFormatter
 {
