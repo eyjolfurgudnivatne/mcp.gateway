@@ -75,6 +75,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OllamaIntegration", "Exampl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OllamaIntegrationTests", "Examples\OllamaIntegrationTests\OllamaIntegrationTests.csproj", "{426E85F2-5FB2-4C0A-9F2C-82433DB3DF6E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DateTimeMcpServer", "Examples\DateTimeMcpServer\DateTimeMcpServer.csproj", "{1579CBDE-9C24-473F-B6DD-417D71F97C2B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DateTimeMcpServerTests", "Examples\DateTimeMcpServerTests\DateTimeMcpServerTests.csproj", "{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -109,6 +113,14 @@ Global
 		{426E85F2-5FB2-4C0A-9F2C-82433DB3DF6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{426E85F2-5FB2-4C0A-9F2C-82433DB3DF6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{426E85F2-5FB2-4C0A-9F2C-82433DB3DF6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1579CBDE-9C24-473F-B6DD-417D71F97C2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1579CBDE-9C24-473F-B6DD-417D71F97C2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1579CBDE-9C24-473F-B6DD-417D71F97C2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1579CBDE-9C24-473F-B6DD-417D71F97C2B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -127,6 +139,8 @@ Global
 		{261EEC25-A03C-4DA7-98BF-CD7D4B045362} = {74DBB65B-8717-4BC6-B042-79FDA377A533}
 		{5BFCF882-622C-B8D2-008C-76CD9475AB09} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 		{426E85F2-5FB2-4C0A-9F2C-82433DB3DF6E} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
+		{1579CBDE-9C24-473F-B6DD-417D71F97C2B} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
+		{A4DF21BD-1EB0-449A-B43B-729B429A4EE0} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}
