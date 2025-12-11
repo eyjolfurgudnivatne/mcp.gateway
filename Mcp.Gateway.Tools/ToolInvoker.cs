@@ -417,7 +417,15 @@ public class ToolInvoker
                 return null; // No response for notifications
             }
 
-            // Get tool details
+            // Fix for CS8604: Add null check for message.Method before calling GetToolDetails
+            if (string.IsNullOrEmpty(message.Method))
+            {
+                return ToolResponse.Error(
+                    id,
+                    -32600,
+                    "Invalid Request",
+                    "Method name must not be null or empty");
+            }
             var toolDetails = _toolService.GetToolDetails(message.Method);
             
             // Check if this is a ToolConnector-based tool (streaming)
@@ -520,7 +528,15 @@ public class ToolInvoker
                 return null; // No response for notifications
             }
 
-            // Get tool details
+            // Fix for CS8604: Add null check for message.Method before calling GetToolDetails
+            if (string.IsNullOrEmpty(message.Method))
+            {
+                return ToolResponse.Error(
+                    id,
+                    -32600,
+                    "Invalid Request",
+                    "Method name must not be null or empty");
+            }
             var toolDetails = _toolService.GetToolDetails(message.Method);
             
             // Check if this is a ToolConnector-based tool (streaming)
@@ -782,7 +798,15 @@ public class ToolInvoker
             // Build tool request
             var toolRequest = JsonRpcMessage.CreateRequest(toolName, request.Id, args);
 
-            // Get tool details and invoke
+            // Fix for CS8604: Add null check for toolName before calling GetToolDetails
+            if (string.IsNullOrEmpty(toolName))
+            {
+                return ToolResponse.Error(
+                    request.Id,
+                    -32602,
+                    "Invalid params",
+                    "Tool name must not be null or empty");
+            }
             var toolDetails = _toolService.GetToolDetails(toolName);
             
             if (toolDetails.ToolArgumentType.IsToolConnector)

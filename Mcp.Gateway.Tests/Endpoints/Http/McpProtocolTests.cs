@@ -64,7 +64,7 @@ public class McpProtocolTests(McpGatewayFixture fixture)
         var pingTool = tools.FirstOrDefault(t => t.GetProperty("name").GetString() == "system_ping");
         Assert.True(pingTool.ValueKind != JsonValueKind.Undefined, "Ping tool not found");
         Assert.True(pingTool.TryGetProperty("description", out var desc));
-        Assert.NotEmpty(desc.GetString());
+        Assert.False(string.IsNullOrEmpty(desc.GetString()));
         Assert.True(pingTool.TryGetProperty("inputSchema", out var schema));
         Assert.Equal("object", schema.GetProperty("type").GetString());
     }
