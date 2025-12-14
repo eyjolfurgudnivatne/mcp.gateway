@@ -1,6 +1,11 @@
 namespace CalculatorMcpServer.Models;
 
+using System.ComponentModel;
 using System.Text.Json.Serialization;
+
+public sealed record AddNumbersRequestTyped(
+    [property: JsonPropertyName("number1")][Description("First number to add")] double Number1,
+    [property: JsonPropertyName("number2")][Description("Second number to add")] double Number2);
 
 public sealed record AddNumbersRequest(
     [property: JsonPropertyName("number1")] double Number1,

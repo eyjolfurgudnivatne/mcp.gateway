@@ -440,7 +440,21 @@ public class ToolInvoker
             }
             
             // Build arguments for tool method
-            object[] args = [message];
+            object[] args;
+            
+            // If the tool expects a TypedJsonRpc<T>, wrap the JsonRpcMessage accordingly.
+            if (toolDetails.ToolArgumentType.IsTypedJsonRpc)
+            {
+                var paramType = toolDetails.ToolArgumentType.ParameterType;
+
+                args = [Activator.CreateInstance(paramType, message)
+                        ?? throw new ToolInternalErrorException(
+                            $"{message.Method}: Failed to create TypedJsonRpc instance for parameter type '{paramType.FullName}'")];
+            }
+            else
+            {
+                args = [message];
+            }
 
             // Invoke the tool
             var result = _toolService.InvokeToolDelegate(

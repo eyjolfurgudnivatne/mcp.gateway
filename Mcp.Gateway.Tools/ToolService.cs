@@ -16,7 +16,7 @@ public class ToolService(IServiceProvider serviceProvider)
     private readonly object _scanLock = new();
 
     internal record ToolDetails(ToolDetailArgumentType ToolArgumentType, ToolDetailResultType ToolResultType, Delegate ToolDelegate);
-    internal record ToolDetailArgumentType(bool IsToolConnector, bool IsStreamMessage, bool IsJsonElementMessage);
+    internal record ToolDetailArgumentType(bool IsToolConnector, bool IsStreamMessage, bool IsJsonElementMessage, bool IsTypedJsonRpc, Type ParameterType);
     internal record ToolDetailResultType(bool IsVoidTask, bool IsGenericTask, bool IsIAsyncEnumerable, bool IsJsonRpcResponse);
     
     internal ToolDetails GetToolDetails(string toolName)
@@ -166,6 +166,11 @@ public class ToolService(IServiceProvider serviceProvider)
         bool isJsonElementMessage =
             firstParam == typeof(JsonRpcMessage);
 
+        // --- Sjekk inputtype TypedJsonRpc ---
+        bool isTypedJson =
+            firstParam.IsGenericType &&
+            firstParam.GetGenericTypeDefinition() == typeof(TypedJsonRpc<>);
+
         // --- Sjekk inputtype stream ---
         bool isInputStreamMessage =
             firstParam  == typeof(StreamMessage);
@@ -174,7 +179,7 @@ public class ToolService(IServiceProvider serviceProvider)
             firstParam == typeof(ToolConnector);
 
         // auda, ingen av delene
-        if (!isJsonElementMessage && !isInputStreamMessage && !isInputToolConnector)
+        if (!isJsonElementMessage && !isTypedJson && !isInputStreamMessage && !isInputToolConnector)
             throw new ArgumentException(
                 $"Tool delegate for '{name}' must take JsonRpcMessage, StreamMessage or ToolConnector as first parameter."
             );
@@ -236,7 +241,9 @@ public class ToolService(IServiceProvider serviceProvider)
         var argumentType = new ToolDetailArgumentType(
             IsToolConnector: isInputToolConnector,
             IsStreamMessage: isInputStreamMessage,
-            IsJsonElementMessage: isJsonElementMessage
+            IsJsonElementMessage: isJsonElementMessage,
+            IsTypedJsonRpc: isTypedJson,
+            ParameterType: firstParam
         );
 
         var resultType = new ToolDetailResultType(

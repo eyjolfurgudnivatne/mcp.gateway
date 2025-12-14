@@ -32,6 +32,28 @@ public class CalculatorToolTests(CalculatorMcpServerFixture fixture)
     }
 
     [Fact]
+    public async Task AddNumbersTyped_ReturnsSum()
+    {
+        // Arrange
+        var request = JsonRpcMessage.CreateRequest(
+            "add_numbers_typed",
+            Guid.NewGuid().ToString("D"),
+            new AddNumbersRequest(5, 10));
+
+        // Act
+        var response = await fixture.HttpClient.PostAsJsonAsync("/rpc", request, fixture.CancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadFromJsonAsync<JsonRpcMessage>(fixture.CancellationToken);
+        Assert.NotNull(content);
+        Assert.True(content.IsSuccessResponse, $"Failed to add numbers");
+
+        var result = content.GetResult<AddNumbersResponse>();
+        Assert.NotNull(result);
+        Assert.Equal(15, result.Result);
+    }
+
+    [Fact]
     public async Task MultiplyNumbers_ReturnsProduct()
     {
         // Arrange
