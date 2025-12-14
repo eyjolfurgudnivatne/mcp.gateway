@@ -7,18 +7,10 @@ public class CalculatorTools
 {
     [McpTool("add_numbers",
         Title = "Add Numbers",
-        Description = "Adds two numbers and return result. Example: 5 + 3 = 8",
-        InputSchema = @"{
-            ""type"":""object"",
-            ""properties"":{
-                ""number1"":{""type"":""number"",""description"":""First number to add""},
-                ""number2"":{""type"":""number"",""description"":""Second number to add""}
-            },
-            ""required"":[""number1"",""number2""]
-        }")]
-    public JsonRpcMessage AddNumbersTool(JsonRpcMessage request)
+        Description = "Adds two numbers and return result. Example: 5 + 3 = 8")]
+    public JsonRpcMessage AddNumbersTool(TypedJsonRpc<AddNumbersRequest> request)
     {
-        var args = request.GetParams<AddNumbersRequest>()
+        var args = request.GetParams()
             ?? throw new ToolInvalidParamsException(
                 "Parameters 'number1' and 'number2' are required and must be numbers.");
 
@@ -29,18 +21,10 @@ public class CalculatorTools
 
     [McpTool("multiply_numbers",
         Title = "Multiply",
-        Description = "Multiplies two numbers and return result. Example: 5 * 3 = 15",
-        InputSchema = @"{
-            ""type"":""object"",
-            ""properties"":{
-                ""number1"":{""type"":""number""},
-                ""number2"":{""type"":""number""}
-            },
-            ""required"":[""number1"",""number2""]
-        }")]
-    public JsonRpcMessage MultiplyTool(JsonRpcMessage request)
+        Description = "Multiplies two numbers and return result. Example: 5 * 3 = 15")]
+    public JsonRpcMessage MultiplyTool(TypedJsonRpc<MultiplyRequest> request)
     {
-        var args = request.GetParams<MultiplyRequest>()
+        var args = request.GetParams()
             ?? throw new ToolInvalidParamsException(
                 "Parameters 'number1' and 'number2' are required and must be numbers.");
 

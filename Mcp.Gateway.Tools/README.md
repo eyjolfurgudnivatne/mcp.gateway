@@ -143,6 +143,45 @@ Register the DI service in `Program.cs`:
 builder.Services.AddScoped<CalculatorService>();
 ```
 
+### TypedJsonRpc<T> (optional helper, v1.3.0)
+
+For tools that prefer strongly-typed request models, you can use `TypedJsonRpc<T>`:
+
+```
+public sealed record AddNumbersRequestTyped(
+    [property: JsonPropertyName("number1")]
+    [property: Description("First number to add")] double Number1,
+
+    [property: JsonPropertyName("number2")]
+    [property: Description("Second number to add")] double Number2);
+
+[McpTool("add_numbers_typed_ii",
+    Title = "Add Numbers (typed)",
+    Description = "Adds two numbers using TypedJsonRpc with auto-generated schema.")]
+public JsonRpcMessage AddNumbersToolTypedII(TypedJsonRpc<AddNumbersRequestTyped> request)
+{
+    var args = request.GetParams()
+        ?? throw new ToolInvalidParamsException(
+            "Parameters 'number1' and 'number2' are required and must be numbers.");
+
+    return ToolResponse.Success(
+        request.Id,
+        new { result = args.Number1 + args.Number2 });
+}
+```
+
+If `InputSchema` is omitted on `[McpTool]` **and** the first parameter is `TypedJsonRpc<TParams>`:
+
+- `tools/list` will auto-generate a JSON Schema for `TParams`:
+  - Root: `type: "object"`
+  - `properties` from public properties on `TParams`
+  - `required` from non-nullable properties (nullable → optional)
+  - `JsonPropertyName` for JSON field names
+  - `[property: Description("...")]` mapped to `description`
+  - enums represented as string enums (`"type": "string", "enum": ["Active", "Disabled"]`)
+
+If `InputSchema` is set on `[McpTool]`, it always wins and auto-generation is skipped.
+
 ---
 
 ## 🕒 Date/time tools (example)
