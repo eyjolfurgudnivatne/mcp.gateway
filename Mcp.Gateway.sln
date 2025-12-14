@@ -56,12 +56,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.2.0", "v1.2.0", "{C8687C11-EA0D-401B-AD02-315FDD9E5FED}"
 	ProjectSection(SolutionItems) = preProject
-		.internal\notes\v.1.2.0\implementation-plan.md = .internal\notes\v.1.2.0\implementation-plan.md
-		.internal\notes\v.1.2.0\ollama-integration.md = .internal\notes\v.1.2.0\ollama-integration.md
-		.internal\notes\v.1.2.0\ollama-reverse-integration.md = .internal\notes\v.1.2.0\ollama-reverse-integration.md
-		.internal\notes\v.1.2.0\phase-0-progress.md = .internal\notes\v.1.2.0\phase-0-progress.md
-		.internal\notes\v.1.2.0\phase-0-tool-capabilities.md = .internal\notes\v.1.2.0\phase-0-tool-capabilities.md
-		.internal\notes\v.1.2.0\README.md = .internal\notes\v.1.2.0\README.md
+		.internal\notes\v1.2.0\implementation-plan.md = .internal\notes\v1.2.0\implementation-plan.md
+		.internal\notes\v1.2.0\ollama-integration.md = .internal\notes\v1.2.0\ollama-integration.md
+		.internal\notes\v1.2.0\ollama-reverse-integration.md = .internal\notes\v1.2.0\ollama-reverse-integration.md
+		.internal\notes\v1.2.0\phase-0-progress.md = .internal\notes\v1.2.0\phase-0-progress.md
+		.internal\notes\v1.2.0\phase-0-tool-capabilities.md = .internal\notes\v1.2.0\phase-0-tool-capabilities.md
+		.internal\notes\v1.2.0\README.md = .internal\notes\v1.2.0\README.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "guides", "guides", "{21C726F2-FA45-4A7D-A2F8-4DBFA66DC69A}"
@@ -122,6 +122,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.3.0", "v1.3.0", "{9DAB64
 	ProjectSection(SolutionItems) = preProject
 		.internal\releases\v1.3.0\release-note.md = .internal\releases\v1.3.0\release-note.md
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.4.0", "v1.4.0", "{38BE54B3-B805-4083-843A-E963842AC97F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -194,6 +196,7 @@ Global
 		{F5C540EC-FE47-400E-8D27-806115FB3ACB} = {D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}
 		{8C286EB7-6319-426B-9673-B788916EA895} = {CC761499-6044-48DF-9E01-744F32E64955}
 		{9DAB6414-448B-4DFC-B91F-0522E0E6A296} = {D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}
+		{38BE54B3-B805-4083-843A-E963842AC97F} = {CC761499-6044-48DF-9E01-744F32E64955}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}
