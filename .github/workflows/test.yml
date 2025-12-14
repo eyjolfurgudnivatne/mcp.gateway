@@ -34,7 +34,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore
       
       - name: Run tests
-        run: dotnet test --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx" --filter "FullyQualifiedName~Mcp.Gateway.Tests"
+        run: dotnet test --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx" --filter "FullyQualifiedName!~OllamaIntegrationTests"
       
       - name: Test Report
         uses: dorny/test-reporter@v1
