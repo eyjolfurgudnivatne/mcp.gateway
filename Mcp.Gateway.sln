@@ -118,6 +118,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.3.0", "v1.3.0", "{8C286E
 		.internal\notes\v1.3.0\plan.md = .internal\notes\v1.3.0\plan.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.3.0", "v1.3.0", "{9DAB6414-448B-4DFC-B91F-0522E0E6A296}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\releases\v1.3.0\release-note.md = .internal\releases\v1.3.0\release-note.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -188,6 +193,7 @@ Global
 		{407A66C2-9148-4AD2-9B48-B940C5E282FB} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 		{F5C540EC-FE47-400E-8D27-806115FB3ACB} = {D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}
 		{8C286EB7-6319-426B-9673-B788916EA895} = {CC761499-6044-48DF-9E01-744F32E64955}
+		{9DAB6414-448B-4DFC-B91F-0522E0E6A296} = {D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}

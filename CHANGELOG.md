@@ -10,10 +10,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Planned for v2.0
 - MCP Resources support (official MCP spec feature)
 - MCP Prompts support (official MCP spec feature)
-- Hybrid Tool API - Simplified tool authoring with auto-generated schemas
 - Tool lifecycle hooks for monitoring
 - Custom transport provider API
 - Enhanced streaming (compression, flow control, multiplexing)
+
+---
+
+## [1.3.0] - 2025-12-14
+
+### Added
+- `TypedJsonRpc<T>` helper for strongly-typed tool implementations
+  - Thin wrapper over `JsonRpcMessage` used as a convenience API for tool authors.
+  - Exposes `Id`, `IdAsString`, `Method`, `Inner` (`JsonRpcMessage`) and `GetParams()` returning `T`.
+- Optional JSON Schema auto-generation for `TypedJsonRpc<T>` tools
+  - Activated only when:
+    - The first parameter of the tool method is `TypedJsonRpc<TParams>`, and
+    - `[McpTool]` has no `InputSchema` defined (null/whitespace).
+  - Generates a minimal MCP-compatible schema for `TParams`:
+    - Root: `{ "type": "object", "properties": { ... }, "required": [ ... ] }`.
+    - `properties` from public instance properties on `TParams`.
+    - `required` contains all non-nullable properties; nullable properties are optional.
+  - Maps C# types to JSON Schema types:
+    - `string` → `"string"`
+    - `Guid` → `"string"` + `"format": "uuid"`
+    - `DateTime` / `DateTimeOffset` → `"string"` + `"format": "date-time"`
+    - `bool` → `"boolean"`
+    - `int`, `long`, `short`, `byte` → `"integer"`
+    - `float`, `double`, `decimal` → `"number"`
+    - arrays / `IEnumerable<T>` (except `string`) → `"array"`
+    - other types → `"object"`.
+- Enum and description support in generated schemas
+  - C# `enum` types are represented as string-based enums:
+    - `enum Status { Active, Disabled }` → `{ "type": "string", "enum": ["Active", "Disabled"] }`.
+  - `[Description("...")]` on record properties (with `[property: Description]`) is mapped to `"description"`.
+  - `JsonPropertyName` attributes are respected for property names.
+
+### Changed
+- `ToolService` now records the first parameter type for each tool method in `ToolDetailArgumentType`.
+  - Enables `ToolInvoker` to construct `TypedJsonRpc<T>` instances when a tool expects that type.
+- `ToolInvoker` argument binding updated to support `TypedJsonRpc<T>`
+  - When `ToolArgumentType.IsTypedJsonRpc` is true, the first argument is constructed via `Activator.CreateInstance(paramType, JsonRpcMessage)`.
+  - Behaviour for existing tools taking `JsonRpcMessage` as first parameter is unchanged.
+
+### Behaviour & Compatibility
+- `InputSchema` remains the source of truth when provided on `[McpTool]`:
+  - If `InputSchema` is set, it is used as-is; schema generation is skipped.
+- For tools using `TypedJsonRpc<TParams>` and no `InputSchema`:
+  - `tools/list` now returns an auto-generated `inputSchema` derived from `TParams`.
+- No changes to MCP protocol behaviour or wire format:
+  - `JsonRpcMessage` structure is unchanged.
+  - `initialize`, `tools/list`, and `tools/call` semantics are unchanged.
+
+### Testing
+- `Examples/CalculatorMcpServer` and `CalculatorMcpServerTests` updated with TypedJsonRpc examples:
+  - `add_numbers_typed` – uses `TypedJsonRpc<T>` with explicit `InputSchema` (behaves as before).
+  - `add_numbers_typed_ii` – uses `TypedJsonRpc<T>` without `InputSchema`, exercising schema generation.
+- New tests in `Examples/CalculatorMcpServerTests/Tools/ToolListTests.cs`:
+  - `ToolsList_ReturnsAllTools` – validates explicit schema for `add_numbers_typed`.
+  - `ToolsListII_ReturnsAllTools` – validates generated schema for `add_numbers_typed_ii`, including `description` and `required`.
 
 ---
 

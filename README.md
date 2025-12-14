@@ -151,6 +151,9 @@ Claude can also use WebSocket (`/ws`) for full duplex and binary streaming.
   - HTTP/stdio: standard tools only  
   - SSE: standard + text streaming  
   - WebSocket: all tools (incl. binary streaming)
+- ✅ **Typed tools & optional schema generation (v1.3.0)**  
+  - `TypedJsonRpc<T>` helper for strongly-typed tool implementations  
+  - Optional JSON Schema auto-generation when `InputSchema` is omitted and the tool uses `TypedJsonRpc<T>`
 - ✅ **Streaming** – text and binary streaming via `ToolConnector`
 - ✅ **DI support** – tools can take services as parameters
 - ✅ **Tested** – 70+ tests covering HTTP, WS, SSE and stdio
