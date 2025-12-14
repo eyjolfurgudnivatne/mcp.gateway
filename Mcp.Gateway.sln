@@ -124,6 +124,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.3.0", "v1.3.0", "{9DAB64
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.4.0", "v1.4.0", "{38BE54B3-B805-4083-843A-E963842AC97F}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\notes\v1.4.0\plan-v1.4.0.md = .internal\notes\v1.4.0\plan-v1.4.0.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
