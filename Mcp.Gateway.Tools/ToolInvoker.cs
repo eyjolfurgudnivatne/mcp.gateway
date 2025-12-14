@@ -1,10 +1,10 @@
 namespace Mcp.Gateway.Tools;
 
+using Mcp.Gateway.Tools.Formatters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Net.WebSockets;
 using System.Text.Json;
-using Mcp.Gateway.Tools.Formatters;
 
 /// <summary>
 /// Handles JSON-RPC tool invocation over HTTP and WebSocket.

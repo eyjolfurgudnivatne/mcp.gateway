@@ -1,6 +1,5 @@
 namespace Mcp.Gateway.Tools.Schema;
 
-using System.ComponentModel;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -43,6 +42,15 @@ internal static class ToolSchemaGenerator
 
             if (format != null)
                 propSchema["format"] = format;
+
+            // Enum: legg til enum-verdier som strings
+            var underlying = Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType;
+            if (underlying.IsEnum)
+            {
+                var names = Enum.GetNames(underlying);
+                var enumArray = new JsonArray(names.Select(n => (JsonNode)n).ToArray());
+                propSchema["enum"] = enumArray;
+            }
 
             // Description fra [Description]
             var descAttr = p.GetCustomAttribute<System.ComponentModel.DescriptionAttribute>();
