@@ -1,5 +1,6 @@
 namespace Mcp.Gateway.Tools;
 
+using Mcp.Gateway.Tools.Schema;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
@@ -324,7 +325,14 @@ public class ToolService(IServiceProvider serviceProvider)
             var description = attr?.Description ?? "No description available";
             var inputSchema = attr?.InputSchema ?? @"{""type"":""object"",""properties"":{}}";
             var capabilities = attr?.Capabilities ?? ToolCapabilities.Standard;  // NEW!
-            
+
+            if (string.IsNullOrWhiteSpace(attr?.InputSchema))
+            {
+                // 2. Hvis TypedJsonRpc<T> og ingen InputSchema → prøv schema-generator
+                var generated = ToolSchemaGenerator.TryGenerateForTool(method, toolDetails);
+                inputSchema = generated ?? @"{""type"":""object"",""properties"":{}}";
+            }
+
             // Validate InputSchema at runtime
             if (!string.IsNullOrEmpty(inputSchema))
             {

@@ -49,6 +49,20 @@ public class CalculatorTools
             new AddNumbersResponse(args.Number1 + args.Number2));
     }
 
+    [McpTool("add_numbers_typed_ii",
+        Title = "Add Numbers (typed)",
+        Description = "Adds two numbers using TypedJsonRpc proof-of-concept. Uses same schema as add_numbers.")]
+    public JsonRpcMessage AddNumbersToolTypedII(TypedJsonRpc<AddNumbersRequestTyped> request)
+    {
+        var args = request.GetParams()
+            ?? throw new ToolInvalidParamsException(
+                "Parameters 'number1' and 'number2' are required and must be numbers.");
+
+        return ToolResponse.Success(
+            request.Id,
+            new AddNumbersResponse(args.Number1 + args.Number2));
+    }
+
     [McpTool("multiply_numbers",
         Title = "Multiply",
         Description = "Multiplies two numbers and return result. Example: 5 * 3 = 15",
