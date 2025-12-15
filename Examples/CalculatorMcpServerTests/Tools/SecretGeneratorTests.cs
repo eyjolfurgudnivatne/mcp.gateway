@@ -25,8 +25,8 @@ public class SecretGeneratorTests(CalculatorMcpServerFixture fixture)
         Assert.NotNull(content);
         Assert.True(content.IsSuccessResponse, $"Failed to generate secret");
 
-        var result = content.GetResult<CalculatorMcpServer.Tools.SecretGenerator.SecretResponse>();
-        Assert.NotNull(result);
-        Assert.NotNull(result.Secret);
+        var cResult = content.GetResult<CalculatorMcpServer.Tools.SecretGenerator.SecretResponse>();
+        Assert.NotNull(cResult);
+        Assert.NotNull(cResult.Secret);
     }
 }
