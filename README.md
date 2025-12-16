@@ -146,7 +146,7 @@ Claude can also use WebSocket (`/ws`) for full duplex and binary streaming.
 
 - ✅ **MCP 2025‑06‑18** – up to date with the current MCP specification
 - ✅ **Transports** – HTTP (`/rpc`), WebSocket (`/ws`), SSE (`/sse`), stdio
-- ✅ **Auto‑discovery** – tools discovered via `[McpTool]`
+- ✅ **Auto‑discovery** – tools, prompts, and resources discovered via attributes
 - ✅ **Transport‑aware filtering (v1.2.0)**  
   - HTTP/stdio: standard tools only  
   - SSE: standard + text streaming  
@@ -157,9 +157,13 @@ Claude can also use WebSocket (`/ws`) for full duplex and binary streaming.
 - ✅ **MCP Prompts (v1.4.0)**  
   - `[McpPrompt]` attribute and prompt models for defining reusable prompt templates  
   - MCP prompt protocol support: `prompts/list`, `prompts/get`, and prompt capabilities in `initialize`
+- ✅ **MCP Resources (v1.5.0)**  
+  - `[McpResource]` attribute for exposing data and content (files, databases, APIs, system metrics)  
+  - MCP resource protocol support: `resources/list`, `resources/read`, and resource capabilities in `initialize`  
+  - URI-based addressing: `file://`, `db://`, `system://`, `http://`
 - ✅ **Streaming** – text and binary streaming via `ToolConnector`
-- ✅ **DI support** – tools can take services as parameters
-- ✅ **Tested** – 70+ tests covering HTTP, WS, SSE and stdio
+- ✅ **DI support** – tools, prompts, and resources can take services as parameters
+- ✅ **Tested** – 121 tests covering HTTP, WS, SSE and stdio
 
 ---
 
@@ -173,6 +177,8 @@ Claude can also use WebSocket (`/ws`) for full duplex and binary streaming.
 - **Examples:**
   - `Examples/CalculatorMcpServer` – calculator server
   - `Examples/DateTimeMcpServer` – date/time tools
+  - `Examples/PromptMcpServer` – prompt templates
+  - `Examples/ResourceMcpServer` – file, system, and database resources
 
 ---
 

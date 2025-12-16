@@ -7,7 +7,7 @@
 		
 		<!-- NuGet Package Metadata -->
 		<PackageId>Mcp.Gateway.Tools</PackageId>
-		<Version>1.4.0</Version>
+		<Version>1.5.0</Version>
 		<Authors>ARKo AS - AHelse Development Team</Authors>
 		<Company>ARKo AS</Company>
 		<Product>MCP Gateway</Product>
@@ -19,7 +19,7 @@
 		<PackageTags>mcp;model-context-protocol;json-rpc;websocket;github-copilot;claude;ai;tools;gateway;dotnet10</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageReleaseNotes>v1.4.0: Added MCP Prompts support (McpPrompt attribute, prompt models, prompts/list, prompts/get, initialize prompts capability) and example PromptMcpServer.</PackageReleaseNotes>
+		<PackageReleaseNotes>v1.5.0: Added MCP Resources support (McpResource attribute, resource models, resources/list, resources/read, initialize resources capability), architecture improvements (ToolService and ToolInvoker split into partial classes), and example ResourceMcpServer. Zero breaking changes.</PackageReleaseNotes>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>

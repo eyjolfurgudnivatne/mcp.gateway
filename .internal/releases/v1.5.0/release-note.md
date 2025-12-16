@@ -134,3 +134,45 @@ v1.5.0 introduces first-class **MCP Resources** support alongside existing tools
   - `db://users/123`
   - `system://status`
   - `http://api.example.com/data`
+
+---
+
+## Future Plans (v1.6+)
+
+- **Resource subscriptions** (`resources/subscribe`, `resources/unsubscribe`) – live updates
+- **Resource templates** – URI templates with variable substitution
+- **Binary blob support** – native binary content (images, PDFs, etc.)
+- **Resource metadata** – size, modified date, permissions
+
+---
+
+## Documentation
+
+- Updated `CHANGELOG.md` with v1.5.0 entry
+- Updated `docs/MCP-Protocol.md` with Resources section
+- Updated `docs/MCP-Protocol-Verification.md` with Resources verification
+- Updated `Mcp.Gateway.Tools/README.md` with Resources examples
+- Updated root `README.md` with Resources feature
+- Created `.internal/releases/v1.5.0/release-note.md` (this file)
+
+---
+
+## Suksesskriterier for v1.5.0
+
+- ✅ `[McpResource]` attributt fungerer
+- ✅ `resources/list` returnerer alle registrerte resources
+- ✅ `resources/read` henter innhold (text-based)
+- ✅ `initialize` viser `resources` capability
+- ✅ Minst 6 eksempel-resources (file, db, system) i ResourceMcpServer
+- ✅ Alle tester passerer (121/121 tester totalt)
+- ✅ Zero breaking changes fra v1.4.0
+- ✅ Komplett dokumentasjon
+- ✅ GitHub Copilot kan lese resources (via stdio)
+
+---
+
+**Status:** Klar for release 🚀  
+**Release Date:** 16. desember 2025  
+**Breaking Changes:** None  
+**Test Coverage:** 121/121 (100%)  
+**Protocol Compliance:** MCP 2025-06-18 (Tools + Prompts + Resources)
