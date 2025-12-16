@@ -42,8 +42,10 @@ public class TellOllama
 
         // 1. Get tools DIRECTLY from ToolService (no HttpClient!)
         var tools = toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "http");
+
+        // Format tools for Ollama
         var ollamaFormatter = new OllamaToolListFormatter();
-        var formattedTools = ollamaFormatter.FormatToolList(tools);
+        var formattedTools = ollamaFormatter.FormatToolList(tools.Items);
 
         // Extract tools array
         var toolsJson = JsonSerializer.Serialize(formattedTools);

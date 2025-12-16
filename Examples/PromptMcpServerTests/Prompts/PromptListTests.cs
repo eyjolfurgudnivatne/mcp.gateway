@@ -28,7 +28,8 @@ public class PromptListTests : IDisposable
     public void GetPrompts_Websocket_IncludesAllPrompts()
     {
         // Arrange & Act
-        var prompts = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Prompt, "ws").ToList();
+        var result = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Prompt, "ws");
+        var prompts = result.Items.ToList();
 
         // Assert
         Assert.NotEmpty(prompts);
@@ -44,7 +45,8 @@ public class PromptListTests : IDisposable
     public void GetPrompts_Http_IncludesAllPrompts()
     {
         // Arrange & Act
-        var prompts = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Prompt, "http").ToList();
+        var result = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Prompt, "http");
+        var prompts = result.Items.ToList();
 
         // Assert
         Assert.NotEmpty(prompts);
@@ -60,7 +62,8 @@ public class PromptListTests : IDisposable
     public void GetTools_Http_IncludesAllTools()
     {
         // Arrange & Act
-        var tools = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "http").ToList();
+        var result = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "http");
+        var tools = result.Items.ToList();
 
         // Assert
         Assert.NotEmpty(tools);
@@ -76,7 +79,8 @@ public class PromptListTests : IDisposable
     public void GetTools_Websocket_IncludesAllTools()
     {
         // Arrange & Act
-        var tools = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "ws").ToList();
+        var result = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "ws");
+        var tools = result.Items.ToList();
 
         // Assert
         Assert.NotEmpty(tools);

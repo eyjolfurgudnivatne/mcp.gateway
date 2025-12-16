@@ -18,9 +18,36 @@ public partial class ToolInvoker
     {
         try
         {
-            var resources = _toolService.GetAllResourceDefinitions();
+            // Extract pagination parameters (v1.6.0+)
+            string? cursor = null;
+            int pageSize = Pagination.CursorHelper.DefaultPageSize;
+
+            if (request.Params is not null)
+            {
+                var @params = request.GetParams();
+                
+                // Extract cursor (optional)
+                if (@params.TryGetProperty("cursor", out var cursorProp) && 
+                    cursorProp.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    cursor = cursorProp.GetString();
+                }
+                
+                // Extract pageSize (optional, default 100)
+                if (@params.TryGetProperty("pageSize", out var pageSizeProp) && 
+                    pageSizeProp.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    pageSize = pageSizeProp.GetInt32();
+                }
+            }
+
+            // Get all resources
+            var allResources = _toolService.GetAllResourceDefinitions();
             
-            var resourcesList = resources.Select(r => new
+            // Apply pagination
+            var paginatedResult = Pagination.CursorHelper.Paginate(allResources, cursor, pageSize);
+            
+            var resourcesList = paginatedResult.Items.Select(r => new
             {
                 uri = r.Uri,
                 name = r.Name,
@@ -28,10 +55,19 @@ public partial class ToolInvoker
                 mimeType = r.MimeType
             }).ToList();
 
-            return ToolResponse.Success(request.Id, new
+            // Build response with pagination
+            var response = new Dictionary<string, object>
             {
-                resources = resourcesList
-            });
+                ["resources"] = resourcesList
+            };
+
+            // Add nextCursor if more results available
+            if (paginatedResult.NextCursor is not null)
+            {
+                response["nextCursor"] = paginatedResult.NextCursor;
+            }
+
+            return ToolResponse.Success(request.Id, response);
         }
         catch (Exception ex)
         {

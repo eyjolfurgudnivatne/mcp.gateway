@@ -66,6 +66,7 @@ public partial class ToolService
 
     /// <summary>
     /// Returns all registered resources with their metadata for MCP resources/list
+    /// Sorted alphabetically by URI for consistent ordering (v1.6.0+)
     /// </summary>
     public IEnumerable<ResourceDefinition> GetAllResourceDefinitions()
     {
@@ -73,6 +74,7 @@ public partial class ToolService
         
         return ConfiguredFunctions
             .Where(x => x.Value.FunctionType == FunctionTypeEnum.Resource)
+            .OrderBy(x => x.Key) // Sort alphabetically by URI for consistent ordering
             .Select(kvp =>
             {
                 var uri = kvp.Key; // For resources, the key IS the URI

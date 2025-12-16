@@ -203,6 +203,25 @@ public partial class ToolInvoker
         {
             capabilities["resources"] = new { };
         }
+
+        // Add notification capabilities (v1.6.0+)
+        // Note: Notifications require WebSocket transport
+        if (_notificationSender is not null)
+        {
+            var notifications = new Dictionary<string, object>();
+            
+            if (isTools)
+                notifications["tools"] = new { };
+            
+            if (isPrompts)
+                notifications["prompts"] = new { };
+            
+            if (hasResources)
+                notifications["resources"] = new { };
+
+            if (notifications.Count > 0)
+                capabilities["notifications"] = notifications;
+        }
         
         return ToolResponse.Success(request.Id, new
         {
@@ -237,13 +256,36 @@ public partial class ToolInvoker
                 functionType = FunctionTypeEnum.Prompt;
             }
 
-            // Get filtered functions for this transport
-            var functions = _toolService.GetFunctionsForTransport(functionType, transport);
+            // Extract pagination parameters (v1.6.0+)
+            string? cursor = null;
+            int pageSize = Pagination.CursorHelper.DefaultPageSize;
+
+            if (request.Params is not null)
+            {
+                var @params = request.GetParams();
+                
+                // Extract cursor (optional)
+                if (@params.TryGetProperty("cursor", out var cursorProp) && 
+                    cursorProp.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    cursor = cursorProp.GetString();
+                }
+                
+                // Extract pageSize (optional, default 100)
+                if (@params.TryGetProperty("pageSize", out var pageSizeProp) && 
+                    pageSizeProp.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    pageSize = pageSizeProp.GetInt32();
+                }
+            }
+
+            // Get paginated functions for this transport
+            var paginatedResult = _toolService.GetFunctionsForTransport(functionType, transport, cursor, pageSize);
 
             // Tools: serialize with inputSchema (object)
             if (functionType == FunctionTypeEnum.Tool)
             {
-                var toolsList = functions.Select(t =>
+                var toolsList = paginatedResult.Items.Select(t =>
                 {
                     object? schema = null;
                     try
@@ -264,16 +306,25 @@ public partial class ToolInvoker
                     };
                 }).ToList();
 
-                return ToolResponse.Success(request.Id, new
+                // Build response with pagination
+                var response = new Dictionary<string, object>
                 {
-                    tools = toolsList
-                });
+                    ["tools"] = toolsList
+                };
+
+                // Add nextCursor if more results available
+                if (paginatedResult.NextCursor is not null)
+                {
+                    response["nextCursor"] = paginatedResult.NextCursor;
+                }
+
+                return ToolResponse.Success(request.Id, response);
             }
 
             // Prompts: serialize with arguments (array)
             else if (functionType == FunctionTypeEnum.Prompt)
             {
-                var promptsList = functions.Select(p =>
+                var promptsList = paginatedResult.Items.Select(p =>
                 {
                     return new
                     {
@@ -283,10 +334,19 @@ public partial class ToolInvoker
                     };
                 }).ToList();
 
-                return ToolResponse.Success(request.Id, new
+                // Build response with pagination
+                var response = new Dictionary<string, object>
                 {
-                    prompts = promptsList
-                });
+                    ["prompts"] = promptsList
+                };
+
+                // Add nextCursor if more results available
+                if (paginatedResult.NextCursor is not null)
+                {
+                    response["nextCursor"] = paginatedResult.NextCursor;
+                }
+
+                return ToolResponse.Success(request.Id, response);
             }
 
             else
@@ -338,8 +398,8 @@ public partial class ToolInvoker
                     "Format must be specified (e.g., tools/list/ollama)");
             }
             
-            // Get filtered functions for this transport
-            var tools = _toolService.GetFunctionsForTransport(functionType, transport);
+            // Get filtered functions for this transport (no pagination for formatted lists)
+            var paginatedTools = _toolService.GetFunctionsForTransport(functionType, transport);
             
             // Get appropriate formatter
             IToolListFormatter formatter = format.ToLowerInvariant() switch
@@ -350,8 +410,8 @@ public partial class ToolInvoker
                 _ => throw new ToolNotFoundException($"Unknown format: {format}")
             };
             
-            // Format functions
-            var formattedTools = formatter.FormatToolList(tools);
+            // Format functions (use Items from paginated result)
+            var formattedTools = formatter.FormatToolList(paginatedTools.Items);
             
             return ToolResponse.Success(request.Id, formattedTools);
         }

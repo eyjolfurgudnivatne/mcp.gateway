@@ -7,7 +7,7 @@
 		
 		<!-- NuGet Package Metadata -->
 		<PackageId>Mcp.Gateway.Tools</PackageId>
-		<Version>1.5.0</Version>
+		<Version>1.6.0</Version>
 		<Authors>ARKo AS - AHelse Development Team</Authors>
 		<Company>ARKo AS</Company>
 		<Product>MCP Gateway</Product>
@@ -16,10 +16,10 @@
 		<PackageProjectUrl>https://github.com/eyjolfurgudnivatne/mcp.gateway</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/eyjolfurgudnivatne/mcp.gateway.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<PackageTags>mcp;model-context-protocol;json-rpc;websocket;github-copilot;claude;ai;tools;gateway;dotnet10</PackageTags>
+		<PackageTags>mcp;model-context-protocol;json-rpc;websocket;github-copilot;claude;ai;tools;gateway;dotnet10;pagination;notifications</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageReleaseNotes>v1.5.0: Added MCP Resources support (McpResource attribute, resource models, resources/list, resources/read, initialize resources capability), architecture improvements (ToolService and ToolInvoker split into partial classes), and example ResourceMcpServer. Zero breaking changes.</PackageReleaseNotes>
+		<PackageReleaseNotes>v1.6.0: Cursor-based pagination for tools/list, prompts/list, resources/list (optional cursor and pageSize parameters, nextCursor in response). Notification infrastructure with NotificationService and INotificationSender (WebSocket-only, tools/prompts/resources changed notifications). Alphabetic sorting for consistent pagination. 17 new tests (9 pagination + 8 notifications). Zero breaking changes.</PackageReleaseNotes>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
