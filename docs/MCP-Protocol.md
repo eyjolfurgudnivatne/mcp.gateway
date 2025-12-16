@@ -488,8 +488,17 @@ public JsonRpcMessage SystemStatus(JsonRpcMessage request)
 
 **Tools & Prompts - MCP-Compliant Pattern:**
 ```
-^[a-zA-Z0-9_-]{1,128}$
+^[a-zA-Z0-9_.-]{1,128}$
 ```
+
+**MCP 2025-11-25 Update:** Tool names can now include dots (`.`) for namespacing!
+
+**Examples:**
+- ✅ `admin.tools.list` - Namespaced tool
+- ✅ `user.get_profile` - Mixed style
+- ✅ `db.users.create` - Multi-level namespace
+- ✅ `add_numbers` - Traditional underscore style
+- ✅ `fetch-data` - Hyphen style
 
 **Resources - URI Format:**
 ```

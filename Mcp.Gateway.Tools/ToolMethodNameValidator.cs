@@ -4,20 +4,21 @@ using System.Text.RegularExpressions;
 
 /// <summary>
 /// Validates tool method names according to MCP protocol requirements.
-/// GitHub Copilot and other MCP clients enforce strict naming: ^[a-zA-Z0-9_-]{1,128}$
+/// MCP 2025-11-25: Tool names SHOULD contain only letters, numbers, underscores, hyphens, and dots.
+/// Pattern: ^[a-zA-Z0-9_.-]{1,128}$
 /// </summary>
 public static partial class ToolMethodNameValidator
 {
-    // MCP-compliant pattern: letters, numbers, underscores, hyphens only (1-128 chars)
-    [GeneratedRegex(@"^[a-zA-Z0-9_-]{1,128}$", RegexOptions.Compiled)]
+    // MCP 2025-11-25 compliant pattern: letters, numbers, underscores, hyphens, AND DOTS (1-128 chars)
+    [GeneratedRegex(@"^[a-zA-Z0-9_.-]{1,128}$", RegexOptions.Compiled)]
     private static partial Regex McpCompliantRegex();
     
-    // Legacy pattern (allows dots) - for backward compatibility check
-    [GeneratedRegex(@"^[A-Za-z][A-Za-z0-9._]{0,128}$", RegexOptions.Compiled)]
+    // Legacy pattern (for backward compatibility warnings) - now same as compliant
+    [GeneratedRegex(@"^[A-Za-z][A-Za-z0-9._-]{0,127}$", RegexOptions.Compiled)]
     private static partial Regex LegacyRegex();
 
     /// <summary>
-    /// Validates a tool method name according to MCP protocol requirements.
+    /// Validates a tool method name according to MCP 2025-11-25 protocol requirements.
     /// </summary>
     /// <param name="methodName">Tool method name to validate</param>
     /// <param name="error">Error message if validation fails</param>
@@ -38,23 +39,13 @@ public static partial class ToolMethodNameValidator
             return false;
         }
 
-        // Check MCP-compliant pattern (strict)
+        // Check MCP 2025-11-25 compliant pattern (now allows dots!)
         if (!McpCompliantRegex().IsMatch(methodName))
         {
-            // Check if it matches legacy pattern (has dots)
-            if (LegacyRegex().IsMatch(methodName) && methodName.Contains('.'))
-            {
-                error = $"⚠️ WARNING: Method name '{methodName}' contains dots (.) which are NOT allowed by MCP clients like GitHub Copilot. " +
-                        $"Use underscores (_) or hyphens (-) instead. " +
-                        $"Example: '{methodName.Replace('.', '_')}' " +
-                        $"Allowed pattern: ^[a-zA-Z0-9_-]{{1,128}}$";
-                return false;
-            }
-            
             error = $"Invalid method name '{methodName}'. " +
-                    $"Allowed: letters (a-z, A-Z), numbers (0-9), underscores (_), hyphens (-). " +
-                    $"NO dots (.), NO spaces, NO special characters. " +
-                    $"Pattern: ^[a-zA-Z0-9_-]{{1,128}}$";
+                    $"Allowed: letters (a-z, A-Z), numbers (0-9), underscores (_), hyphens (-), dots (.). " +
+                    $"NO spaces, NO special characters. " +
+                    $"Pattern: ^[a-zA-Z0-9_.-]{{1,128}}$";
             return false;
         }
 
@@ -82,9 +73,17 @@ public static partial class ToolMethodNameValidator
         {
             warning = "Tool name contains double hyphens (--). Consider using single hyphens for better readability.";
         }
+        else if (methodName.Contains(".."))
+        {
+            warning = "Tool name contains consecutive dots (..). Consider using single dots for better readability.";
+        }
         else if (methodName.Length > 64)
         {
             warning = $"Tool name is quite long ({methodName.Length} chars). Consider shorter names for better usability.";
+        }
+        else if (methodName.StartsWith('.') || methodName.EndsWith('.'))
+        {
+            warning = "Tool name starts or ends with a dot. This may be confusing for users.";
         }
         
         return (true, null, warning);
