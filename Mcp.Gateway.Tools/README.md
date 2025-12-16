@@ -379,6 +379,202 @@ See `docs/StreamingProtocol.md` and `docs/examples/toolconnector-usage.md` for m
 
 ---
 
+## 📄 Pagination (v1.6.0)
+
+When you have many tools, prompts, or resources, use cursor-based pagination to avoid overwhelming clients:
+
+### Using pagination in tools/list
+
+```csharp
+// Client request with pagination
+{
+  "jsonrpc": "2.0",
+  "method": "tools/list",
+  "params": {
+    "cursor": "eyJvZmZzZXQiOjEwMH0=",
+    "pageSize": 50
+  },
+  "id": 1
+}
+
+// Server response with nextCursor
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "tools": [ /* 50 tools */ ],
+    "nextCursor": "eyJvZmZzZXQiOjE1MH0="
+  },
+  "id": 1
+}
+```
+
+### Pagination helper (CursorHelper)
+
+You can use `CursorHelper` in your own tools to implement pagination:
+
+```csharp
+using Mcp.Gateway.Tools.Pagination;
+
+public class MyTools
+{
+    [McpTool("list_items")]
+    public JsonRpcMessage ListItems(JsonRpcMessage request)
+    {
+        // Get pagination params
+        var @params = request.GetParams();
+        string? cursor = null;
+        int pageSize = 100;
+        
+        if (@params.TryGetProperty("cursor", out var cursorProp))
+            cursor = cursorProp.GetString();
+        
+        if (@params.TryGetProperty("pageSize", out var sizeProp))
+            pageSize = sizeProp.GetInt32();
+        
+        // Get your items (e.g., from database)
+        var allItems = GetAllItems();
+        
+        // Apply pagination
+        var paginatedResult = CursorHelper.Paginate(allItems, cursor, pageSize);
+        
+        // Build response
+        var response = new Dictionary<string, object>
+        {
+            ["items"] = paginatedResult.Items
+        };
+        
+        if (paginatedResult.NextCursor is not null)
+            response["nextCursor"] = paginatedResult.NextCursor;
+        
+        return ToolResponse.Success(request.Id, response);
+    }
+}
+```
+
+**Features:**
+- ✅ Base64-encoded cursor: `{"offset": 100}`
+- ✅ Default page size: 100 items
+- ✅ Works with any `IEnumerable<T>`
+- ✅ Thread-safe and stateless
+
+See `Examples/PaginationMcpServer` for a complete example with 120+ tools.
+
+---
+
+## 🔔 Notifications (v1.6.0)
+
+Send real-time updates to WebSocket clients when your tools, prompts, or resources change:
+
+### Using INotificationSender
+
+Inject `INotificationSender` into your tools to send notifications:
+
+```csharp
+using Mcp.Gateway.Tools.Notifications;
+
+public class MyTools
+{
+    private readonly INotificationSender _notificationSender;
+    
+    public MyTools(INotificationSender notificationSender)
+    {
+        _notificationSender = notificationSender;
+    }
+    
+    [McpTool("reload_tools")]
+    public async Task<JsonRpcMessage> ReloadTools(JsonRpcMessage request)
+    {
+        // Reload your tools (e.g., scan file system, refresh cache)
+        await ReloadToolsFromFileSystem();
+        
+        // Notify all WebSocket clients
+        await _notificationSender.SendNotificationAsync(
+            NotificationMessage.ToolsChanged());
+        
+        return ToolResponse.Success(request.Id, new { reloaded = true });
+    }
+    
+    [McpTool("update_resource")]
+    public async Task<JsonRpcMessage> UpdateResource(JsonRpcMessage request)
+    {
+        var uri = request.GetParams().GetProperty("uri").GetString();
+        
+        // Update the resource
+        await UpdateResourceContent(uri);
+        
+        // Notify with specific URI
+        await _notificationSender.SendNotificationAsync(
+            NotificationMessage.ResourcesUpdated(uri));
+        
+        return ToolResponse.Success(request.Id, new { updated = uri });
+    }
+}
+```
+
+### Notification types
+
+Three notification methods are available:
+
+```csharp
+// Tools changed
+await notificationSender.SendNotificationAsync(
+    NotificationMessage.ToolsChanged());
+
+// Prompts changed
+await notificationSender.SendNotificationAsync(
+    NotificationMessage.PromptsChanged());
+
+// Resources updated (optional URI)
+await notificationSender.SendNotificationAsync(
+    NotificationMessage.ResourcesUpdated("file://config/settings.json"));
+```
+
+### How it works
+
+1. **Client connects** via WebSocket (`/ws`)
+2. **Client sends `initialize`** → Server responds with notification capabilities
+3. **Server detects change** (tool added, resource updated, etc.)
+4. **Server sends notification** to all WebSocket subscribers:
+   ```json
+   {
+     "jsonrpc": "2.0",
+     "method": "notifications/tools/changed",
+     "params": {}
+   }
+   ```
+5. **Client re-fetches** tools/list, prompts/list, or resources/list
+
+### Notification capabilities
+
+When `NotificationService` is registered (automatic via `AddToolsService()`), the `initialize` response includes:
+
+```json
+{
+  "capabilities": {
+    "tools": {},
+    "prompts": {},
+    "resources": {},
+    "notifications": {
+      "tools": {},
+      "prompts": {},
+      "resources": {}
+    }
+  }
+}
+```
+
+**Note:** Only capabilities for registered function types are included. If your server has no prompts, `notifications.prompts` will not be present.
+
+### Limitations (v1.6.0)
+
+- ⚠️ **WebSocket-only**: HTTP and stdio clients cannot receive push notifications
+  - HTTP/stdio clients must poll `tools/list` / `prompts/list` / `resources/list`
+- 📅 **SSE support planned**: v1.7.0 will add SSE-based notifications for full MCP 2025-11-25 compliance
+
+See `Examples/NotificationMcpServer` for a complete example with manual notification triggers.
+
+---
+
 ## 🧱 JSON models
 
 Core models live in `ToolModels.cs`:
@@ -427,9 +623,13 @@ To use `Mcp.Gateway.Tools` in your project:
 
 For complete examples, see:
 
-- `Examples/CalculatorMcpServer`
-- `Examples/DateTimeMcpServer`
-- `DevTestServer` (used by the tests)
+- `Examples/CalculatorMcpServer` - Calculator tools
+- `Examples/DateTimeMcpServer` - Date/time utilities
+- `Examples/PromptMcpServer` - Prompt templates
+- `Examples/ResourceMcpServer` - File, system, and database resources
+- `Examples/PaginationMcpServer` - Pagination with 120+ mock tools (v1.6.0)
+- `Examples/NotificationMcpServer` - WebSocket notifications demo (v1.6.0)
+- `DevTestServer` - Full-featured reference (used by tests)
 
 ---
 

@@ -167,8 +167,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationMcpServerTests"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.6.0", "v1.6.0", "{0C3D1F81-0EF6-4634-B2D4-A4B16E240175}"
 	ProjectSection(SolutionItems) = preProject
+		.internal\releases\v1.6.0\readme-updates-summary.md = .internal\releases\v1.6.0\readme-updates-summary.md
 		.internal\releases\v1.6.0\release-note.md = .internal\releases\v1.6.0\release-note.md
 		.internal\releases\v1.6.0\release-summary.md = .internal\releases\v1.6.0\release-summary.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.7.0", "v1.7.0", "{DF47E754-591F-46BE-9169-2A5C6C626EC1}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\notes\v1.7.0\omw-to-2025-11-25.md = .internal\notes\v1.7.0\omw-to-2025-11-25.md
 	EndProjectSection
 EndProject
 Global
@@ -436,6 +442,7 @@ Global
 		{3383A284-CB01-0FB9-A455-817AAA81930B} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 		{5361ABF3-1A09-9892-F01B-CC15D427011B} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 		{0C3D1F81-0EF6-4634-B2D4-A4B16E240175} = {D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}
+		{DF47E754-591F-46BE-9169-2A5C6C626EC1} = {CC761499-6044-48DF-9E01-744F32E64955}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}

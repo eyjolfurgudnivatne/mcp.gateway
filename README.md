@@ -142,6 +142,101 @@ Claude can also use WebSocket (`/ws`) for full duplex and binary streaming.
 
 ---
 
+## 📄 Pagination (v1.6.0)
+
+When you have many tools, prompts, or resources, use cursor-based pagination:
+
+### Request with pagination
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/list",
+  "params": {
+    "cursor": "eyJvZmZzZXQiOjEwMH0=",
+    "pageSize": 50
+  },
+  "id": 1
+}
+```
+
+### Response with nextCursor
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "tools": [ /* 50 tools */ ],
+    "nextCursor": "eyJvZmZzZXQiOjE1MH0="
+  },
+  "id": 1
+}
+```
+
+**Features:**
+- ✅ Optional parameters – works without pagination by default
+- ✅ Base64-encoded cursor format: `{"offset": 100}`
+- ✅ Default page size: 100 items
+- ✅ Works with `tools/list`, `prompts/list`, `resources/list`
+- ✅ Alphabetically sorted for consistent results
+
+See `Examples/PaginationMcpServer` for a demo with 120+ tools.
+
+---
+
+## 🔔 Notifications (v1.6.0)
+
+Get real-time updates when tools, prompts, or resources change (WebSocket only):
+
+### Server sends notification
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "notifications/tools/changed",
+  "params": {}
+}
+```
+
+### Client re-fetches tools
+```csharp
+// Client receives notification → re-fetch tools/list
+var response = await httpClient.PostAsJsonAsync("/rpc", new {
+    jsonrpc = "2.0",
+    method = "tools/list",
+    id = 2
+});
+```
+
+**Notification types:**
+- `notifications/tools/changed` – Tools added, removed, or modified
+- `notifications/prompts/changed` – Prompts updated
+- `notifications/resources/updated` – Resources changed (optional `uri` parameter)
+
+**How to send notifications:**
+```csharp
+public class MyTools(INotificationSender notificationSender)
+{
+    [McpTool("reload_tools")]
+    public async Task<JsonRpcMessage> ReloadTools(JsonRpcMessage request)
+    {
+        // Your tool logic...
+        
+        // Notify all WebSocket clients
+        await notificationSender.SendNotificationAsync(
+            NotificationMessage.ToolsChanged());
+        
+        return ToolResponse.Success(request.Id, new { reloaded = true });
+    }
+}
+```
+
+**Limitations:**
+- ⚠️ Requires WebSocket transport
+- ⚠️ HTTP and stdio clients must poll `tools/list` to detect changes
+- 📅 SSE-based notifications planned for v1.7.0 (full MCP 2025-11-25 compliance)
+
+See `Examples/NotificationMcpServer` for a demo with manual notification triggers.
+
+---
+
 ## 💡 Features
 
 - ✅ **MCP 2025‑06‑18** – up to date with the current MCP specification
@@ -161,9 +256,20 @@ Claude can also use WebSocket (`/ws`) for full duplex and binary streaming.
   - `[McpResource]` attribute for exposing data and content (files, databases, APIs, system metrics)  
   - MCP resource protocol support: `resources/list`, `resources/read`, and resource capabilities in `initialize`  
   - URI-based addressing: `file://`, `db://`, `system://`, `http://`
+- ✅ **Cursor-based pagination (v1.6.0)**  
+  - Optional `cursor` and `pageSize` parameters for `tools/list`, `prompts/list`, `resources/list`  
+  - `nextCursor` in response when more results are available  
+  - Default page size: 100 items (configurable)  
+  - Alphabetically sorted results for consistent pagination
+- ✅ **Notification infrastructure (v1.6.0)**  
+  - WebSocket-based push notifications for dynamic updates  
+  - `notifications/tools/changed`, `notifications/prompts/changed`, `notifications/resources/updated`  
+  - `NotificationService` with thread-safe subscriber management  
+  - Notification capabilities in `initialize` response  
+  - **Note:** Notifications require WebSocket; HTTP/stdio clients must poll
 - ✅ **Streaming** – text and binary streaming via `ToolConnector`
 - ✅ **DI support** – tools, prompts, and resources can take services as parameters
-- ✅ **Tested** – 121 tests covering HTTP, WS, SSE and stdio
+- ✅ **Tested** – 130 tests covering HTTP, WS, SSE and stdio
 
 ---
 
@@ -179,6 +285,8 @@ Claude can also use WebSocket (`/ws`) for full duplex and binary streaming.
   - `Examples/DateTimeMcpServer` – date/time tools
   - `Examples/PromptMcpServer` – prompt templates
   - `Examples/ResourceMcpServer` – file, system, and database resources
+  - `Examples/PaginationMcpServer` – pagination with 120+ mock tools (v1.6.0)
+  - `Examples/NotificationMcpServer` – WebSocket notifications demo (v1.6.0)
 
 ---
 
