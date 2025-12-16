@@ -25,7 +25,7 @@ public class OllamaToolListFormatter : IToolListFormatter
 {
     public string FormatName => "ollama";
     
-    public object FormatToolList(IEnumerable<ToolService.ToolDefinition> tools)
+    public object FormatToolList(IEnumerable<ToolService.FunctionDefinition> tools)
     {
         var formattedTools = tools.Select(t =>
         {

@@ -41,7 +41,7 @@ public class MicrosoftAIToolListFormatter : IToolListFormatter
 {
     public string FormatName => "microsoft-ai";
     
-    public object FormatToolList(IEnumerable<ToolService.ToolDefinition> tools)
+    public object FormatToolList(IEnumerable<ToolService.FunctionDefinition> tools)
     {
         var formattedTools = tools.Select(t =>
         {

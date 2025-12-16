@@ -4,25 +4,18 @@ using Mcp.Gateway.Tools.Formatters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Net.WebSockets;
+using System.Security.Cryptography.Xml;
 using System.Text.Json;
+using static Mcp.Gateway.Tools.ToolService;
 
 /// <summary>
 /// Handles JSON-RPC tool invocation over HTTP and WebSocket.
 /// Class-based for dependency injection and testability.
 /// </summary>
-public class ToolInvoker
+public class ToolInvoker(ToolService _toolService, ILogger<ToolInvoker> _logger)
 {
-    private readonly ToolService _toolService;
-    private readonly ILogger<ToolInvoker> _logger;
-    
     // Default buffer size for WebSocket frame accumulation
     private const int DefaultBufferSize = 64 * 1024;
-
-    public ToolInvoker(ToolService toolService, ILogger<ToolInvoker> logger)
-    {
-        _toolService = toolService;
-        _logger = logger;
-    }
 
     /// <summary>
     /// Invokes a JSON-RPC request over HTTP.
@@ -156,7 +149,7 @@ public class ToolInvoker
                 messageStream.Position = 0;
                 using var doc = await JsonDocument.ParseAsync(messageStream, cancellationToken: stopToken.Token);
 
-                // Try to parse as StreamMessage first (for streaming tools)
+                // Try to parse as StreamMessage first (for streaming functions)
                 if (StreamMessage.TryGetFromJsonElement(doc.RootElement, out var streamMsg) && 
                     streamMsg != null && 
                     streamMsg.IsStart)
@@ -167,16 +160,16 @@ public class ToolInvoker
                     {
                         try
                         {
-                            var toolDetails = _toolService.GetToolDetails(method);
+                            var toolDetails = _toolService.GetFunctionDetails(method);
                             
-                            if (toolDetails.ToolArgumentType.IsToolConnector)
+                            if (toolDetails.FunctionArgumentType.IsToolConnector)
                             {
                                 // Create ToolConnector with actual StreamMessage
                                 var connector = new ToolConnector(socket);
                                 connector.StreamMessage = streamMsg;
                                 
                                 // Invoke tool
-                                var toolResult = _toolService.InvokeToolDelegate(method, toolDetails, connector);
+                                var toolResult = _toolService.InvokeFunctionDelegate(method, toolDetails, connector);
                                 
                                 if (toolResult is Task toolConnectorTask)
                                 {
@@ -386,27 +379,30 @@ public class ToolInvoker
                     "Message must be a request or notification");
             }
 
-            // MCP protocol methods (check BEFORE GetToolDetails!)
+            // MCP protocol methods (check BEFORE GetFunctionDetails!)
             if (message.Method == "initialize")
             {
                 return HandleInitialize(message);
             }
             
-            if (message.Method == "tools/list")
+            if (message.Method == "tools/list" ||
+                message.Method == "prompts/list")
             {
                 // Use transport-aware filtering
-                return HandleToolsList(message, transport);
+                return HandleFunctionsList(message, transport);
             }
             
-            // NEW: Formatted tool lists (tools/list/{format})
-            if (message.Method?.StartsWith("tools/list/") == true)
+            // Formatted tool lists (functions/list/{format})
+            if (message.Method?.StartsWith("tools/list/") == true ||
+                message.Method?.StartsWith("prompts/list/") == true)
             {
-                return HandleFormattedToolsList(message, transport);
+                return HandleFormattedFunctionsList(message, transport);
             }
             
-            if (message.Method == "tools/call")
+            if (message.Method == "tools/call" ||
+                message.Method == "prompts/get")
             {
-                return await HandleToolsCallAsync(message, cancellationToken);
+                return await HandleFunctionsCallAsync(message, cancellationToken);
             }
 
             // MCP notifications (client → server, no response expected)
@@ -417,7 +413,7 @@ public class ToolInvoker
                 return null; // No response for notifications
             }
 
-            // Fix for CS8604: Add null check for message.Method before calling GetToolDetails
+            // Fix for CS8604: Add null check for message.Method before calling GetFunctionDetails
             if (string.IsNullOrEmpty(message.Method))
             {
                 return ToolResponse.Error(
@@ -426,12 +422,12 @@ public class ToolInvoker
                     "Invalid Request",
                     "Method name must not be null or empty");
             }
-            var toolDetails = _toolService.GetToolDetails(message.Method);
+            var toolDetails = _toolService.GetFunctionDetails(message.Method);
             
             // Check if this is a ToolConnector-based tool (streaming)
-            if (toolDetails.ToolArgumentType.IsToolConnector)
+            if (toolDetails.FunctionArgumentType.IsToolConnector)
             {
-                // ToolConnector tools should be initiated via StreamMessage start, not JSON-RPC
+                // ToolConnector functions should be initiated via StreamMessage start, not JSON-RPC
                 return ToolResponse.Error(
                     id,
                     -32601,
@@ -443,9 +439,9 @@ public class ToolInvoker
             object[] args;
             
             // If the tool expects a TypedJsonRpc<T>, wrap the JsonRpcMessage accordingly.
-            if (toolDetails.ToolArgumentType.IsTypedJsonRpc)
+            if (toolDetails.FunctionArgumentType.IsTypedJsonRpc)
             {
-                var paramType = toolDetails.ToolArgumentType.ParameterType;
+                var paramType = toolDetails.FunctionArgumentType.ParameterType;
 
                 args = [Activator.CreateInstance(paramType, message)
                         ?? throw new ToolInternalErrorException(
@@ -457,7 +453,7 @@ public class ToolInvoker
             }
 
             // Invoke the tool
-            var result = _toolService.InvokeToolDelegate(
+            var result = _toolService.InvokeFunctionDelegate(
                 message.Method,
                 toolDetails,
                 args);
@@ -484,7 +480,7 @@ public class ToolInvoker
 
     /// <summary>
     /// Invokes a single JSON-RPC request over WebSocket.
-    /// Handles ToolConnector-based tools specially.
+    /// Handles ToolConnector-based functions specially.
     /// Returns null for notifications (no response expected).
     /// </summary>
     private async Task<object?> InvokeSingleWsAsync(
@@ -518,20 +514,28 @@ public class ToolInvoker
                     "Message must be a request or notification");
             }
 
-            // MCP protocol methods (check BEFORE GetToolDetails!)
+            // MCP protocol methods (check BEFORE GetFunctionDetails!)
             if (message.Method == "initialize")
             {
                 return HandleInitialize(message);
             }
             
-            if (message.Method == "tools/list")
+            if (message.Method == "tools/list" ||
+                message.Method == "prompts/list")
             {
-                return HandleToolsList(message, "ws");
+                return HandleFunctionsList(message, "ws");
             }
-            
+
+            // Formatted tool lists (functions/list/{format})
+            if (message.Method?.StartsWith("tools/list/") == true ||
+                message.Method?.StartsWith("prompts/list/") == true)
+            {
+                return HandleFormattedFunctionsList(message, "ws");
+            }
+
             if (message.Method == "tools/call")
             {
-                return await HandleToolsCallAsync(message, cancellationToken);
+                return await HandleFunctionsCallAsync(message, cancellationToken);
             }
 
             // MCP notifications (client → server, no response expected)
@@ -542,7 +546,7 @@ public class ToolInvoker
                 return null; // No response for notifications
             }
 
-            // Fix for CS8604: Add null check for message.Method before calling GetToolDetails
+            // Fix for CS8604: Add null check for message.Method before calling GetFunctionDetails
             if (string.IsNullOrEmpty(message.Method))
             {
                 return ToolResponse.Error(
@@ -551,15 +555,15 @@ public class ToolInvoker
                     "Invalid Request",
                     "Method name must not be null or empty");
             }
-            var toolDetails = _toolService.GetToolDetails(message.Method);
+            var toolDetails = _toolService.GetFunctionDetails(message.Method);
             
             // Check if this is a ToolConnector-based tool (streaming)
-            if (toolDetails.ToolArgumentType.IsToolConnector)
+            if (toolDetails.FunctionArgumentType.IsToolConnector)
             {
                 // Create ToolConnector and pass WebSocket ownership
                 var connector = new ToolConnector(socket);
                 
-                // For read tools: create a synthetic StreamMessage from JSON-RPC request
+                // For read functions: create a synthetic StreamMessage from JSON-RPC request
                 // This allows tool to start receive loop with proper context
                 var metaObj = new
                 {
@@ -575,7 +579,7 @@ public class ToolInvoker
                 connector.StreamMessage = StreamMessage.CreateStartMessage(metaElement) with { Id = message.IdAsString };
                 
                 // Invoke tool with connector
-                var result = _toolService.InvokeToolDelegate(
+                var result = _toolService.InvokeFunctionDelegate(
                     message.Method,
                     toolDetails,
                     connector);
@@ -588,9 +592,9 @@ public class ToolInvoker
             object[] args;
 
             // If the tool expects a TypedJsonRpc<T>, wrap the JsonRpcMessage accordingly.
-            if (toolDetails.ToolArgumentType.IsTypedJsonRpc)
+            if (toolDetails.FunctionArgumentType.IsTypedJsonRpc)
             {
-                var paramType = toolDetails.ToolArgumentType.ParameterType;
+                var paramType = toolDetails.FunctionArgumentType.ParameterType;
 
                 args = [Activator.CreateInstance(paramType, message)
                         ?? throw new ToolInternalErrorException(
@@ -601,7 +605,7 @@ public class ToolInvoker
                 args = [message];
             }
 
-            var regularResult = _toolService.InvokeToolDelegate(
+            var regularResult = _toolService.InvokeFunctionDelegate(
                 message.Method,
                 toolDetails,
                 args);
@@ -631,6 +635,19 @@ public class ToolInvoker
     /// </summary>
     private JsonRpcMessage HandleInitialize(JsonRpcMessage request)
     {
+        bool isTools = _toolService.GetAllFunctionDefinitions(ToolService.FunctionTypeEnum.Tool).Any();
+        bool isPrompts = _toolService.GetAllFunctionDefinitions(ToolService.FunctionTypeEnum.Prompt).Any();
+
+        Dictionary<string, object> capabilities = [];
+
+        if (isTools)
+        {
+            capabilities["tools"] = new { };
+        }
+        if (isPrompts)
+        {
+            capabilities["prompts"] = new { };
+        }
         return ToolResponse.Success(request.Id, new
         {
             protocolVersion = "2025-06-18", // Updated to latest MCP protocol version
@@ -640,21 +657,18 @@ public class ToolInvoker
                 name = "mcp-gateway",
                 version = "2.0.0"
             },
-            capabilities = new
-            {
-                tools = new { }
-            }
+            capabilities
         });
     }
 
     /// <summary>
-    /// Handles MCP tools/list request
+    /// Handles MCP functions/list request
     /// </summary>
     private JsonRpcMessage HandleToolsList(JsonRpcMessage request)
     {
         try
         {
-            var tools = _toolService.GetAllToolDefinitions();
+            var tools = _toolService.GetAllFunctionDefinitions(ToolService.FunctionTypeEnum.Tool);
             var toolsList = tools.Select(t =>
             {
                 object? schema = null;
@@ -703,18 +717,29 @@ public class ToolInvoker
     }
 
     /// <summary>
-    /// Handles MCP tools/list request with transport filtering.
-    /// Filters tools based on transport capabilities to prevent clients from seeing incompatible tools.
+    /// Handles MCP functions/list request with transport filtering.
+    /// Filters functions based on transport capabilities to prevent clients from seeing incompatible functions.
     /// </summary>
     /// <param name="request">The JSON-RPC request</param>
     /// <param name="transport">Transport type: "stdio", "http", "ws", or "sse"</param>
-    private JsonRpcMessage HandleToolsList(JsonRpcMessage request, string transport)
+    private JsonRpcMessage HandleFunctionsList(JsonRpcMessage request, string transport)
     {
         try
         {
-            // Get filtered tools for this transport
-            var tools = _toolService.GetToolsForTransport(transport);
-            var toolsList = tools.Select(t =>
+            FunctionTypeEnum functionType = FunctionTypeEnum.Tool;
+
+            if (request.Method == "tools/list")
+            {
+                functionType = FunctionTypeEnum.Tool;
+            }
+            if (request.Method == "prompts/list")
+            {
+                functionType = FunctionTypeEnum.Prompt;
+            }
+
+            // Get filtered functions for this transport
+            var functions = _toolService.GetFunctionsForTransport(functionType, transport);
+            var functionsList = functions.Select(t =>
             {
                 object? schema = null;
                 try
@@ -735,10 +760,23 @@ public class ToolInvoker
                 };
             }).ToList();
 
-            return ToolResponse.Success(request.Id, new
+            if (functionType == FunctionTypeEnum.Tool)
             {
-                tools = toolsList
-            });
+                return ToolResponse.Success(request.Id, new
+                {
+                    tools = functionsList
+                });
+            }
+
+            if (functionType == FunctionTypeEnum.Prompt)
+            {
+                return ToolResponse.Success(request.Id, new
+                {
+                    prompts = functionsList
+                });
+            }
+
+            return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = "Invalid method" });
         }
         catch (Exception ex)
         {
@@ -748,18 +786,32 @@ public class ToolInvoker
     }
 
     /// <summary>
-    /// Handles formatted tool list requests (tools/list/{format}).
+    /// Handles formatted function list requests (functions/list/{format}) (prompts/list/{format}).
     /// Supports multiple AI platform formats: ollama, microsoft-ai, openai, etc.
     /// </summary>
     /// <param name="request">The JSON-RPC request</param>
     /// <param name="transport">Transport type for capability filtering</param>
     /// <returns>Formatted tool list in the requested format</returns>
-    private JsonRpcMessage HandleFormattedToolsList(JsonRpcMessage request, string transport)
+    private JsonRpcMessage HandleFormattedFunctionsList(JsonRpcMessage request, string transport)
     {
         try
         {
-            // Extract format from method name (e.g., "tools/list/ollama" → "ollama")
-            var format = request.Method?.Replace("tools/list/", "") ?? "";
+            ToolService.FunctionTypeEnum functionType = ToolService.FunctionTypeEnum.Tool;
+            string? format = null;
+
+            if (!string.IsNullOrEmpty(request.Method) && request.Method.Contains("tools/list/"))
+            {
+                functionType = ToolService.FunctionTypeEnum.Tool;
+                // Extract format from method name (e.g., "functions/list/ollama" → "ollama")
+                format = request.Method?.Replace("tools/list/", "") ?? "";
+            }
+            if (!string.IsNullOrEmpty(request.Method) && request.Method.Contains("prompts/list/"))
+            {
+                functionType = ToolService.FunctionTypeEnum.Prompt;
+                // Extract format from method name (e.g., "functions/list/ollama" → "ollama")
+                format = request.Method?.Replace("prompts/list/", "") ?? "";
+            }
+
             
             if (string.IsNullOrEmpty(format))
             {
@@ -770,8 +822,8 @@ public class ToolInvoker
                     "Format must be specified (e.g., tools/list/ollama)");
             }
             
-            // Get filtered tools for this transport
-            var tools = _toolService.GetToolsForTransport(transport);
+            // Get filtered functions for this transport
+            var tools = _toolService.GetFunctionsForTransport(functionType, transport);
             
             // Get appropriate formatter
             IToolListFormatter formatter = format.ToLowerInvariant() switch
@@ -782,14 +834,14 @@ public class ToolInvoker
                 _ => throw new ToolNotFoundException($"Unknown format: {format}")
             };
             
-            // Format tools
+            // Format functions
             var formattedTools = formatter.FormatToolList(tools);
             
             return ToolResponse.Success(request.Id, formattedTools);
         }
         catch (ToolNotFoundException ex)
         {
-            _logger.LogWarning(ex, "Unknown tool list format: {Method}", request.Method);
+            _logger.LogWarning(ex, "Unknown function list format: {Method}", request.Method);
             return ToolResponse.Error(
                 request.Id,
                 -32601,
@@ -804,31 +856,37 @@ public class ToolInvoker
     }
 
     /// <summary>
-    /// Handles MCP tools/call request
+    /// Handles MCP functions/call request
     /// </summary>
-    private async Task<JsonRpcMessage> HandleToolsCallAsync(JsonRpcMessage request, CancellationToken cancellationToken)
+    private async Task<JsonRpcMessage> HandleFunctionsCallAsync(JsonRpcMessage request, CancellationToken cancellationToken)
     {
         try
         {
             var requestParams = request.GetParams();
-            var toolName = requestParams.GetProperty("name").GetString();
-            if (string.IsNullOrEmpty(toolName))
+            var functionName = requestParams.GetProperty("name").GetString();
+            if (string.IsNullOrEmpty(functionName))
             {
                 return ToolResponse.Error(request.Id, -32602, "Invalid params", "Missing 'name' parameter");
             }
 
-            // Get arguments if provided
+            // Get arguments (tools) if provided
             JsonElement? args = null;
             if (requestParams.TryGetProperty("arguments", out var argsElement))
             {
                 args = argsElement;
             }
 
-            // Build tool request
-            var toolRequest = JsonRpcMessage.CreateRequest(toolName, request.Id, args);
+            // Get params (prompt) if provided
+            else if (requestParams.TryGetProperty("params", out var paramsElement))
+            {
+                args = paramsElement;
+            }
 
-            // Fix for CS8604: Add null check for toolName before calling GetToolDetails
-            if (string.IsNullOrEmpty(toolName))
+            // Build tool request
+            var functionRequest = JsonRpcMessage.CreateRequest(functionName, request.Id, args);
+
+            // Fix for CS8604: Add null check for functionName before calling GetFunctionDetails
+            if (string.IsNullOrEmpty(functionName))
             {
                 return ToolResponse.Error(
                     request.Id,
@@ -836,9 +894,9 @@ public class ToolInvoker
                     "Invalid params",
                     "Tool name must not be null or empty");
             }
-            var toolDetails = _toolService.GetToolDetails(toolName);
+            var functionDetails = _toolService.GetFunctionDetails(functionName);
             
-            if (toolDetails.ToolArgumentType.IsToolConnector)
+            if (functionDetails.FunctionArgumentType.IsToolConnector)
             {
                 return ToolResponse.Error(
                     request.Id,
@@ -847,8 +905,24 @@ public class ToolInvoker
                     "This tool must be called via StreamMessage, not tools/call");
             }
 
-            var result = _toolService.InvokeToolDelegate(toolName, toolDetails, toolRequest);
-            var processedResult = await ProcessToolResultAsync(result, toolDetails, false, request.Id, cancellationToken);
+            object? result = null;
+
+            // If the tool expects a TypedJsonRpc<T>, wrap the JsonRpcMessage accordingly.
+            if (functionDetails.FunctionArgumentType.IsTypedJsonRpc)
+            {
+                var paramType = functionDetails.FunctionArgumentType.ParameterType;
+
+                var functionTypedRequest = Activator.CreateInstance(paramType, functionRequest)
+                    ?? throw new ToolInternalErrorException($"{functionName}: Failed to create TypedJsonRpc instance for parameter type '{paramType}'");
+
+                result = _toolService.InvokeFunctionDelegate(functionName, functionDetails, functionTypedRequest);
+            }
+            else
+            {
+                result = _toolService.InvokeFunctionDelegate(functionName, functionDetails, functionRequest);
+            }
+
+            var processedResult = await ProcessToolResultAsync(result, functionDetails, false, request.Id, cancellationToken);
 
             // Extract the actual result data
             object? resultData = null;
@@ -861,21 +935,31 @@ public class ToolInvoker
                 resultData = processedResult;
             }
 
-            // Wrap result in MCP content format
-            var resultJson = JsonSerializer.Serialize(resultData, JsonOptions.Default);
-            var mcpResult = new
+            // TOOL: Wrap result in MCP content format
+            if (functionDetails.FunctionType == FunctionTypeEnum.Tool)
             {
-                content = new []
+                var resultJson = JsonSerializer.Serialize(resultData, JsonOptions.Default);
+                var mcpResult = new
                 {
-                    new
+                    content = new []
                     {
-                        type = "text",
-                        text = resultJson
+                        new
+                        {
+                            type = "text",
+                            text = resultJson
+                        }
                     }
-                }
-            };
+                };
+                return ToolResponse.Success(request.Id, mcpResult);
+            }
 
-            return ToolResponse.Success(request.Id, mcpResult);
+            if (functionDetails.FunctionType == FunctionTypeEnum.Prompt)
+            {
+                return ToolResponse.Success(request.Id, resultData);
+            }
+
+            throw new ToolNotFoundException("Unknown function type.");
+
         }
         catch (ToolNotFoundException ex)
         {
@@ -893,7 +977,7 @@ public class ToolInvoker
     /// </summary>
     private async Task<object?> ProcessToolResultAsync(
         object? result,
-        ToolService.ToolDetails toolDetails,
+        ToolService.FunctionDetails toolDetails,
         bool isNotification,
         object? id,
         CancellationToken cancellationToken)

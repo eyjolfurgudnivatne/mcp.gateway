@@ -7,54 +7,58 @@ using System.Net.WebSockets;
 using System.Reflection;
 using System.Text.Json;
 
-/// <summary>
-/// Implementation of IToolService
-/// </summary>
+
 public class ToolService(IServiceProvider serviceProvider)
 {
-    private readonly ConcurrentDictionary<string, ToolDetails> ConfiguredTools = new(StringComparer.OrdinalIgnoreCase);
-    private volatile bool _toolsScanned = false;
+    private readonly ConcurrentDictionary<string, FunctionDetails> ConfiguredFunctions = new(StringComparer.OrdinalIgnoreCase);
+    private volatile bool _functionsScanned = false;
     private readonly object _scanLock = new();
 
-    internal record ToolDetails(ToolDetailArgumentType ToolArgumentType, ToolDetailResultType ToolResultType, Delegate ToolDelegate);
-    internal record ToolDetailArgumentType(bool IsToolConnector, bool IsStreamMessage, bool IsJsonElementMessage, bool IsTypedJsonRpc, Type ParameterType);
-    internal record ToolDetailResultType(bool IsVoidTask, bool IsGenericTask, bool IsIAsyncEnumerable, bool IsJsonRpcResponse);
-    
-    internal ToolDetails GetToolDetails(string toolName)
+    public enum FunctionTypeEnum
     {
-        // Lazy scan on first tool lookup
-        EnsureToolsScanned();
-        
-        if (!ConfiguredTools.TryGetValue(toolName, out var toolDelegate) || toolDelegate is null)
-            throw new ToolNotFoundException($"Tool '{toolName}' is not configured.");
-        return toolDelegate;
+        Tool,
+        Prompt
+    }
+
+    internal record FunctionDetails(FunctionTypeEnum FunctionType, FunctionDetailArgumentType FunctionArgumentType, FunctionDetailResultType FunctionResultType, Delegate FunctionDelegate);
+    internal record FunctionDetailArgumentType(bool IsToolConnector, bool IsStreamMessage, bool IsJsonElementMessage, bool IsTypedJsonRpc, Type ParameterType);
+    internal record FunctionDetailResultType(bool IsVoidTask, bool IsGenericTask, bool IsIAsyncEnumerable, bool IsJsonRpcResponse);
+    
+    internal FunctionDetails GetFunctionDetails(string functionName)
+    {
+        // Lazy scan on first function lookup
+        EnsureFunctionsScanned();
+
+        if (!ConfiguredFunctions.TryGetValue(functionName, out var functionDetails) || functionDetails is null)
+            throw new ToolNotFoundException($"Function '{functionName}' is not configured.");
+        return functionDetails;
     }
     
     /// <summary>
-    /// Ensures tools are scanned exactly once, thread-safely.
+    /// Ensures functions are scanned exactly once, thread-safely.
     /// </summary>
-    private void EnsureToolsScanned()
+    private void EnsureFunctionsScanned()
     {
-        if (_toolsScanned)
+        if (_functionsScanned)
             return;
             
         lock (_scanLock)
         {
-            if (_toolsScanned)
+            if (_functionsScanned)
                 return;
                 
-            ScanAndRegisterTools();
-            _toolsScanned = true;
+            ScanAndRegisterFunctions();
+            _functionsScanned = true;
         }
     }
-    
+
     /// <summary>
-    /// Scans all loaded assemblies for methods marked with [McpTool] and registers them.
+    /// Scans all loaded assemblies for methods marked with [McpTool] or [McpPrompt] and registers them.
     /// </summary>
-    private void ScanAndRegisterTools()
+    private void ScanAndRegisterFunctions()
     {
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-        var toolCount = 0;
+        var functionCount = 0;
         
         foreach (var assembly in assemblies)
         {
@@ -78,31 +82,55 @@ public class ToolService(IServiceProvider serviceProvider)
                     
                     foreach (var method in methods)
                     {
-                        var attribute = method.GetCustomAttribute<McpToolAttribute>();
-                        if (attribute is null)
+                        FunctionTypeEnum functionType = FunctionTypeEnum.Tool;
+                        string? functionName = null;
+
+                        // Check for McpTool attribute
+                        if (functionName is null)
+                        {
+                            var attribute = method.GetCustomAttribute<McpToolAttribute>();
+                            if (attribute != null)
+                            {
+                                functionType = FunctionTypeEnum.Tool;
+                                functionName = attribute.Name ?? ToolNameGenerator.ToSnakeCase(method.Name);
+                            }
+                        }
+                        // Check for McpPrompt attribute
+                        if (functionName is null)
+                        {
+                            var attribute = method.GetCustomAttribute<McpPromptAttribute>();
+                            if (attribute != null)
+                            {
+                                functionType = FunctionTypeEnum.Prompt;
+                                functionName = attribute.Name ?? ToolNameGenerator.ToSnakeCase(method.Name);
+                            }
+                        }
+
+                        // Skip methods without custom attribute
+                        if (functionName is null)
                             continue;
                         
                         // Auto-generate tool name if not specified
-                        var toolName = attribute.Name ?? ToolNameGenerator.ToSnakeCase(method.Name);
+                        //var functionName = attributeName ?? ToolNameGenerator.ToSnakeCase(method.Name);
                         
                         // Validate tool name
-                        if (!ToolMethodNameValidator.IsValid(toolName, out var validationError))
+                        if (!ToolMethodNameValidator.IsValid(functionName, out var validationError))
                         {
                             System.Diagnostics.Debug.WriteLine(
-                                $"WARNING: Skipping tool '{method.Name}' in {type.FullName} - Invalid tool name '{toolName}': {validationError}");
+                                $"WARNING: Skipping function '{method.Name}' in {type.FullName} - Invalid function name '{functionName}': {validationError}");
                             continue;
                         }
                         
                         // Debug: Found a tool!
                         System.Diagnostics.Debug.WriteLine(
-                            $"Found tool: {toolName} (from method: {method.Name}) in {type.FullName}");
+                            $"Found function: {functionName} (from method: {method.Name}) in {type.FullName}");
                         
                         // Create delegate
-                        Delegate toolDelegate;
+                        Delegate functionDelegate;
                         
                         if (method.IsStatic)
                         {
-                            toolDelegate = Delegate.CreateDelegate(
+                            functionDelegate = Delegate.CreateDelegate(
                                 System.Linq.Expressions.Expression.GetDelegateType(
                                     method.GetParameters().Select(p => p.ParameterType)
                                         .Concat(new[] { method.ReturnType })
@@ -115,7 +143,7 @@ public class ToolService(IServiceProvider serviceProvider)
                             if (instance is null)
                                 continue;
                                 
-                            toolDelegate = Delegate.CreateDelegate(
+                            functionDelegate = Delegate.CreateDelegate(
                                 System.Linq.Expressions.Expression.GetDelegateType(
                                     method.GetParameters().Select(p => p.ParameterType)
                                         .Concat(new[] { method.ReturnType })
@@ -123,10 +151,10 @@ public class ToolService(IServiceProvider serviceProvider)
                                 instance,
                                 method);
                         }
-                        
-                        // Register the tool with auto-generated or explicit name
-                        RegisterTool(toolName, toolDelegate);
-                        toolCount++;
+
+                        // Register the function with auto-generated or explicit name
+                        RegisterFunction(functionName, functionType, functionDelegate);
+                        functionCount++;
                     }
                 }
             }
@@ -136,30 +164,31 @@ public class ToolService(IServiceProvider serviceProvider)
                 continue;
             }
         }
-        
-        System.Diagnostics.Debug.WriteLine($"Tool scan complete. Registered {toolCount} tools.");
+
+        System.Diagnostics.Debug.WriteLine($"Function scan complete. Registered {functionCount} functions.");
     }
 
 
 
     /// <summary>
-    /// Registers a tool with the specified name and delegate.
+    /// Registers a function with the specified name and delegate.
     /// </summary>
-    /// <param name="name">The name of the tool to register. Must be a valid tool name.</param>
-    /// <param name="toolDelegate">The delegate for the tool's operations.</param>
-    /// <exception cref="ArgumentException">Thrown if <paramref name="name"/> is not a valid tool name.</exception>
-    internal void RegisterTool(string name, Delegate toolDelegate)
+    /// <param name="name">The name of the function to register. Must be a valid function name.</param>
+    /// <param name="functionType"></param>
+    /// <param name="functionDelegate">The delegate for the function's operations.</param>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="name"/> is not a valid function name.</exception>
+    internal void RegisterFunction(string name, FunctionTypeEnum functionType, Delegate functionDelegate)
     {
         if (!ToolMethodNameValidator.IsValid(name, out var error))
-            throw new ArgumentException($"Invalid tool name '{name}': {error}");
+            throw new ArgumentException($"Invalid function name '{name}': {error}");
 
-        var method = toolDelegate.Method;
+        var method = functionDelegate.Method;
         var returnType = method.ReturnType;
         var parameters = method.GetParameters();
 
         // --- Sjekk parameter ---
         if (parameters.Length == 0)
-            throw new ArgumentException($"Tool delegate for '{name}' must accept at least one parameter.");
+            throw new ArgumentException($"Function delegate for '{name}' must accept at least one parameter.");
 
         var firstParam = parameters[0].ParameterType;
 
@@ -182,13 +211,19 @@ public class ToolService(IServiceProvider serviceProvider)
         // auda, ingen av delene
         if (!isJsonElementMessage && !isTypedJson && !isInputStreamMessage && !isInputToolConnector)
             throw new ArgumentException(
-                $"Tool delegate for '{name}' must take JsonRpcMessage, StreamMessage or ToolConnector as first parameter."
+                $"Function delegate for '{name}' must take JsonRpcMessage, TypedJsonRpc<T>, StreamMessage or ToolConnector as first parameter."
+            );
+
+        // prompt, ingen av delene
+        if (functionType == FunctionTypeEnum.Prompt && !isJsonElementMessage && !isTypedJson)
+            throw new ArgumentException(
+                $"Prompt delegate for '{name}' must take JsonRpcMessage or TypedJsonRpc<T> as first parameter."
             );
 
         // TODO: Erstattes av ToolConnector. dersom det er en stream, må det være minst en parameter til (for WebSocket)
         if (isInputStreamMessage && parameters.Length < 2)
             throw new ArgumentException(
-                $"Tool delegate for '{name}' must take at least two parameters when using StreamMessage."
+                $"Function delegate for '{name}' must take at least two parameters when using StreamMessage."
             );
 
         // TODO: Erstattes av ToolConnector. ved input stream melding må neste parameter være WebSocket
@@ -197,7 +232,7 @@ public class ToolService(IServiceProvider serviceProvider)
             var secondParam = parameters[1].ParameterType;
             if (secondParam != typeof(WebSocket))
                 throw new ArgumentException(
-                    $"Tool delegate for '{name}' must take WebSocket as second parameter when using StreamMessage."
+                    $"Function delegate for '{name}' must take WebSocket as second parameter when using StreamMessage."
                 );
         }
 
@@ -220,17 +255,21 @@ public class ToolService(IServiceProvider serviceProvider)
              returnType.GenericTypeArguments[0].GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>));
 
         // --- Sjekk returtype Task void ---
-        bool isTask = returnType.IsGenericType &&
-             returnType.GetGenericTypeDefinition() == typeof(Task<>);
+        bool isGenericTask = returnType.IsGenericType &&
+            returnType.GetGenericTypeDefinition() == typeof(Task<>);
 
-        bool isGenericTask = method.ReturnType.IsGenericType &&
-                     method.ReturnType.GetGenericTypeDefinition() == typeof(Task<>);
-        bool isVoidTask = method.ReturnType == typeof(Task);
+        bool isVoidTask = returnType == typeof(Task);
 
-        // Sjekk retur verdier og kast feil dersom ugyldig
-        if (!isJsonRpcResponse && !isStreamMessageResponse && !isVoidTask)
+        // Tool: Sjekk retur verdier og kast feil dersom ugyldig
+        if (functionType == FunctionTypeEnum.Tool && !isJsonRpcResponse && !isStreamMessageResponse && !isVoidTask)
             throw new ArgumentException(
                 $"Tool delegate for '{name}' must return Task, Task<JsonRpcMessage>, JsonRpcMessage or IAsyncEnumerable<T>."
+            );
+
+        // Prompt: Sjekk retur verdier og kast feil dersom ugyldig
+        if (functionType == FunctionTypeEnum.Prompt && !isJsonRpcResponse && !isGenericTask)
+            throw new ArgumentException(
+                $"Prompt delegate for '{name}' must return Task<JsonRpcMessage> or JsonRpcMessage."
             );
 
         // Kun Task tillatt for ToolConnector
@@ -239,7 +278,7 @@ public class ToolService(IServiceProvider serviceProvider)
                 $"Tool delegate for '{name}' use ToolConnector and must return Task."
             );
 
-        var argumentType = new ToolDetailArgumentType(
+        var argumentType = new FunctionDetailArgumentType(
             IsToolConnector: isInputToolConnector,
             IsStreamMessage: isInputStreamMessage,
             IsJsonElementMessage: isJsonElementMessage,
@@ -247,17 +286,18 @@ public class ToolService(IServiceProvider serviceProvider)
             ParameterType: firstParam
         );
 
-        var resultType = new ToolDetailResultType(
+        var resultType = new FunctionDetailResultType(
             IsVoidTask: isVoidTask,
             IsGenericTask: isGenericTask,
             IsIAsyncEnumerable: isStreamMessageResponse,
             IsJsonRpcResponse: isJsonRpcResponse
         );
         // --- Alt OK ---
-        ConfiguredTools[name] = new ToolDetails(
-            ToolArgumentType: argumentType,
-            ToolResultType: resultType,
-            ToolDelegate: toolDelegate);
+        ConfiguredFunctions[name] = new FunctionDetails(
+            FunctionType: functionType,
+            FunctionArgumentType: argumentType,
+            FunctionResultType: resultType,
+            FunctionDelegate: functionDelegate);
     }
 
 
@@ -268,9 +308,9 @@ public class ToolService(IServiceProvider serviceProvider)
     /// <remarks>
     /// - If the tool method has more (or no matching) parameters than extraArgs, these will be resolved from the DI container.<br></br>
     /// </remarks>
-    internal object? InvokeToolDelegate(string toolName, ToolDetails toolDetails, params object[] extraArgs)
+    internal object? InvokeFunctionDelegate(string functionName, FunctionDetails functionDetails, params object[] extraArgs)
     {
-        var parameters = toolDetails.ToolDelegate.Method.GetParameters();
+        var parameters = functionDetails.FunctionDelegate.Method.GetParameters();
         var delegateArgs = new object[parameters.Length];
 
         using var scope = serviceProvider.CreateScope();
@@ -291,46 +331,69 @@ public class ToolService(IServiceProvider serviceProvider)
             {
                 // Prøv å resolve fra DI
                 delegateArgs[i] = scopedServiceProvider.GetService(paramType) ??
-                    throw new ToolInternalErrorException($"{toolName}: Parameter type {paramType.Name} is missing");
+                    throw new ToolInternalErrorException($"{functionName}: Parameter type {paramType.Name} is missing");
             }
         }
-        return toolDetails.ToolDelegate.DynamicInvoke(delegateArgs);
+        return functionDetails.FunctionDelegate.DynamicInvoke(delegateArgs);
     }
 
     /// <summary>
-    /// Tool definition for MCP protocol (used by tools/list)
+    /// Function definition for MCP protocol (used by tools/list and prompts/list)
     /// </summary>
-    public record ToolDefinition(
+    public record FunctionDefinition(
         string Name, 
         string Description, 
         string InputSchema,
         ToolCapabilities Capabilities = ToolCapabilities.Standard);
 
+
     /// <summary>
-    /// Returns all registered tools with their metadata for MCP tools/list
+    /// Returns all registered functions with their metadata for MCP tools/list or prompts/list
     /// </summary>
-    public IEnumerable<ToolDefinition> GetAllToolDefinitions()
+    public IEnumerable<FunctionDefinition> GetAllFunctionDefinitions(FunctionTypeEnum functionType)
     {
-        EnsureToolsScanned();
+        EnsureFunctionsScanned();
         
-        return ConfiguredTools.Select(kvp =>
+        return ConfiguredFunctions.Where(x => x.Value.FunctionType == functionType).Select(kvp =>
         {
-            var toolName = kvp.Key;
-            var toolDetails = kvp.Value;
+            var functionName = kvp.Key;
+            var functionDetails = kvp.Value;
             
             // Get attribute from delegate method
-            var method = toolDetails.ToolDelegate.Method;
-            var attr = method.GetCustomAttribute<McpToolAttribute>();
-            
-            var description = attr?.Description ?? "No description available";
-            var inputSchema = attr?.InputSchema ?? @"{""type"":""object"",""properties"":{}}";
-            var capabilities = attr?.Capabilities ?? ToolCapabilities.Standard;  // NEW!
+            var method = functionDetails.FunctionDelegate.Method;
+            string? description = null;
+            string? attrInputSchema = null;
+            ToolCapabilities capabilities = ToolCapabilities.Standard;
 
-            if (string.IsNullOrWhiteSpace(attr?.InputSchema))
+            // Tool
+            if (functionDetails.FunctionType == FunctionTypeEnum.Tool)
+            {
+                var attr = method.GetCustomAttribute<McpToolAttribute>();
+
+                description = attr?.Description ?? "No description available";
+                attrInputSchema = attr?.InputSchema;
+                capabilities = attr?.Capabilities ?? ToolCapabilities.Standard;                
+            }
+
+            // Prompt
+            if (functionDetails.FunctionType == FunctionTypeEnum.Prompt)
+            {
+                var attr = method.GetCustomAttribute<McpPromptAttribute>();
+
+                description = attr?.Description ?? "No description available";
+                attrInputSchema = attr?.InputSchema;
+            }
+
+            string? inputSchema = null;
+            if (string.IsNullOrWhiteSpace(attrInputSchema))
             {
                 // 2. Hvis TypedJsonRpc<T> og ingen InputSchema → prøv schema-generator
-                var generated = ToolSchemaGenerator.TryGenerateForTool(method, toolDetails);
+                var generated = ToolSchemaGenerator.TryGenerateForTool(method, functionDetails);
                 inputSchema = generated ?? @"{""type"":""object"",""properties"":{}}";
+            }
+            else
+            {
+                inputSchema = attrInputSchema;
             }
 
             // Validate InputSchema at runtime
@@ -340,14 +403,14 @@ public class ToolService(IServiceProvider serviceProvider)
                 {
                     using var doc = JsonDocument.Parse(inputSchema);
                     var root = doc.RootElement;
-                    
+
                     // Check if it's a valid JSON object
                     if (root.ValueKind != JsonValueKind.Object)
                     {
                         System.Diagnostics.Debug.WriteLine(
-                            $"WARNING: Tool '{toolName}' has invalid InputSchema - root must be an object");
+                            $"WARNING: Function '{functionName}' has invalid InputSchema - root must be an object");
                     }
-                    
+
                     // Check if 'type' is 'object'
                     if (root.TryGetProperty("type", out var typeElement))
                     {
@@ -355,17 +418,17 @@ public class ToolService(IServiceProvider serviceProvider)
                         if (typeValue != "object")
                         {
                             System.Diagnostics.Debug.WriteLine(
-                                $"WARNING: Tool '{toolName}' InputSchema type is '{typeValue}', expected 'object'");
+                                $"WARNING: Function '{functionName}' InputSchema type is '{typeValue}', expected 'object'");
                         }
                     }
-                    
+
                     // CRITICAL: Check if 'properties' is an object (not an array!)
                     if (root.TryGetProperty("properties", out var propertiesElement))
                     {
                         if (propertiesElement.ValueKind == JsonValueKind.Array)
                         {
                             System.Diagnostics.Debug.WriteLine(
-                                $"ERROR: Tool '{toolName}' has INVALID InputSchema - 'properties' must be an object {{}}, not an array []!");
+                                $"ERROR: Function '{functionName}' has INVALID InputSchema - 'properties' must be an object {{}}, not an array []!");
                             System.Diagnostics.Debug.WriteLine(
                                 $"  This will cause LLM clients to fail when parsing the schema.");
                             System.Diagnostics.Debug.WriteLine(
@@ -374,37 +437,38 @@ public class ToolService(IServiceProvider serviceProvider)
                         else if (propertiesElement.ValueKind != JsonValueKind.Object)
                         {
                             System.Diagnostics.Debug.WriteLine(
-                                $"WARNING: Tool '{toolName}' InputSchema 'properties' should be an object");
+                                $"WARNING: Function '{functionName}' InputSchema 'properties' should be an object");
                         }
                     }
                 }
                 catch (JsonException ex)
                 {
                     System.Diagnostics.Debug.WriteLine(
-                        $"ERROR: Tool '{toolName}' has malformed InputSchema JSON: {ex.Message}");
+                        $"ERROR: Function '{functionName}' has malformed InputSchema JSON: {ex.Message}");
                 }
             }
             
-            return new ToolDefinition(
-                Name: toolName,
-                Description: description,
+            return new FunctionDefinition(
+                Name: functionName,
+                Description: description!,
                 InputSchema: inputSchema,
-                Capabilities: capabilities  // NEW!
+                Capabilities: capabilities
             );
         });
     }
-    
+
     /// <summary>
     /// Returns tools filtered by transport capabilities.
     /// This ensures clients only see tools they can actually use.
     /// </summary>
+    /// <param name="functionType">Tool, Prompt</param>
     /// <param name="transport">Transport type: "stdio", "http", "sse", or "ws"</param>
     /// <returns>List of tools compatible with the specified transport</returns>
-    public IEnumerable<ToolDefinition> GetToolsForTransport(string transport)
+    public IEnumerable<FunctionDefinition> GetFunctionsForTransport(FunctionTypeEnum functionType, string transport)
     {
-        var allTools = GetAllToolDefinitions();
-        
-        // Determine allowed capabilities based on transport
+        var allTools = GetAllFunctionDefinitions(functionType);
+
+        // Determine allowed capabilities based on transport (tools)
         var allowedCapabilities = transport switch
         {
             "stdio" => ToolCapabilities.Standard,

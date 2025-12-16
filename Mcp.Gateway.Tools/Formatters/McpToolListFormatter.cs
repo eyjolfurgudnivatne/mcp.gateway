@@ -10,7 +10,7 @@ public class McpToolListFormatter : IToolListFormatter
 {
     public string FormatName => "mcp";
     
-    public object FormatToolList(IEnumerable<ToolService.ToolDefinition> tools)
+    public object FormatToolList(IEnumerable<ToolService.FunctionDefinition> tools)
     {
         var toolsList = tools.Select(t =>
         {

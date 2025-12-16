@@ -1,4 +1,4 @@
-﻿namespace Mcp.Gateway.Tools;
+namespace Mcp.Gateway.Tools;
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,6 +48,6 @@ public class ToolRouteBuilder(WebApplication app, string toolPath)
         }
 
         app.Services.GetRequiredService<ToolService>()
-            .RegisterTool(_path, handler);
+            .RegisterFunction(_path, ToolService.FunctionTypeEnum.Tool, handler);
     }
 }

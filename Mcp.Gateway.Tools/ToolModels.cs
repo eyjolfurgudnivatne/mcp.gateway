@@ -18,6 +18,11 @@ public static class JsonOptions
         // See JsonSourceGenerationContext.cs for details
         // TypeInfoResolver = JsonSourceGenerationContext.Default
     };
+
+    static JsonOptions()
+    {
+        Default.Converters.Add(new JsonStringEnumConverter());
+    }
 }
 
 public sealed record JsonRpcMessage(
@@ -67,9 +72,64 @@ public sealed record JsonRpcMessage(
     {
         if (Result is null) return default;
         if (Result is T typed) return typed;
-        if (Result is JsonElement je) return je.Deserialize<T>(JsonOptions.Default);
-        // fallback: serialize + deserialize (sjelden nødvendig)
-        return JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(Result, JsonOptions.Default), JsonOptions.Default);
+        if (Result is JsonElement je)
+        {
+            // 1) Prøv direkte deserialisering til T fra root
+            try
+            {
+                var direct = je.Deserialize<T>(JsonOptions.Default);
+                if (direct is not null)
+                {
+                    return direct;
+                }
+            }
+            catch (JsonException)
+            {
+                // Ignorer
+            }            
+        }
+
+        // 2) Fallback: serialize + deserialize (sjelden nødvendig)
+        return JsonSerializer.Deserialize<T>(
+            JsonSerializer.Serialize(Result, JsonOptions.Default),
+            JsonOptions.Default);
+    }
+
+    // tools/call Wrap result in MCP content format
+    public T? GetToolsCallResult<T>()
+    {
+        if (Result is null) return default;
+        if (Result is T typed) return typed;
+        if (Result is JsonElement je)
+        {
+            // 1) MCP content-format: { content: [ { text: "<json or text>" } ] }
+            if (je.TryGetProperty("content", out var contentProp))
+            {
+                var contentItem = contentProp.EnumerateArray().FirstOrDefault();
+                if (contentItem.ValueKind != JsonValueKind.Undefined &&
+                    contentItem.TryGetProperty("text", out var textProp))
+                {
+                    // text kan være enten en ren streng eller et JSON-objekt
+                    if (textProp.ValueKind == JsonValueKind.String)
+                    {
+                        var str = textProp.GetString();
+                        if (!string.IsNullOrEmpty(str))
+                        {
+                            return JsonSerializer.Deserialize<T>(str, JsonOptions.Default);
+                        }
+                    }
+                    else
+                    {
+                        return textProp.Deserialize<T>(JsonOptions.Default);
+                    }
+                }
+            }
+        }
+
+        // 2) Fallback: serialize + deserialize (sjelden nødvendig)
+        return JsonSerializer.Deserialize<T>(
+            JsonSerializer.Serialize(Result, JsonOptions.Default),
+            JsonOptions.Default);
     }
 
     public T? GetParams<T>()

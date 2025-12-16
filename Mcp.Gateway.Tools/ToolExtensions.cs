@@ -129,8 +129,8 @@ public static class ToolExtensions
     }
 
     /// <summary>
-    /// Adds the ToolsService to the DI container.
-    /// Tools are scanned lazily on first use.
+    /// Adds ToolService and PromptService to the DI container.
+    /// Tools and Prompts are scanned lazily on first use.
     /// </summary>
     /// <param name="builder"></param>
     public static void AddToolsService(this WebApplicationBuilder builder)
