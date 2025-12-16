@@ -11,7 +11,7 @@ using static Mcp.Gateway.Tools.ToolService;
 /// Handles JSON-RPC tool invocation over HTTP and WebSocket.
 /// Class-based for dependency injection and testability.
 /// </summary>
-public class ToolInvoker(ToolService _toolService, ILogger<ToolInvoker> _logger)
+public partial class ToolInvoker(ToolService _toolService, ILogger<ToolInvoker> _logger)
 {
     // Default buffer size for WebSocket frame accumulation
     private const int DefaultBufferSize = 64 * 1024;
@@ -404,6 +404,17 @@ public class ToolInvoker(ToolService _toolService, ILogger<ToolInvoker> _logger)
                 return await HandleFunctionsCallAsync(message, cancellationToken);
             }
 
+            // MCP Resources support (v1.5.0)
+            if (message.Method == "resources/list")
+            {
+                return HandleResourcesList(message);
+            }
+            
+            if (message.Method == "resources/read")
+            {
+                return await HandleResourcesReadAsync(message, cancellationToken);
+            }
+
             // MCP notifications (client → server, no response expected)
             if (message.Method?.StartsWith("notifications/") == true)
             {
@@ -537,6 +548,17 @@ public class ToolInvoker(ToolService _toolService, ILogger<ToolInvoker> _logger)
                 return await HandleFunctionsCallAsync(message, cancellationToken);
             }
 
+            // MCP Resources support (v1.5.0)
+            if (message.Method == "resources/list")
+            {
+                return HandleResourcesList(message);
+            }
+            
+            if (message.Method == "resources/read")
+            {
+                return await HandleResourcesReadAsync(message, cancellationToken);
+            }
+
             // MCP notifications (client → server, no response expected)
             if (message.Method?.StartsWith("notifications/") == true)
             {
@@ -636,6 +658,7 @@ public class ToolInvoker(ToolService _toolService, ILogger<ToolInvoker> _logger)
     {
         bool isTools = _toolService.GetAllFunctionDefinitions(ToolService.FunctionTypeEnum.Tool).Any();
         bool isPrompts = _toolService.GetAllFunctionDefinitions(ToolService.FunctionTypeEnum.Prompt).Any();
+        bool hasResources = _toolService.GetAllResourceDefinitions().Any();
 
         Dictionary<string, object> capabilities = [];
 
@@ -647,6 +670,11 @@ public class ToolInvoker(ToolService _toolService, ILogger<ToolInvoker> _logger)
         {
             capabilities["prompts"] = new { };
         }
+        if (hasResources)
+        {
+            capabilities["resources"] = new { };
+        }
+        
         return ToolResponse.Success(request.Id, new
         {
             protocolVersion = "2025-06-18", // Updated to latest MCP protocol version
