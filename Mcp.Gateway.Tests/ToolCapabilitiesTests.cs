@@ -31,7 +31,8 @@ public class ToolCapabilitiesTests : IDisposable
     public void GetToolsForTransport_Stdio_ExcludesStreamingTools()
     {
         // Arrange & Act
-        var tools = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "stdio").ToList();
+        var result = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "stdio");
+        var tools = result.Items.ToList();
 
         // Assert
         Assert.NotEmpty(tools);
@@ -49,7 +50,8 @@ public class ToolCapabilitiesTests : IDisposable
     public void GetToolsForTransport_Http_ExcludesStreamingTools()
     {
         // Arrange & Act
-        var tools = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "http").ToList();
+        var result = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "http");
+        var tools = result.Items.ToList();
 
         // Assert
         Assert.NotEmpty(tools);
@@ -67,7 +69,8 @@ public class ToolCapabilitiesTests : IDisposable
     public void GetToolsForTransport_WebSocket_IncludesAllTools()
     {
         // Arrange & Act
-        var tools = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "ws").ToList();
+        var result = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "ws");
+        var tools = result.Items.ToList();
 
         // Assert
         Assert.NotEmpty(tools);
@@ -86,7 +89,8 @@ public class ToolCapabilitiesTests : IDisposable
     public void GetToolsForTransport_Sse_IncludesTextStreamingTools()
     {
         // Arrange & Act
-        var tools = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "sse").ToList();
+        var result = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "sse");
+        var tools = result.Items.ToList();
 
         // Assert
         Assert.NotEmpty(tools);

@@ -21,6 +21,7 @@ public partial class ToolService
 
     /// <summary>
     /// Returns all registered functions with their metadata for MCP tools/list or prompts/list
+    /// Sorted alphabetically by name for consistent ordering (v1.6.0+)
     /// </summary>
     public IEnumerable<FunctionDefinition> GetAllFunctionDefinitions(FunctionTypeEnum functionType)
     {
@@ -28,6 +29,7 @@ public partial class ToolService
         
         return ConfiguredFunctions
             .Where(x => x.Value.FunctionType == functionType)
+            .OrderBy(x => x.Key) // Sort alphabetically by function name for consistent ordering
             .Select(kvp =>
             {
                 var functionName = kvp.Key;
@@ -168,8 +170,14 @@ public partial class ToolService
     /// </summary>
     /// <param name="functionType">Tool or Prompt</param>
     /// <param name="transport">Transport type: "stdio", "http", "sse", or "ws"</param>
-    /// <returns>List of functions compatible with the specified transport</returns>
-    public IEnumerable<FunctionDefinition> GetFunctionsForTransport(FunctionTypeEnum functionType, string transport)
+    /// <param name="cursor">Optional cursor for pagination (v1.6.0+)</param>
+    /// <param name="pageSize">Number of items per page (default: 100)</param>
+    /// <returns>Paginated list of functions compatible with the specified transport</returns>
+    public Pagination.CursorHelper.PaginatedResult<FunctionDefinition> GetFunctionsForTransport(
+        FunctionTypeEnum functionType, 
+        string transport,
+        string? cursor = null,
+        int pageSize = Pagination.CursorHelper.DefaultPageSize)
     {
         var allFunctions = GetAllFunctionDefinitions(functionType);
 
@@ -184,7 +192,7 @@ public partial class ToolService
         };
         
         // Filter functions based on capabilities
-        return allFunctions.Where(func =>
+        var filteredFunctions = allFunctions.Where(func =>
         {
             // If function is Standard (default), it works on all transports
             if (func.Capabilities == ToolCapabilities.Standard)
@@ -193,6 +201,9 @@ public partial class ToolService
             // Check if function's capabilities are supported by this transport
             return (func.Capabilities & allowedCapabilities) != 0;
         });
+
+        // Apply pagination (v1.6.0+)
+        return Pagination.CursorHelper.Paginate(filteredFunctions, cursor, pageSize);
     }
 
     /// <summary>
