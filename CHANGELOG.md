@@ -7,42 +7,119 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Planned for v1.7.0
+- **Full MCP Protocol 2025-11-25 compliance**
+  - **Streamable HTTP transport** - Replace WebSocket notifications with SSE-based notifications
+  - **Session Management** - `MCP-Session-Id` header support for stateful sessions
+  - **Protocol Version Header** - `MCP-Protocol-Version` validation
+  - **Resumability** - SSE event IDs and `Last-Event-ID` for resuming broken connections
+  - **SSE-based notifications** - Migrate from WebSocket to SSE for server→client push
+
 ### Planned for v2.0
-- **MCP Protocol 2025-11-25 support**
-  - **Prompts enhancements:**
-    - Cursor-based pagination for `prompts/list`
-    - Dynamic prompt updates and `prompts/changed` notifications
-    - Enhanced argument validation with JSON Schema
-    - Embedded resource references in prompt messages
-  - **Tools enhancements:**
-    - Cursor-based pagination for `tools/list`
-    - Dynamic tool updates and `tools/changed` notifications
-  - **Resources enhancements:**
-    - Cursor-based pagination for `resources/list`
-    - `resources/subscribe` for live resource updates
-    - `resources/unsubscribe` to stop watching resources
-    - `resources/updated` notifications when subscribed resources change
-    - Resource templates with URI variables (e.g., `file://logs/{date}.log`)
-  - **Utilities:**
-    - **Completion** (`completion/complete`) - Auto-completion support for prompt arguments and resource URIs
-    - **Logging** - Client-to-server log forwarding with configurable log levels
-      - `logging/setLevel` - Configure which log levels to forward
-      - `notifications/message` - Client sends log messages to server
-    - **Pagination** - Cursor-based pagination pattern for all list operations
-      - Consistent cursor format across `tools/list`, `prompts/list`, `resources/list`
-      - Optional `cursor` parameter in requests
-      - `nextCursor` in responses when more results available
-- **Tool lifecycle hooks for monitoring**
-  - Pre/post invocation hooks for logging and metrics
-  - Error handling hooks for custom error reporting
-  - Performance tracking and latency monitoring
-- **Custom transport provider API**
-  - Pluggable transport system (gRPC, message queues, custom protocols)
-  - Transport-agnostic tool invocation
-- **Enhanced streaming**
-  - Compression support (gzip, brotli) for large payloads
-  - Flow control and backpressure handling
-  - Stream multiplexing over single connection
+- **MCP Protocol 2025-11-25 extensions**
+  - **Resource subscriptions** (`resources/subscribe`, `resources/unsubscribe`)
+  - **Resource templates** with URI variables (e.g., `file://logs/{date}.log`)
+  - **Completion** (`completion/complete`) - Auto-completion support
+  - **Logging** - Client-to-server log forwarding (`logging/setLevel`, `notifications/message`)
+- **Tool lifecycle hooks** for monitoring and metrics
+- **Custom transport provider API** - Pluggable transport system
+- **Enhanced streaming** - Compression, flow control, multiplexing
+
+---
+
+## [1.6.0] - 2025-12-16
+
+### Added
+- **Cursor-based pagination for MCP list operations**
+  - New `CursorHelper` utility class in `Mcp.Gateway.Tools/Pagination/`:
+    - Base64-encoded cursor format: `{"offset": 100}`
+    - `Paginate<T>()` helper method for consistent pagination logic
+    - `PaginatedResult<T>` record with `Items` and optional `NextCursor`
+  - Pagination support added to:
+    - `tools/list` - Returns paginated tool list with optional `cursor` and `pageSize` parameters
+    - `prompts/list` - Returns paginated prompt list with optional `cursor` and `pageSize` parameters
+    - `resources/list` - Returns paginated resource list with optional `cursor` and `pageSize` parameters
+  - Default page size: 100 items (configurable via `pageSize` parameter)
+  - `nextCursor` included in response when more results are available
+  - Alphabetic sorting of results for consistent cursor-based pagination
+- **Notification infrastructure for dynamic updates (WebSocket-only in v1.6.0)**
+  - New notification models in `Mcp.Gateway.Tools/Notifications/`:
+    - `NotificationType` enum (ToolsChanged, PromptsChanged, ResourcesUpdated)
+    - `NotificationMessage` record with factory methods
+    - `INotificationSender` interface for sending notifications
+  - `NotificationService` - Thread-safe WebSocket subscriber management:
+    - `AddSubscriber()` / `RemoveSubscriber()` for WebSocket connections
+    - `SendNotificationAsync()` broadcasts to all active subscribers
+    - Automatic cleanup of closed connections
+  - New methods in `ToolInvoker`:
+    - `NotifyToolsChangedAsync()` - Sends `notifications/tools/changed`
+    - `NotifyPromptsChangedAsync()` - Sends `notifications/prompts/changed`
+    - `NotifyResourcesUpdatedAsync()` - Sends `notifications/resources/updated`
+  - `initialize` response includes `notifications` capability when NotificationService is registered:
+    - `capabilities.notifications.tools` - Indicates tools change notifications are supported
+    - `capabilities.notifications.prompts` - Indicates prompts change notifications are supported
+    - `capabilities.notifications.resources` - Indicates resources change notifications are supported
+  - Notification capabilities are filtered based on registered functions (only shows capabilities for registered types)
+- **New example servers and tests**
+  - `Examples/PaginationMcpServer` - Demonstrates pagination with 120 mock tools, 20 prompts, 20 resources
+  - `Examples/PaginationMcpServerTests` - 9 tests covering pagination scenarios (cursor, pageSize, invalid cursor, etc.)
+  - `Examples/NotificationMcpServer` - Demonstrates notification infrastructure with API endpoints for triggering notifications
+  - `Examples/NotificationMcpServerTests` - 8 tests covering notification capabilities and notification sending
+
+### Changed
+- **DI registration** - `AddToolsService()` now registers `INotificationSender` → `NotificationService` as singleton
+- **ToolInvoker constructor** - Added optional `INotificationSender` parameter for dependency injection
+- **List operations** - All function lists (tools/prompts) and resource lists are now sorted alphabetically for consistent pagination
+
+### Behaviour & Compatibility
+- **Backward compatible** - All pagination parameters are optional:
+  - `cursor` defaults to null (start from beginning)
+  - `pageSize` defaults to 100
+  - No `nextCursor` in response when all results fit in one page
+- **Notifications are WebSocket-only in v1.6.0**:
+  - HTTP/stdio clients cannot receive push notifications
+  - HTTP/stdio clients must poll `tools/list` / `prompts/list` / `resources/list` to detect changes
+  - SSE support deferred to v1.7.0 (full MCP 2025-11-25 compliance)
+- **Notification capabilities are dynamic**:
+  - Only included in `initialize` response when NotificationService is registered
+  - Only shows capabilities for function types that are actually registered (e.g., if server has no prompts, `notifications.prompts` is not included)
+- All existing functionality remains unchanged:
+  - Tools, prompts, resources discovery and invocation work as before
+  - Streaming (binary/text) unchanged
+  - All transports (HTTP/WebSocket/SSE/stdio) unchanged
+
+### Testing
+- **130 tests (100% passing)**
+  - Mcp.Gateway.Tests: 70 tests
+  - CalculatorMcpServerTests: 16 tests
+  - DateTimeMcpServerTests: 4 tests
+  - PromptMcpServerTests: 10 tests
+  - ResourceMcpServerTests: 11 tests
+  - **PaginationMcpServerTests: 9 tests** (NEW)
+  - **NotificationMcpServerTests: 8 tests** (NEW)
+  - OllamaIntegrationTests: 2 tests (Ollama integration scenarios)
+- New pagination tests verify:
+  - Default pagination (100 items per page)
+  - Custom page sizes
+  - Cursor-based navigation
+  - Invalid cursor handling
+  - Edge cases (empty results, single page, exact page boundary)
+- New notification tests verify:
+  - Notification capabilities in `initialize` response
+  - Capability filtering based on registered functions
+  - Notification sending for tools/prompts/resources
+  - API endpoints for triggering notifications
+
+### Known Limitations
+- **Notifications require WebSocket transport**:
+  - HTTP and stdio clients cannot receive push notifications in v1.6.0
+  - SSE-based notifications planned for v1.7.0 (full MCP 2025-11-25 compliance)
+- **Session management not implemented**:
+  - No `MCP-Session-Id` header support in v1.6.0
+  - Planned for v1.7.0
+- **No resumability support**:
+  - SSE event IDs and `Last-Event-ID` not implemented in v1.6.0
+  - Planned for v1.7.0
 
 ---
 
