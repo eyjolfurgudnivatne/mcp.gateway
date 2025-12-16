@@ -137,6 +137,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.4.0", "v1.4.0", "{585FCB
 		.internal\releases\v1.4.0\release-note.md = .internal\releases\v1.4.0\release-note.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.5.0", "v1.5.0", "{0089E81B-D429-4A49-B03E-1578BB969E32}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\notes\v1.5.0\mcp-resources.md = .internal\notes\v1.5.0\mcp-resources.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -220,6 +225,7 @@ Global
 		{3AC218F7-7B03-4157-A57F-405090DC2055} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 		{9834D13C-B059-4867-B53E-50A072964667} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 		{585FCBFB-07BB-48A2-91C8-1F9904C7271A} = {D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}
+		{0089E81B-D429-4A49-B03E-1578BB969E32} = {CC761499-6044-48DF-9E01-744F32E64955}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}
