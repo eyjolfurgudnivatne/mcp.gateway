@@ -1,127 +1,136 @@
-# MCP Gateway v1.4.0 – MCP Prompts Support
+# MCP Gateway v1.5.0 – MCP Resources Support
 
 ## Summary
 
-v1.4.0 introduces first-class **MCP Prompts** support alongside existing tools, including:
+v1.5.0 introduces first-class **MCP Resources** support alongside existing tools and prompts, including:
 
-- Attribute-based prompt registration via `McpPromptAttribute`
-- A dedicated prompt model and response types in `Mcp.Gateway.Tools`
-- A new example server `PromptMcpServer` + tests
-- Groundwork for future MCP concepts (Resources, extended server features)
+- Attribute-based resource registration via `McpResourceAttribute`
+- Resource models and response types in `Mcp.Gateway.Tools`
+- A new example server `ResourceMcpServer` + tests
+- Architecture improvements (ToolService and ToolInvoker split into partial classes)
+- Full MCP protocol compliance with Tools, Prompts, and Resources
 
 ---
 
 ## Highlights
 
-### New: MCP Prompts
+### New: MCP Resources
 
-- Added `[McpPrompt]` attribute in `Mcp.Gateway.Tools`:
-  - `McpPromptAttribute(string? name = null)` with:
-    - `Name` – optional; auto-generated from method name when null (same snake_case logic as tools).
-    - `Title` – optional, human-friendly title (falls back to humanized name when omitted).
-    - `Description` – optional, shown to MCP clients in `prompts/list`.
-  - Used to mark methods as **prompts**, separate from `[McpTool]`.
-- Introduced dedicated prompt response models in `Mcp.Gateway.Tools`:
-  - `PromptResponse` – wraps the MCP prompt result:
-    - `name` – name of this prompt.
-    - `description` – description of this prompt.
-    - `messages` – list of messages for the LLM to handle.
-    - `arguments` – list of arguments for the LLM to use with messages.
-  - `PromptMessage` – a single prompt message:
-    - `role` – e.g. `system`, `user`, `assistant`.
-    - `content` – prompt text.
-  - These models match the MCP `prompts/get` result shape and can be reused by all prompt implementations.
-  - MCP prompt methods implemented:
-    - `prompts/list`
-    - `prompts/get`
-    - `initialize` prompts capability flag
+- Added `[McpResource]` attribute in `Mcp.Gateway.Tools`:
+  - `Uri` – required, must follow `scheme://path` format (e.g., `file://logs/app.log`, `db://users/123`).
+  - `Name` – optional, human-friendly name (falls back to humanized URI when omitted).
+  - `Description` – optional, shown to MCP clients in `resources/list`.
+  - `MimeType` – optional, specifies content type (`text/plain`, `application/json`, etc.).
+  - Used to mark methods as **resources**, separate from `[McpTool]` and `[McpPrompt]`.
+- Introduced dedicated resource response models in `Mcp.Gateway.Tools`:
+  - `ResourceDefinition` – describes a resource:
+    - `Uri` – resource identifier.
+    - `Name` – human-readable name.
+    - `Description` – resource description.
+    - `MimeType` – content type.
+  - `ResourceContent` – wraps resource content:
+    - `Uri` – resource identifier.
+    - `MimeType` – content type.
+    - `Text` – text content (v1.5.0 supports text-based resources).
+  - `ResourceListResponse` – response format for `resources/list`.
+  - `ResourceReadResponse` – response format for `resources/read`.
+  - These models match the MCP resource result shape and can be reused by all resource implementations.
+  - MCP resource methods implemented:
+    - `resources/list`
+    - `resources/read`
+    - `initialize` resources capability flag
 
-> Note: Prompts are **not** streamed in v1.4.0; they are returned as regular JSON-RPC responses with a fixed
-> `messages` array.
+> Note: Resources are **not** streamed in v1.5.0; they are returned as regular JSON-RPC responses with text content.
+> Binary blob support and resource subscriptions are planned for v1.6+.
 
-### New: Prompt Example Server
+### New: Resource Example Server
 
-- Added `Examples/PromptMcpServer` showcasing prompt usage:
-  - `Prompts/SimplePrompt.cs` – minimal prompt example using `JsonRpcMessage`:
+- Added `Examples/ResourceMcpServer` showcasing resource usage:
+  - `Resources/FileResource.cs` – file-based resources:
+    - `file://logs/app.log` – application logs.
+    - `file://config/settings.json` – application configuration.
+  - `Resources/SystemResource.cs` – system metrics resources:
+    - `system://status` – system health metrics.
+    - `system://environment` – environment information.
+  - `Resources/DataResource.cs` – database resources:
+    - `db://users/example` – example user profile.
+    - `db://stats/summary` – application statistics.
+  - Demonstrates how resources and `JsonRpcMessage` integrate cleanly with existing infrastructure.
 
-    ```csharp
-    [McpPrompt(Description = "Report to Santa Claus")]
-    public JsonRpcMessage SantaReportPrompt(JsonRpcMessage request)
-    {
-        return ToolResponse.Success(
-            request.Id,
-            new PromptResponse(
-                Name: "santa_report_prompt",
-                Description: "A prompt that reports to Santa Claus",
-                Messages: [
-                    new(
-                        PromptRole.System,
-                        "You are a very helpful assistant for Santa Claus."),
-                    new (
-                        PromptRole.User,
-                        "Send a letter to Santa Claus and tell him that {{name}} has been {{behavior}}.")
-                ],
-                Arguments: new {
-                    name = new {
-                        type = "string",
-                        description = "Name of the child"
-                    },
-                    behavior = new {
-                        type = "string",
-                        description = "Behavior of the child (e.g., Good, Naughty)",
-                        @enum = new[] { "Good", "Naughty" }
-                    }
-                }
-            ));
-    }
-    ```
+- Added `Examples/ResourceMcpServerTests`:
+  - `Resources/ResourceListTests.cs` verifies that resources are correctly discovered and exposed via `resources/list`.
+  - `Resources/ResourceReadTests.cs` verifies that `resources/read` returns the expected content structure.
+  - `Resources/McpProtocolTests.cs` verifies that `initialize` includes resources capability and tests full workflow.
 
-  - Demonstrates how prompts and `JsonRpcMessage` integrate cleanly with existing infrastructure.
+> The example server is intended as a reference implementation for MCP Resources, similar to how
+> `CalculatorMcpServer` demonstrates tools and `PromptMcpServer` demonstrates prompts.
 
-- Added `Examples/PromptMcpServerTests`:
-  - `Prompts/SimplePromptTests.cs` verifies that the prompt responds with the expected `name`, `description`, `messages` and `arguments` structure and uses
-    the `PromptResponse`/`PromptMessage` models correctly.
+### Architecture Improvements
 
-> The example server is intended as a reference implementation for MCP Prompts, similar to how
-> `CalculatorMcpServer` demonstrates tools.
+- **ToolService refactored into 6 partial classes** for better organization:
+  - `ToolService.cs` (Core) – 97 lines
+  - `ToolService.Scanning.cs` (253 lines) – Function scanning and registration
+  - `ToolService.Functions.cs` (168 lines) – Function definitions (Tools & Prompts)
+  - `ToolService.Invocation.cs` (46 lines) – Function invocation with DI
+  - `ToolService.Resources.cs` (155 lines) – Resource-specific functionality
+  - **Average per file**: 143 lines (down from 719!)
+
+- **ToolInvoker refactored into 6 partial classes** for better maintainability:
+  - `ToolInvoker.cs` (Core) – 42 lines
+  - `ToolInvoker.Http.cs` (75 lines) – HTTP transport
+  - `ToolInvoker.WebSocket.cs` (421 lines) – WebSocket transport
+  - `ToolInvoker.Sse.cs` (99 lines) – SSE transport
+  - `ToolInvoker.Protocol.cs` (531 lines) – MCP protocol handlers
+  - `ToolInvoker.Resources.cs` (162 lines) – Resources support
+  - **Average per file**: 222 lines (down from 1060!)
 
 ---
 
 ## Behaviour & Compatibility
 
-- Prompts are a **new** MCP surface area and do **not** change existing behaviour:
+- Resources are a **new** MCP surface area and do **not** change existing behaviour:
   - Tools (`[McpTool]`, `tools/list`, `tools/call`) remain unchanged.
-  - Wire format for tools and streaming is unchanged.
-- Prompt types live in `Mcp.Gateway.Tools` and reuse existing JSON-RPC infrastructure:
-  - Prompt methods still return `JsonRpcMessage` via `ToolResponse.Success(...)`.
-  - `PromptResponse` and `PromptMessage` are regular record types serialized by the existing `JsonOptions`.
-- Prompt roles are represented as strings on the wire (e.g. `"system"`, `"user"`, `"assistant"`), keeping
-  compatibility with MCP/LLM clients.
-- `initialize` now includes a `prompts` capability flag when the server has registered prompts (mirroring how tools capabilities are surfaced). MCP clients can use this to detect prompt support.
+  - Prompts (`[McpPrompt]`, `prompts/list`, `prompts/get`) remain unchanged.
+  - Wire format for tools, prompts, and streaming is unchanged.
+- Resource types live in `Mcp.Gateway.Tools` and reuse existing JSON-RPC infrastructure:
+  - Resource methods still return `JsonRpcMessage` via `ToolResponse.Success(...)`.
+  - `ResourceContent` and `ResourceDefinition` are regular record types serialized by the existing `JsonOptions`.
+- `initialize` now includes a `resources` capability flag when the server has registered resources (mirroring how tools and prompts capabilities are surfaced). MCP clients can use this to detect resource support.
 
-> v1.4.0 delivers a complete first version of MCP Prompts: attribute, response model, auto-discovery, prompts/list and prompts/get wired into ToolInvoker, and initialize-capabilities when prompts are present. 
+> v1.5.0 delivers a complete first version of MCP Resources: attribute, response models, auto-discovery, resources/list and resources/read wired into ToolInvoker, and initialize-capabilities when resources are present.
 
 ---
 
 ## Testing
 
-- New example tests in `Examples/PromptMcpServerTests`:
-  - Validate that prompt endpoints:
-    - Accept both raw `JsonRpcMessage` and `TypedJsonRpc<T>` request models, depending on the example.
-    - Produce `PromptResponse` objects with correct `messages` shape.
-- Existing `Mcp.Gateway.Tests` and example tests continue to pass:
-  - No regressions to tools, transports (HTTP/WS/SSE/stdio), or streaming behaviour.
+- New example tests in `Examples/ResourceMcpServerTests`:
+  - Validate that resource endpoints:
+    - Accept `JsonRpcMessage` request models.
+    - Produce `ResourceContent` objects with correct structure (`uri`, `mimeType`, `text`).
+    - Handle errors correctly (resource not found, invalid URI, missing parameters).
+  - Full MCP protocol workflow tests (initialize → resources/list → resources/read).
+- All existing `Mcp.Gateway.Tests` and example tests continue to pass:
+  - No regressions to tools, prompts, transports (HTTP/WS/SSE/stdio), or streaming behaviour.
+- **Test summary**: 121/121 tests passing (100% success rate)
+  - Mcp.Gateway.Tests: 70 tests
+  - CalculatorMcpServerTests: 16 tests
+  - DateTimeMcpServerTests: 4 tests
+  - PromptMcpServerTests: 10 tests
+  - **ResourceMcpServerTests**: **10 tests** (NEW)
+  - OllamaIntegrationTests: 11 tests
 
 ---
 
 ## Upgrade Notes
 
-- v1.4.0 is backward compatible with v1.3.0 and v1.2.0.
-- No changes are required for existing tool implementations.
-- To start using prompts:
-  1. Add a new class in your server with methods annotated by `[McpPrompt]`.
-  2. Use `TypedJsonRpc<TRequest>` if you want a strongly-typed request model.
-  3. Return `ToolResponse.Success(request.Id, PromptResponse)` with a `messages` array that MCP clients can send to
-     their LLM.
-- Prompt roles are free-form strings at this stage; stick to `system`, `user`, and `assistant` to align with common
-  LLM conventions.
+- v1.5.0 is backward compatible with v1.4.0 and v1.3.0.
+- No changes are required for existing tool or prompt implementations.
+- To start using resources:
+  1. Add a new class in your server with methods annotated by `[McpResource]`.
+  2. Return `ToolResponse.Success(request.Id, ResourceContent)` with a `uri`, `mimeType`, and `text` content.
+  3. Resources will be automatically discovered and exposed via `resources/list` and `resources/read`.
+- Resource URIs must follow `scheme://path` format:
+  - `file://logs/app.log`
+  - `db://users/123`
+  - `system://status`
+  - `http://api.example.com/data`
