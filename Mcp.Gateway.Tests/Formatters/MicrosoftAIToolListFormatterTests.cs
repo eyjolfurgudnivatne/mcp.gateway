@@ -15,7 +15,7 @@ public class MicrosoftAIToolListFormatterTests
     {
         // Arrange
         var formatter = new MicrosoftAIToolListFormatter();
-        var tools = new List<ToolService.ToolDefinition>
+        var tools = new List<ToolService.FunctionDefinition>
         {
             new(
                 Name: "add_numbers",
@@ -62,7 +62,7 @@ public class MicrosoftAIToolListFormatterTests
     {
         // Arrange
         var formatter = new MicrosoftAIToolListFormatter();
-        var tools = new List<ToolService.ToolDefinition>
+        var tools = new List<ToolService.FunctionDefinition>
         {
             new(
                 Name: "greet",
@@ -96,7 +96,7 @@ public class MicrosoftAIToolListFormatterTests
     {
         // Arrange
         var formatter = new MicrosoftAIToolListFormatter();
-        var tools = new List<ToolService.ToolDefinition>
+        var tools = new List<ToolService.FunctionDefinition>
         {
             new(
                 Name: "create_user",
@@ -133,7 +133,7 @@ public class MicrosoftAIToolListFormatterTests
     {
         // Arrange
         var formatter = new MicrosoftAIToolListFormatter();
-        var tools = new List<ToolService.ToolDefinition>
+        var tools = new List<ToolService.FunctionDefinition>
         {
             new(
                 Name: "simple_tool",
@@ -171,7 +171,7 @@ public class MicrosoftAIToolListFormatterTests
     {
         // Arrange
         var formatter = new MicrosoftAIToolListFormatter();
-        var tools = new List<ToolService.ToolDefinition>
+        var tools = new List<ToolService.FunctionDefinition>
         {
             new("tool1", "First", """{"type":"object","properties":{}}"""),
             new("tool2", "Second", """{"type":"object","properties":{}}"""),
@@ -207,7 +207,7 @@ public class MicrosoftAIToolListFormatterTests
     {
         // Arrange
         var formatter = new MicrosoftAIToolListFormatter();
-        var tools = new List<ToolService.ToolDefinition>
+        var tools = new List<ToolService.FunctionDefinition>
         {
             new(
                 Name: "no_params",

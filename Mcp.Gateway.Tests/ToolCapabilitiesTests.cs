@@ -31,7 +31,7 @@ public class ToolCapabilitiesTests : IDisposable
     public void GetToolsForTransport_Stdio_ExcludesStreamingTools()
     {
         // Arrange & Act
-        var tools = _toolService.GetToolsForTransport("stdio").ToList();
+        var tools = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "stdio").ToList();
 
         // Assert
         Assert.NotEmpty(tools);
@@ -49,7 +49,7 @@ public class ToolCapabilitiesTests : IDisposable
     public void GetToolsForTransport_Http_ExcludesStreamingTools()
     {
         // Arrange & Act
-        var tools = _toolService.GetToolsForTransport("http").ToList();
+        var tools = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "http").ToList();
 
         // Assert
         Assert.NotEmpty(tools);
@@ -67,7 +67,7 @@ public class ToolCapabilitiesTests : IDisposable
     public void GetToolsForTransport_WebSocket_IncludesAllTools()
     {
         // Arrange & Act
-        var tools = _toolService.GetToolsForTransport("ws").ToList();
+        var tools = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "ws").ToList();
 
         // Assert
         Assert.NotEmpty(tools);
@@ -86,7 +86,7 @@ public class ToolCapabilitiesTests : IDisposable
     public void GetToolsForTransport_Sse_IncludesTextStreamingTools()
     {
         // Arrange & Act
-        var tools = _toolService.GetToolsForTransport("sse").ToList();
+        var tools = _toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "sse").ToList();
 
         // Assert
         Assert.NotEmpty(tools);
@@ -116,7 +116,7 @@ public class ToolCapabilitiesTests : IDisposable
     public void ToolDefinition_DefaultCapabilities_IsStandard()
     {
         // Arrange
-        var tool = new ToolService.ToolDefinition(
+        var tool = new ToolService.FunctionDefinition(
             Name: "test",
             Description: "Test tool",
             InputSchema: "{}"
@@ -140,7 +140,7 @@ public class ToolCapabilitiesTests : IDisposable
     public void GetAllToolDefinitions_IncludesCapabilities()
     {
         // Arrange & Act
-        var tools = _toolService.GetAllToolDefinitions().ToList();
+        var tools = _toolService.GetAllFunctionDefinitions(ToolService.FunctionTypeEnum.Tool).ToList();
 
         // Assert
         Assert.NotEmpty(tools);
