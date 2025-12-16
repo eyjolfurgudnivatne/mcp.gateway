@@ -239,40 +239,53 @@ public partial class ToolInvoker
 
             // Get filtered functions for this transport
             var functions = _toolService.GetFunctionsForTransport(functionType, transport);
-            var functionsList = functions.Select(t =>
-            {
-                object? schema = null;
-                try
-                {
-                    schema = JsonSerializer.Deserialize<object>(t.InputSchema, JsonOptions.Default);
-                }
-                catch
-                {
-                    // Fallback to empty object schema if deserialization fails
-                    schema = new { type = "object", properties = new { } };
-                }
 
-                return new
-                {
-                    name = t.Name,
-                    description = t.Description,
-                    inputSchema = schema
-                };
-            }).ToList();
-
+            // Tools: serialize with inputSchema (object)
             if (functionType == FunctionTypeEnum.Tool)
             {
+                var toolsList = functions.Select(t =>
+                {
+                    object? schema = null;
+                    try
+                    {
+                        schema = JsonSerializer.Deserialize<object>(t.InputSchema, JsonOptions.Default);
+                    }
+                    catch
+                    {
+                        // Fallback to empty object schema if deserialization fails
+                        schema = new { type = "object", properties = new { } };
+                    }
+
+                    return new
+                    {
+                        name = t.Name,
+                        description = t.Description,
+                        inputSchema = schema
+                    };
+                }).ToList();
+
                 return ToolResponse.Success(request.Id, new
                 {
-                    tools = functionsList
+                    tools = toolsList
                 });
             }
 
-            else if(functionType == FunctionTypeEnum.Prompt)
+            // Prompts: serialize with arguments (array)
+            else if (functionType == FunctionTypeEnum.Prompt)
             {
+                var promptsList = functions.Select(p =>
+                {
+                    return new
+                    {
+                        name = p.Name,
+                        description = p.Description,
+                        arguments = p.Arguments ?? Array.Empty<PromptArgument>()
+                    };
+                }).ToList();
+
                 return ToolResponse.Success(request.Id, new
                 {
-                    prompts = functionsList
+                    prompts = promptsList
                 });
             }
 

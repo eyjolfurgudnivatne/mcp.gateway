@@ -251,7 +251,7 @@ See `ToolInvoker.HandleFunctionsList()` in `Mcp.Gateway.Tools/ToolInvoker.Protoc
 
 ### 5️⃣ `prompts/get` - Prompt Retrieval (v1.4.0+)
 
-Retrieves a specific prompt with filled-in arguments.
+Retrieves a specific prompt by name.
 
 **Request:**
 ```json
@@ -260,11 +260,7 @@ Retrieves a specific prompt with filled-in arguments.
   "method": "prompts/get",
   "id": 5,
   "params": {
-    "name": "santa_report_prompt",
-    "arguments": {
-      "name": "Alice",
-      "behavior": "Good"
-    }
+    "name": "santa_report_prompt"
   }
 }
 ```
@@ -275,6 +271,8 @@ Retrieves a specific prompt with filled-in arguments.
   "jsonrpc": "2.0",
   "id": 5,
   "result": {
+    "name": "santa_report_prompt",
+    "description": "A prompt that reports to Santa Claus",
     "messages": [
       {
         "role": "system",
@@ -282,12 +280,25 @@ Retrieves a specific prompt with filled-in arguments.
       },
       {
         "role": "user",
-        "content": "Send a letter to Santa Claus and tell him that Alice has been Good."
+        "content": "Send a letter to Santa Claus and tell him that {{name}} has been {{behavior}}."
       }
-    ]
+    ],
+    "arguments": {
+      "name": {
+        "type": "string",
+        "description": "Name of the child"
+      },
+      "behavior": {
+        "type": "string",
+        "description": "Behavior of the child (e.g., Good, Naughty)",
+        "enum": ["Good", "Naughty"]
+      }
+    }
   }
 }
 ```
+
+**Note:** The prompt template uses `{{name}}` and `{{behavior}}` as placeholders. The `arguments` object describes the required parameters using JSON Schema format. The MCP client is responsible for substituting these values in the message templates before sending them to the LLM.
 
 **Implementation:**  
 See `ToolInvoker.HandleFunctionsCallAsync()` in `Mcp.Gateway.Tools/ToolInvoker.Protocol.cs`

@@ -39,6 +39,70 @@ public class McpProtocolTests(PromptMcpServerFixture fixture)
     }
 
     [Fact]
+    public async Task PromptsList_ReturnsAllPrompts()
+    {
+        // Arrange
+        var request = new
+        {
+            jsonrpc = "2.0",
+            method = "prompts/list",
+            id = "prompts-list-1"
+        };
+
+        // Act
+        var httpResponse = await fixture.HttpClient.PostAsJsonAsync("/rpc", request, fixture.CancellationToken);
+        httpResponse.EnsureSuccessStatusCode();
+
+        var content = await httpResponse.Content.ReadAsStringAsync(fixture.CancellationToken);
+        var response = JsonDocument.Parse(content).RootElement;
+
+        // Assert - Response structure
+        Assert.True(response.TryGetProperty("result", out var result));
+        Assert.True(result.TryGetProperty("prompts", out var promptsElement));
+
+        var prompts = promptsElement.EnumerateArray().ToList();
+        Assert.True(prompts.Count >= 1, $"Expected at least 1 prompt, got {prompts.Count}");
+
+        // Find santa_report_prompt
+        var santaPrompt = prompts.FirstOrDefault(p => 
+            p.GetProperty("name").GetString() == "santa_report_prompt");
+        Assert.True(santaPrompt.ValueKind != JsonValueKind.Undefined, 
+            "santa_report_prompt not found in prompts/list");
+
+        // Assert - Prompt metadata
+        Assert.True(santaPrompt.TryGetProperty("name", out var name));
+        Assert.Equal("santa_report_prompt", name.GetString());
+
+        Assert.True(santaPrompt.TryGetProperty("description", out var description));
+        Assert.Equal("Report to Santa Claus", description.GetString());
+
+        // Assert - Arguments array (NOT inputSchema!)
+        Assert.True(santaPrompt.TryGetProperty("arguments", out var argumentsElement));
+        Assert.Equal(JsonValueKind.Array, argumentsElement.ValueKind); // Must be array!
+
+        var arguments = argumentsElement.EnumerateArray().ToList();
+        Assert.Equal(2, arguments.Count); // name and behavior
+
+        // Assert - First argument (name)
+        var nameArg = arguments.FirstOrDefault(a => 
+            a.GetProperty("name").GetString() == "name");
+        Assert.True(nameArg.ValueKind != JsonValueKind.Undefined, "name argument not found");
+        Assert.True(nameArg.TryGetProperty("description", out var nameDesc));
+        Assert.False(string.IsNullOrEmpty(nameDesc.GetString()));
+        Assert.True(nameArg.TryGetProperty("required", out var nameRequired));
+        Assert.True(nameRequired.GetBoolean());
+
+        // Assert - Second argument (behavior)
+        var behaviorArg = arguments.FirstOrDefault(a => 
+            a.GetProperty("name").GetString() == "behavior");
+        Assert.True(behaviorArg.ValueKind != JsonValueKind.Undefined, "behavior argument not found");
+        Assert.True(behaviorArg.TryGetProperty("description", out var behaviorDesc));
+        Assert.False(string.IsNullOrEmpty(behaviorDesc.GetString()));
+        Assert.True(behaviorArg.TryGetProperty("required", out var behaviorRequired));
+        Assert.True(behaviorRequired.GetBoolean());
+    }
+
+    [Fact]
     public async Task ToolsList_ReturnsAllTools()
     {
         // Arrange

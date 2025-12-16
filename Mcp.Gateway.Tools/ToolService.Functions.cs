@@ -15,7 +15,8 @@ public partial class ToolService
     public record FunctionDefinition(
         string Name, 
         string Description, 
-        string InputSchema,
+        string? InputSchema = null,  // For tools (JSON Schema object)
+        IReadOnlyList<PromptArgument>? Arguments = null,  // For prompts (array of arguments)
         ToolCapabilities Capabilities = ToolCapabilities.Standard);
 
     /// <summary>
@@ -36,6 +37,7 @@ public partial class ToolService
                 var method = functionDetails.FunctionDelegate.Method;
                 string? description = null;
                 string? attrInputSchema = null;
+                IReadOnlyList<PromptArgument>? arguments = null;
                 ToolCapabilities capabilities = ToolCapabilities.Standard;
 
                 // Tool
@@ -44,7 +46,31 @@ public partial class ToolService
                     var attr = method.GetCustomAttribute<McpToolAttribute>();
                     description = attr?.Description ?? "No description available";
                     attrInputSchema = attr?.InputSchema;
-                    capabilities = attr?.Capabilities ?? ToolCapabilities.Standard;                
+                    capabilities = attr?.Capabilities ?? ToolCapabilities.Standard;
+                    
+                    // Generate or use provided input schema
+                    string? inputSchema = null;
+                    if (string.IsNullOrWhiteSpace(attrInputSchema))
+                    {
+                        // If TypedJsonRpc<T> and no InputSchema → try schema generator
+                        var generated = ToolSchemaGenerator.TryGenerateForTool(method, functionDetails);
+                        inputSchema = generated ?? @"{""type"":""object"",""properties"":{}}";
+                    }
+                    else
+                    {
+                        inputSchema = attrInputSchema;
+                    }
+
+                    // Validate InputSchema at runtime
+                    ValidateInputSchema(functionName, inputSchema);
+                    
+                    return new FunctionDefinition(
+                        Name: functionName,
+                        Description: description!,
+                        InputSchema: inputSchema,
+                        Arguments: null,  // Tools don't have arguments array
+                        Capabilities: capabilities
+                    );
                 }
 
                 // Prompt
@@ -52,32 +78,88 @@ public partial class ToolService
                 {
                     var attr = method.GetCustomAttribute<McpPromptAttribute>();
                     description = attr?.Description ?? "No description available";
-                    attrInputSchema = attr?.InputSchema;
+                    
+                    // For prompts, we need to extract Arguments from PromptResponse
+                    // We do this by calling the prompt method with a dummy request
+                    try
+                    {
+                        var dummyRequest = JsonRpcMessage.CreateRequest("prompts/get", "dummy", new { name = functionName });
+                        var response = (JsonRpcMessage)functionDetails.FunctionDelegate.DynamicInvoke(dummyRequest)!;
+                        
+                        // Parse PromptResponse from result
+                        if (response.Result is not null)
+                        {
+                            var promptResponse = response.GetResult<PromptResponse>();
+                            if (promptResponse?.Arguments is not null)
+                            {
+                                // Parse Arguments object into PromptArgument array
+                                arguments = ParsePromptArguments(promptResponse.Arguments);
+                            }
+                        }
+                    }
+                    catch
+                    {
+                        // If parsing fails, return empty arguments
+                        arguments = Array.Empty<PromptArgument>();
+                    }
+                    
+                    return new FunctionDefinition(
+                        Name: functionName,
+                        Description: description!,
+                        InputSchema: null,  // Prompts don't have inputSchema
+                        Arguments: arguments ?? Array.Empty<PromptArgument>(),
+                        Capabilities: capabilities
+                    );
                 }
 
-                // Generate or use provided input schema
-                string? inputSchema = null;
-                if (string.IsNullOrWhiteSpace(attrInputSchema))
-                {
-                    // If TypedJsonRpc<T> and no InputSchema → try schema generator
-                    var generated = ToolSchemaGenerator.TryGenerateForTool(method, functionDetails);
-                    inputSchema = generated ?? @"{""type"":""object"",""properties"":{}}";
-                }
-                else
-                {
-                    inputSchema = attrInputSchema;
-                }
-
-                // Validate InputSchema at runtime
-                ValidateInputSchema(functionName, inputSchema);
-                
+                // Fallback (should never happen)
                 return new FunctionDefinition(
                     Name: functionName,
-                    Description: description!,
-                    InputSchema: inputSchema,
-                    Capabilities: capabilities
+                    Description: "Unknown function type",
+                    InputSchema: @"{""type"":""object"",""properties"":{}}",
+                    Arguments: null,
+                    Capabilities: ToolCapabilities.Standard
                 );
             });
+    }
+
+    /// <summary>
+    /// Parses PromptResponse.Arguments object into PromptArgument array for prompts/list
+    /// </summary>
+    private static IReadOnlyList<PromptArgument> ParsePromptArguments(object argumentsObj)
+    {
+        try
+        {
+            // Arguments is a JSON object like: { "name": { "type": "string", "description": "..." }, ... }
+            var json = JsonSerializer.Serialize(argumentsObj, JsonOptions.Default);
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            var result = new List<PromptArgument>();
+
+            foreach (var property in root.EnumerateObject())
+            {
+                var argName = property.Name;
+                var argValue = property.Value;
+
+                // Extract description and determine if required
+                string description = argValue.TryGetProperty("description", out var descProp)
+                    ? descProp.GetString() ?? ""
+                    : "";
+
+                // For now, assume all arguments in the object are required
+                // (we can enhance this later if PromptResponse includes required metadata)
+                bool required = true;
+
+                result.Add(new PromptArgument(argName, description, required));
+            }
+
+            return result;
+        }
+        catch
+        {
+            return Array.Empty<PromptArgument>();
+        }
     }
 
     /// <summary>
