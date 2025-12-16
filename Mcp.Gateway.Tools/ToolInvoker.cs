@@ -4,7 +4,6 @@ using Mcp.Gateway.Tools.Formatters;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Net.WebSockets;
-using System.Security.Cryptography.Xml;
 using System.Text.Json;
 using static Mcp.Gateway.Tools.ToolService;
 
@@ -768,7 +767,7 @@ public class ToolInvoker(ToolService _toolService, ILogger<ToolInvoker> _logger)
                 });
             }
 
-            if (functionType == FunctionTypeEnum.Prompt)
+            else if(functionType == FunctionTypeEnum.Prompt)
             {
                 return ToolResponse.Success(request.Id, new
                 {
@@ -776,7 +775,10 @@ public class ToolInvoker(ToolService _toolService, ILogger<ToolInvoker> _logger)
                 });
             }
 
-            return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = "Invalid method" });
+            else
+            {
+                return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = "Invalid method" });
+            }
         }
         catch (Exception ex)
         {

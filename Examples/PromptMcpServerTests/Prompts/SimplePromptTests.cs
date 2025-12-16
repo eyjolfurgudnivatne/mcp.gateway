@@ -28,6 +28,7 @@ public class SimplePromptTests(PromptMcpServerFixture fixture)
 
         var result = content.GetResult<PromptResponse>();
         Assert.NotNull(result);
+        Assert.NotEmpty(result.Messages);
         Assert.NotNull(result.Messages.First().Content);
         Assert.Equal("santa_report_prompt", result.Name);
     }
@@ -50,6 +51,7 @@ public class SimplePromptTests(PromptMcpServerFixture fixture)
 
         var result = content.GetResult<PromptResponse>();
         Assert.NotNull(result);
+        Assert.NotEmpty(result.Messages);
         Assert.NotNull(result.Messages.First().Content);
         Assert.Equal("santa_report_prompt", result.Name);
     }

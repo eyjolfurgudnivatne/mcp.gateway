@@ -92,6 +92,7 @@ public class ToolService(IServiceProvider serviceProvider)
                             if (attribute != null)
                             {
                                 functionType = FunctionTypeEnum.Tool;
+                                // Auto-generate tool name if not specified
                                 functionName = attribute.Name ?? ToolNameGenerator.ToSnakeCase(method.Name);
                             }
                         }
@@ -102,6 +103,7 @@ public class ToolService(IServiceProvider serviceProvider)
                             if (attribute != null)
                             {
                                 functionType = FunctionTypeEnum.Prompt;
+                                // Auto-generate tool name if not specified
                                 functionName = attribute.Name ?? ToolNameGenerator.ToSnakeCase(method.Name);
                             }
                         }
@@ -109,9 +111,6 @@ public class ToolService(IServiceProvider serviceProvider)
                         // Skip methods without custom attribute
                         if (functionName is null)
                             continue;
-                        
-                        // Auto-generate tool name if not specified
-                        //var functionName = attributeName ?? ToolNameGenerator.ToSnakeCase(method.Name);
                         
                         // Validate tool name
                         if (!ToolMethodNameValidator.IsValid(functionName, out var validationError))
@@ -260,17 +259,25 @@ public class ToolService(IServiceProvider serviceProvider)
 
         bool isVoidTask = returnType == typeof(Task);
 
-        // Tool: Sjekk retur verdier og kast feil dersom ugyldig
-        if (functionType == FunctionTypeEnum.Tool && !isJsonRpcResponse && !isStreamMessageResponse && !isVoidTask)
-            throw new ArgumentException(
-                $"Tool delegate for '{name}' must return Task, Task<JsonRpcMessage>, JsonRpcMessage or IAsyncEnumerable<T>."
-            );
 
-        // Prompt: Sjekk retur verdier og kast feil dersom ugyldig
-        if (functionType == FunctionTypeEnum.Prompt && !isJsonRpcResponse && !isGenericTask)
-            throw new ArgumentException(
-                $"Prompt delegate for '{name}' must return Task<JsonRpcMessage> or JsonRpcMessage."
-            );
+        // Sjekk retur verdier for Tool og Prompt, og kast feil dersom ugyldig
+        if (functionType == FunctionTypeEnum.Tool)
+        {
+            if (!isJsonRpcResponse && !isStreamMessageResponse && !isVoidTask)
+                throw new ArgumentException(
+                    $"Tool delegate for '{name}' must return Task, Task<JsonRpcMessage>, JsonRpcMessage or IAsyncEnumerable<T>."
+                );
+        }
+
+        else if (functionType == FunctionTypeEnum.Prompt)
+        {
+            // Prompt: Sjekk retur verdier og kast feil dersom ugyldig
+            if (!isJsonRpcResponse && !isGenericTask)
+                throw new ArgumentException(
+                    $"Prompt delegate for '{name}' must return Task<JsonRpcMessage> or JsonRpcMessage."
+                );
+        }
+
 
         // Kun Task tillatt for ToolConnector
         if (isInputToolConnector && !isVoidTask)

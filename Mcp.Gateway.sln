@@ -132,6 +132,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PromptMcpServer", "Examples
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PromptMcpServerTests", "Examples\PromptMcpServerTests\PromptMcpServerTests.csproj", "{9834D13C-B059-4867-B53E-50A072964667}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.4.0", "v1.4.0", "{585FCBFB-07BB-48A2-91C8-1F9904C7271A}"
+	ProjectSection(SolutionItems) = preProject
+		.internal\releases\v1.4.0\release-note.md = .internal\releases\v1.4.0\release-note.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -214,6 +219,7 @@ Global
 		{38BE54B3-B805-4083-843A-E963842AC97F} = {CC761499-6044-48DF-9E01-744F32E64955}
 		{3AC218F7-7B03-4157-A57F-405090DC2055} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
 		{9834D13C-B059-4867-B53E-50A072964667} = {6A8723BD-3073-45B4-AAC3-AA46A1973400}
+		{585FCBFB-07BB-48A2-91C8-1F9904C7271A} = {D9CA5D71-21C8-4EC0-8545-C2BF80DFAE88}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E66382B0-4071-49E7-95B0-4BCF0B2434D0}
