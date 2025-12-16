@@ -41,7 +41,7 @@ public class TellOllama
         const string model = "llama3.2";
 
         // 1. Get tools DIRECTLY from ToolService (no HttpClient!)
-        var tools = toolService.GetToolsForTransport("http");
+        var tools = toolService.GetFunctionsForTransport(ToolService.FunctionTypeEnum.Tool, "http");
         var ollamaFormatter = new OllamaToolListFormatter();
         var formattedTools = ollamaFormatter.FormatToolList(tools);
 
