@@ -17,7 +17,8 @@ public class ToolService(IServiceProvider serviceProvider)
     public enum FunctionTypeEnum
     {
         Tool,
-        Prompt
+        Prompt,
+        Resource  // NY for v1.5.0
     }
 
     internal record FunctionDetails(FunctionTypeEnum FunctionType, FunctionDetailArgumentType FunctionArgumentType, FunctionDetailResultType FunctionResultType, Delegate FunctionDelegate);
