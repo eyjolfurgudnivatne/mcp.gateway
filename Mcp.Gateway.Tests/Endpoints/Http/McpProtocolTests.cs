@@ -28,7 +28,7 @@ public class McpProtocolTests(McpGatewayFixture fixture)
 
         // Assert
         Assert.True(response.TryGetProperty("result", out var result));
-        Assert.Equal("2025-06-18", result.GetProperty("protocolVersion").GetString());  // Updated to match current protocol version
+        Assert.Equal("2025-11-25", result.GetProperty("protocolVersion").GetString());  // Updated to MCP 2025-11-25 (v1.6.5)
         Assert.True(result.TryGetProperty("serverInfo", out var serverInfo));
         Assert.Equal("mcp-gateway", serverInfo.GetProperty("name").GetString());
         Assert.True(result.TryGetProperty("capabilities", out var capabilities));

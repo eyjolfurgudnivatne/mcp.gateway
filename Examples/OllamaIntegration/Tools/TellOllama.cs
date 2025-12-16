@@ -36,8 +36,8 @@ public class TellOllama
         var tellRequest = message.GetParams<TellRequest>();
         string format = tellRequest?.Format ?? "guid";
 
-        const string ollamaUrl = "http://localhost:11434";
-        // const string ollamaUrl = "http://multicom.internal:11434";  // Use remote server if needed
+        // const string ollamaUrl = "http://localhost:11434";
+        const string ollamaUrl = "http://multicom.internal:11434";  // Use remote server if needed
         const string model = "llama3.2";
 
         // 1. Get tools DIRECTLY from ToolService (no HttpClient!)

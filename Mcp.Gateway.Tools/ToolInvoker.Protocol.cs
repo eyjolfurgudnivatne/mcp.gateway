@@ -225,7 +225,7 @@ public partial class ToolInvoker
         
         return ToolResponse.Success(request.Id, new
         {
-            protocolVersion = "2025-06-18", // Updated to latest MCP protocol version
+            protocolVersion = "2025-11-25", // Updated to MCP 2025-11-25 (v1.6.5+)
             serverInfo = new
             {
                 name = "mcp-gateway",
