@@ -6,11 +6,11 @@
 [![.NET 10](https://img.shields.io/badge/.NET-10-purple)](https://dotnet.microsoft.com/)
 [![MCP Protocol](https://img.shields.io/badge/MCP-2025--06--18-green)](https://modelcontextprotocol.io/)
 
-`Mcp.Gateway.Tools` contains the infrastructure for MCP tools:
+`Mcp.Gateway.Tools` contains the infrastructure for MCP tools, prompts, and resources:
 
 - JSON‑RPC models (`JsonRpcMessage`, `JsonRpcError`)
-- Attributes (`McpToolAttribute`)
-- Tool registration (`ToolService`)
+- Attributes (`McpToolAttribute`, `McpPromptAttribute`, `McpResourceAttribute`)
+- Tool/Prompt/Resource registration (`ToolService`)
 - Invocation and protocol implementation (`ToolInvoker`)
 - Streaming (`ToolConnector`, `ToolCapabilities`)
 - ASP.NET Core extensions for endpoints (`MapHttpRpcEndpoint`, `MapWsRpcEndpoint`, `MapSseRpcEndpoint`, `AddToolsService`)
@@ -226,6 +226,49 @@ Prompts are exposed via the MCP prompt methods and `initialize` capabilities:
 
 On the wire, prompts are regular JSON-RPC responses whose `result` contains a prompt object with `name`,
 `description`, `messages` (each with `role` and `content`), and `arguments` that clients can use to build LLM calls.
+
+### MCP Resources (v1.5.0)
+
+You can expose data and content using `[McpResource]`:
+
+```csharp
+[McpResource("system://status",
+    Name = "System Status",
+    Description = "Current system health metrics",
+    MimeType = "application/json")]
+public JsonRpcMessage SystemStatus(JsonRpcMessage request)
+{
+    var status = new
+    {
+        uptime = Environment.TickCount64,
+        memoryUsed = GC.GetTotalMemory(false) / (1024 * 1024),
+        timestamp = DateTime.UtcNow
+    };
+    
+    var json = JsonSerializer.Serialize(status, JsonOptions.Default);
+    
+    return ToolResponse.Success(request.Id, new ResourceContent(
+        Uri: "system://status",
+        MimeType: "application/json",
+        Text: json
+    ));
+}
+```
+
+**Resource URI patterns:**
+- `file://logs/app.log` - File-based resources
+- `db://users/123` - Database resources
+- `system://status` - System metrics
+- `http://api.example.com/data` - External APIs
+
+Resources are exposed via the MCP resource methods and `initialize` capabilities:
+
+- `resources/list` – returns all discovered resources with `uri`, `name`, `description`, `mimeType`.
+- `resources/read` – returns the content of a specific resource by URI.
+- `initialize` – includes a `resources` capability flag when resources are registered.
+
+On the wire, resources are regular JSON-RPC responses whose `result` contains resource metadata (for list) or
+content (for read) with `uri`, `mimeType`, and `text` fields.
 
 ---
 

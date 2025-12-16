@@ -8,10 +8,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned for v2.0
-- MCP Resources support (official MCP spec feature)
 - Tool lifecycle hooks for monitoring
 - Custom transport provider API
 - Enhanced streaming (compression, flow control, multiplexing)
+- resources/subscribe for live resource updates
+- Resource templates with URI variables
+
+---
+
+## [1.5.0] - 2025-12-16
+
+### Added
+- MCP Resources support:
+  - New `[McpResource]` attribute in `Mcp.Gateway.Tools` to mark resource methods, separate from `[McpTool]` and `[McpPrompt]`.
+    - `Uri` is required and must follow `scheme://path` format (e.g., `file://logs/app.log`, `db://users/123`).
+    - `Name`, `Description`, and `MimeType` are optional metadata for resource discovery.
+  - New resource models in `Mcp.Gateway.Tools`:
+    - `ResourceDefinition` – describes a resource with URI, name, description, and MIME type.
+    - `ResourceContent` – wraps resource content with URI, MIME type, and text data.
+    - `ResourceListResponse` – response format for `resources/list`.
+    - `ResourceReadResponse` – response format for `resources/read`.
+  - Full MCP resources protocol support:
+    - `resources/list` implemented and returns all discovered resources with metadata.
+    - `resources/read` implemented and returns the content of a specific resource by URI.
+  - `initialize` now includes a `resources` capability flag when the server has registered resources, mirroring tools and prompts capabilities.
+- New example server `Examples/ResourceMcpServer`:
+  - Demonstrates resources implemented as regular methods returning `JsonRpcMessage` via `ToolResponse.Success(...)`.
+  - File resources: `file://logs/app.log`, `file://config/settings.json`
+  - System resources: `system://status`, `system://environment`
+  - Data resources: `db://users/example`, `db://stats/summary`
+- Architecture improvements:
+  - Refactored `ToolService` into 6 partial classes for better organization:
+    - `ToolService.cs` (Core)
+    - `ToolService.Scanning.cs` (Function scanning)
+    - `ToolService.Functions.cs` (Function definitions)
+    - `ToolService.Invocation.cs` (Function invocation)
+    - `ToolService.Resources.cs` (Resource-specific functionality)
+  - Refactored `ToolInvoker` into 6 partial classes for better maintainability:
+    - `ToolInvoker.cs` (Core)
+    - `ToolInvoker.Http.cs` (HTTP transport)
+    - `ToolInvoker.WebSocket.cs` (WebSocket transport)
+    - `ToolInvoker.Sse.cs` (SSE transport)
+    - `ToolInvoker.Protocol.cs` (MCP protocol handlers)
+    - `ToolInvoker.Resources.cs` (Resources support)
+
+### Behaviour & Compatibility
+- Resources are a new MCP surface area and do not change existing behaviour:
+  - Tools (`[McpTool]`, `tools/list`, `tools/call`) remain unchanged.
+  - Prompts (`[McpPrompt]`, `prompts/list`, `prompts/get`) remain unchanged.
+  - Wire format for tools, prompts, and streaming is unchanged.
+- Resource types reuse existing JSON-RPC infrastructure:
+  - Resource methods still return `JsonRpcMessage`; `ResourceContent` is serialized using the existing `JsonOptions`.
+- v1.5.0 is backward compatible with v1.4.0; no changes are required for existing tool or prompt implementations.
+
+### Testing
+- New tests in `Examples/ResourceMcpServerTests`:
+  - Verify that resources are correctly discovered and exposed via `resources/list` (URI, name, description, MIME type).
+  - Verify that `resources/read` returns the expected content structure (URI, MIME type, text).
+  - Verify error handling (resource not found, invalid URI, missing parameters).
+  - Full MCP protocol workflow tests (initialize → resources/list → resources/read).
+- Test summary: **121 tests (100% passing)**
+  - Mcp.Gateway.Tests: 70 tests
+  - CalculatorMcpServerTests: 16 tests
+  - DateTimeMcpServerTests: 4 tests
+  - PromptMcpServerTests: 10 tests
+  - **ResourceMcpServerTests: 10 tests** (NEW)
+  - OllamaIntegrationTests: 11 tests
+- All existing `Mcp.Gateway.Tests` and example tests continue to pass with no regressions across transports (HTTP/WebSocket/SSE/stdio).
 
 ---
 
