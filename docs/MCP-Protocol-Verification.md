@@ -157,7 +157,7 @@ Assert.Contains("streaming", errorMessage, StringComparison.OrdinalIgnoreCase);
 
 ### 4. `prompts/list` Method
 
-**Location:** `Mcp.Gateway.Tools/ToolInvoker.cs` - `HandlePromptsList()`
+**Location:** `Mcp.Gateway.Tools/ToolInvoker.Protocol.cs` - `HandlePromptsList()`
 
 **Verified:**
 - ✅ Returns array of prompts
@@ -183,7 +183,7 @@ Assert.True(messages.TryGetProperty("content", out _));
 
 ### 5. `prompts/get` Method
 
-**Location:** `Mcp.Gateway.Tools/ToolInvoker.cs` - `HandlePromptsGet()`
+**Location:** `Mcp.Gateway.Tools/ToolInvoker.Protocol.cs` - `HandlePromptsGet()`
 
 **Verified:**
 - ✅ Accepts `id` parameter
@@ -201,7 +201,7 @@ Assert.True(messages.TryGetProperty("content", out _));
 
 ### 6. `resources/list` Method
 
-**Location:** `Mcp.Gateway.Tools/ToolInvoker.cs` - `HandleResourcesList()`
+**Location:** `Mcp.Gateway.Tools/ToolInvoker.Resources.cs` - `HandleResourcesList()`
 
 **Verified:**
 - ✅ Returns array of resources
@@ -224,7 +224,7 @@ Assert.Equal("https://example.com/models/gltf/model.glb", modelGltf.GetProperty(
 
 ### 7. `resources/read` Method
 
-**Location:** `Mcp.Gateway.Tools/ToolInvoker.cs` - `HandleResourcesRead()`
+**Location:** `Mcp.Gateway.Tools/ToolInvoker.Resources.cs` - `HandleResourcesRead()`
 
 **Verified:**
 - ✅ Accepts `uri` parameter

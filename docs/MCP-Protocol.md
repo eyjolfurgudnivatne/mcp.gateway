@@ -158,7 +158,7 @@ Lists all available tools with their schemas.
 ```
 
 **Implementation:**  
-See `ToolInvoker.HandleFunctionsList()` in `Mcp.Gateway.Tools/ToolInvoker.Protocol.cs`
+See `ToolInvoker.HandleFunctionsList()` (unified handler for both `tools/list` and `prompts/list`) in `Mcp.Gateway.Tools/ToolInvoker.Protocol.cs`
 
 ---
 
@@ -199,7 +199,7 @@ Invokes a specific tool with arguments.
 ```
 
 **Implementation:**  
-See `ToolInvoker.HandleFunctionsCallAsync()` in `Mcp.Gateway.Tools/ToolInvoker.Protocol.cs`
+See `ToolInvoker.HandleFunctionsCallAsync()` in `Mcp.Gateway.Tools/ToolInvoker.Protocol.cs` (handles both `tools/call` and `prompts/get`)
 
 ---
 

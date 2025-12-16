@@ -106,7 +106,7 @@ public partial class ToolInvoker
                     content = new ResourceContent(
                         Uri: uri,
                         MimeType: resourceDef.MimeType,
-                        Text: msg.Result.ToString()
+                        Text: msg.Result is string s ? s : JsonSerializer.Serialize(msg.Result, JsonOptions.Default)
                     );
                 }
             }

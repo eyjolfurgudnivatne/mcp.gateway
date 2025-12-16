@@ -84,9 +84,11 @@ public class ResourceReadTests(ResourceMcpServerFixture fixture)
         var textValue = text.GetString();
         Assert.NotNull(textValue);
         Assert.NotEmpty(textValue);
-        
+
         // Verify it's valid JSON
-        var statusData = JsonDocument.Parse(textValue!).RootElement;
+        using var statusDoc = JsonDocument.Parse(textValue!);
+        var statusData = statusDoc.RootElement;
+
         Assert.True(statusData.TryGetProperty("uptime", out _));
         Assert.True(statusData.TryGetProperty("memoryUsed", out _));
         Assert.True(statusData.TryGetProperty("timestamp", out _));
@@ -131,7 +133,9 @@ public class ResourceReadTests(ResourceMcpServerFixture fixture)
         Assert.NotEmpty(textValue);
         
         // Verify it's valid JSON with expected structure
-        var userData = JsonDocument.Parse(textValue!).RootElement;
+        using var userDoc = JsonDocument.Parse(textValue!);
+        var userData = userDoc.RootElement;
+                
         Assert.True(userData.TryGetProperty("id", out var id));
         Assert.Equal("example", id.GetString());
         Assert.True(userData.TryGetProperty("name", out _));
