@@ -66,4 +66,13 @@ public class McpResourceAttribute : Attribute
     /// Optional, can be auto-detected or set explicitly.
     /// </summary>
     public string? MimeType { get; set; }
+    
+    /// <summary>
+    /// Optional icon URL for this resource (MCP 2025-11-25).
+    /// Provides a visual representation in MCP clients.
+    /// </summary>
+    /// <example>
+    /// "https://example.com/file-icon.png"
+    /// </example>
+    public string? Icon { get; set; }
 }

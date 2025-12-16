@@ -95,12 +95,14 @@ public partial class ToolService
                 var name = attr.Name ?? DeriveNameFromUri(uri);
                 var description = attr.Description;
                 var mimeType = attr.MimeType;
+                var icon = attr.Icon;  // NEW: Extract icon (v1.6.5)
                 
                 return new ResourceDefinition(
                     Uri: uri,
                     Name: name,
                     Description: description,
-                    MimeType: mimeType
+                    MimeType: mimeType,
+                    Icon: icon  // NEW: Include icon (v1.6.5)
                 );
             })
             .Where(x => x != null)!; // Filter out nulls from missing attributes
@@ -134,7 +136,8 @@ public partial class ToolService
             Uri: uri,
             Name: attr.Name ?? DeriveNameFromUri(uri),
             Description: attr.Description,
-            MimeType: attr.MimeType
+            MimeType: attr.MimeType,
+            Icon: attr.Icon  // NEW: Include icon (v1.6.5)
         );
     }
 

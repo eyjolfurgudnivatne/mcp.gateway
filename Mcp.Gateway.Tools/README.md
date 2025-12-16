@@ -69,6 +69,7 @@ public class CalculatorTools
     [McpTool("add_numbers",
         Title = "Add Numbers",
         Description = "Adds two numbers and returns the result.",
+        Icon = "https://example.com/icons/calculator.png",  // NEW: Icon (v1.6.5)
         InputSchema = @"{
             ""type"":""object"",
             ""properties"":{
@@ -89,6 +90,40 @@ public class CalculatorTools
     }
 }
 ```
+
+**Icons (v1.6.5+):**
+
+Tools, prompts, and resources can include optional icons for visual representation in MCP clients:
+
+```csharp
+[McpTool("calculator_add",
+    Icon = "https://example.com/icons/calculator.png")]
+
+[McpPrompt("summarize",
+    Icon = "https://example.com/icons/document.png")]
+
+[McpResource("file://logs/app.log",
+    Icon = "https://example.com/icons/log-file.png")]
+```
+
+Icons are serialized as a single-item array in the MCP protocol:
+```json
+{
+  "name": "add_numbers",
+  "icons": [
+    {
+      "src": "https://example.com/icons/calculator.png",
+      "mimeType": null,
+      "sizes": null
+    }
+  ]
+}
+```
+
+The `Icon` property accepts:
+- ✅ HTTPS URLs: `"https://example.com/icon.png"`
+- ✅ Data URIs: `"data:image/svg+xml;base64,..."`
+- ℹ️ `mimeType` and `sizes` are automatically set to `null` (client infers from URL)
 
 ### With validation and DI (from `DevTestServer/Tools/Calculator.cs`)
 

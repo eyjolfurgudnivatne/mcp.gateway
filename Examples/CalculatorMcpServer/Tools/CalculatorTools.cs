@@ -7,7 +7,8 @@ public class CalculatorTools
 {
     [McpTool("add_numbers",
         Title = "Add Numbers",
-        Description = "Adds two numbers and return result. Example: 5 + 3 = 8")]
+        Description = "Adds two numbers and return result. Example: 5 + 3 = 8",
+        Icon = "https://example.com/icons/calculator.png")]  // NEW: Icon for testing (v1.6.5)
     public JsonRpcMessage AddNumbersTool(TypedJsonRpc<AddNumbersRequest> request)
     {
         var args = request.GetParams()

@@ -433,6 +433,7 @@ Tools are registered using the `[McpTool]` attribute:
 [McpTool("add_numbers",
     Title = "Add Numbers",
     Description = "Adds two numbers and return result",
+    Icon = "https://example.com/icons/calculator.png",  // NEW: v1.6.5+
     InputSchema = @"{...}")]
 public async Task<JsonRpcMessage> AddNumbers(JsonRpcMessage request)
 {
@@ -441,6 +442,34 @@ public async Task<JsonRpcMessage> AddNumbers(JsonRpcMessage request)
     return ToolResponse.Success(request.Id, new { result = a + b });
 }
 ```
+
+**Icons (v1.6.5+):**
+
+All three types (tools, prompts, resources) support optional icons for visual representation:
+
+```csharp
+// Tool with icon
+[McpTool("calculator", Icon = "https://example.com/calc.png")]
+
+// Prompt with icon
+[McpPrompt("summarize", Icon = "https://example.com/document.png")]
+
+// Resource with icon
+[McpResource("file://config", Icon = "https://example.com/config.png")]
+```
+
+Icons are serialized in the MCP protocol as:
+```json
+{
+  "name": "add_numbers",
+  "icons": [{"src": "https://example.com/icons/calculator.png", "mimeType": null, "sizes": null}]
+}
+```
+
+Supported formats:
+- ✅ HTTPS URLs: `"https://example.com/icon.png"`
+- ✅ Data URIs: `"data:image/svg+xml;base64,..."`
+- ℹ️ When omitted, the `icons` field is not included in the response
 
 ### Prompt Registration (v1.4.0+)
 

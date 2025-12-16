@@ -298,12 +298,28 @@ public partial class ToolInvoker
                         schema = new { type = "object", properties = new { } };
                     }
 
-                    return new
+                    var toolObj = new Dictionary<string, object>
                     {
-                        name = t.Name,
-                        description = t.Description,
-                        inputSchema = schema
+                        ["name"] = t.Name,
+                        ["description"] = t.Description,
+                        ["inputSchema"] = schema!
                     };
+
+                    // Add icons if present (MCP 2025-11-25)
+                    if (!string.IsNullOrEmpty(t.Icon))
+                    {
+                        toolObj["icons"] = new[]
+                        {
+                            new
+                            {
+                                src = t.Icon,
+                                mimeType = (string?)null,
+                                sizes = (string[]?)null
+                            }
+                        };
+                    }
+
+                    return toolObj;
                 }).ToList();
 
                 // Build response with pagination
@@ -326,12 +342,28 @@ public partial class ToolInvoker
             {
                 var promptsList = paginatedResult.Items.Select(p =>
                 {
-                    return new
+                    var promptObj = new Dictionary<string, object>
                     {
-                        name = p.Name,
-                        description = p.Description,
-                        arguments = p.Arguments ?? Array.Empty<PromptArgument>()
+                        ["name"] = p.Name,
+                        ["description"] = p.Description,
+                        ["arguments"] = p.Arguments ?? Array.Empty<PromptArgument>()
                     };
+
+                    // Add icons if present (MCP 2025-11-25)
+                    if (!string.IsNullOrEmpty(p.Icon))
+                    {
+                        promptObj["icons"] = new[]
+                        {
+                            new
+                            {
+                                src = p.Icon,
+                                mimeType = (string?)null,
+                                sizes = (string[]?)null
+                            }
+                        };
+                    }
+
+                    return promptObj;
                 }).ToList();
 
                 // Build response with pagination

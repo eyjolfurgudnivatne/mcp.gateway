@@ -56,4 +56,13 @@ public class McpToolAttribute : Attribute
     /// - Text streaming: Capabilities = ToolCapabilities.TextStreaming
     /// </remarks>
     public ToolCapabilities Capabilities { get; init; } = ToolCapabilities.Standard;
+    
+    /// <summary>
+    /// Optional icon URL for this tool (MCP 2025-11-25).
+    /// Provides a visual representation in MCP clients.
+    /// </summary>
+    /// <example>
+    /// "https://example.com/calculator-icon.png" or "data:image/svg+xml;base64,..."
+    /// </example>
+    public string? Icon { get; set; }
 }
