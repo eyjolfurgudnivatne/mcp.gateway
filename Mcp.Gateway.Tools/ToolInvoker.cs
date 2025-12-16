@@ -804,13 +804,13 @@ public class ToolInvoker(ToolService _toolService, ILogger<ToolInvoker> _logger)
             if (!string.IsNullOrEmpty(request.Method) && request.Method.Contains("tools/list/"))
             {
                 functionType = ToolService.FunctionTypeEnum.Tool;
-                // Extract format from method name (e.g., "functions/list/ollama" → "ollama")
+                // Extract format from method name (e.g., "tools/list/ollama" → "ollama")
                 format = request.Method?.Replace("tools/list/", "") ?? "";
             }
             if (!string.IsNullOrEmpty(request.Method) && request.Method.Contains("prompts/list/"))
             {
                 functionType = ToolService.FunctionTypeEnum.Prompt;
-                // Extract format from method name (e.g., "functions/list/ollama" → "ollama")
+                // Extract format from method name (e.g., "prompts/list/ollama" → "ollama")
                 format = request.Method?.Replace("prompts/list/", "") ?? "";
             }
 

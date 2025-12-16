@@ -103,7 +103,7 @@ public class ToolService(IServiceProvider serviceProvider)
                             if (attribute != null)
                             {
                                 functionType = FunctionTypeEnum.Prompt;
-                                // Auto-generate tool name if not specified
+                                // Auto-generate prompt name if not specified
                                 functionName = attribute.Name ?? ToolNameGenerator.ToSnakeCase(method.Name);
                             }
                         }
@@ -112,7 +112,7 @@ public class ToolService(IServiceProvider serviceProvider)
                         if (functionName is null)
                             continue;
                         
-                        // Validate tool name
+                        // Validate name
                         if (!ToolMethodNameValidator.IsValid(functionName, out var validationError))
                         {
                             System.Diagnostics.Debug.WriteLine(
