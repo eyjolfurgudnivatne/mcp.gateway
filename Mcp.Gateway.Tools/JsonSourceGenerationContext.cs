@@ -17,7 +17,7 @@ using System.Text.Json.Serialization;
 [JsonSerializable(typeof(JsonRpcError))]
 [JsonSerializable(typeof(StreamMessage))]
 [JsonSerializable(typeof(StreamMessageMeta))]
-[JsonSerializable(typeof(ToolService.ToolDefinition))]
+[JsonSerializable(typeof(ToolService.FunctionDefinition))]
 internal partial class JsonSourceGenerationContext : JsonSerializerContext
 {
 }

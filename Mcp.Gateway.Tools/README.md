@@ -182,6 +182,51 @@ If `InputSchema` is omitted on `[McpTool]` **and** the first parameter is `Typed
 
 If `InputSchema` is set on `[McpTool]`, it always wins and auto-generation is skipped.
 
+### MCP Prompts (v1.4.0)
+
+You can define reusable prompt templates using `[McpPrompt]` and the prompt models:
+
+```
+[McpPrompt(Description = "Report to Santa Claus")]
+public JsonRpcMessage SantaReportPrompt(JsonRpcMessage request)
+{
+    return ToolResponse.Success(
+        request.Id,
+        new PromptResponse(
+            Name: "santa_report_prompt",
+            Description: "A prompt that reports to Santa Claus",
+            Messages: [
+                new(
+                    PromptRole.System,
+                    "You are a very helpful assistant for Santa Claus."),
+                new(
+                    PromptRole.User,
+                    "Send a letter to Santa Claus and tell him that {name} has been {behavior}.")
+            ],
+            Arguments: new {
+                name = new {
+                    type = "string",
+                    description = "Name of the child"
+                },
+                behavior = new {
+                    type = "string",
+                    description = "Behavior of the child (e.g., Good, Naughty)",
+                    @enum = new[] { "Good", "Naughty" }
+                }
+            }
+        ));
+}
+```
+
+Prompts are exposed via the MCP prompt methods and `initialize` capabilities:
+
+- `prompts/list` – returns all discovered prompts with `name`, `description`, `arguments`.
+- `prompts/get` – returns the expanded prompt `messages` for a given prompt and arguments.
+- `initialize` – includes a `prompts` capability flag when prompts are registered.
+
+On the wire, prompts are regular JSON-RPC responses whose `result` contains a prompt object with `name`,
+`description`, `messages` (each with `role` and `content`), and `arguments` that clients can use to build LLM calls.
+
 ---
 
 ## 🕒 Date/time tools (example)

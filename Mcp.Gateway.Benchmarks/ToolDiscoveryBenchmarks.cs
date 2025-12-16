@@ -33,16 +33,16 @@ public class ToolDiscoveryBenchmarks
     }
     
     [Benchmark(Baseline = true)]
-    public List<ToolService.ToolDefinition> DiscoverAllTools()
+    public List<ToolService.FunctionDefinition> DiscoverAllTools()
     {
         // This triggers tool scan on first call (lazy initialization)
-        return _toolService.GetAllToolDefinitions().ToList();
+        return _toolService.GetAllFunctionDefinitions(ToolService.FunctionTypeEnum.Tool).ToList();
     }
     
     [Benchmark]
     public int CountTools()
     {
         // Count total tools (uses cached results after first call)
-        return _toolService.GetAllToolDefinitions().Count();
+        return _toolService.GetAllFunctionDefinitions(ToolService.FunctionTypeEnum.Tool).Count();
     }
 }

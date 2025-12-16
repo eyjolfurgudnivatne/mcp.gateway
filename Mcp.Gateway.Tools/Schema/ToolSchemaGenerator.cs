@@ -6,14 +6,14 @@ using System.Text.Json.Nodes;
 
 internal static class ToolSchemaGenerator
 {
-    public static string? TryGenerateForTool(MethodInfo method, ToolService.ToolDetails toolDetails)
+    public static string? TryGenerateForTool(MethodInfo method, ToolService.FunctionDetails toolDetails)
     {
         // Kun for TypedJsonRpc<T> + manglende InputSchema
-        if (!toolDetails.ToolArgumentType.IsTypedJsonRpc)
+        if (!toolDetails.FunctionArgumentType.IsTypedJsonRpc)
             return null;
 
         // Finn T fra TypedJsonRpc<T>
-        var paramType = toolDetails.ToolArgumentType.ParameterType;              // typeof(TypedJsonRpc<TParams>)
+        var paramType = toolDetails.FunctionArgumentType.ParameterType;              // typeof(TypedJsonRpc<TParams>)
         var tParams = paramType.GetGenericArguments().FirstOrDefault();
         if (tParams == null)
             return null;
@@ -64,7 +64,7 @@ internal static class ToolSchemaGenerator
                            ?? ToCamelCase(p.Name);
 
             // Required = non-nullable
-            if (!IsNullable(p.PropertyType))
+            if (!IsNullable(p))
                 required.Add(jsonName);
 
             ((JsonObject)root["properties"]!)[jsonName] = propSchema;
@@ -106,12 +106,19 @@ internal static class ToolSchemaGenerator
         return ("object", null);
     }
 
-    private static bool IsNullable(Type type)
+    private static bool IsNullable(PropertyInfo propertyInfo)
     {
-        if (!type.IsValueType) // referansetyper er nullable
-            return true;
+        // value types: som før
+        if (propertyInfo.PropertyType.IsValueType)
+        {
+            return Nullable.GetUnderlyingType(propertyInfo.PropertyType) != null;
+        }
 
-        return Nullable.GetUnderlyingType(type) != null;
+        // referansetyper: bruk NullabilityInfoContext
+        var context = new NullabilityInfoContext();
+        var nullability = context.Create(propertyInfo);
+
+        return nullability.ReadState is NullabilityState.Nullable;
     }
 
     private static string ToCamelCase(string name)

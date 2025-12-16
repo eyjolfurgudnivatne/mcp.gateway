@@ -15,7 +15,7 @@ public class OllamaToolListFormatterTests
     {
         // Arrange
         var formatter = new OllamaToolListFormatter();
-        var tools = new List<ToolService.ToolDefinition>
+        var tools = new List<ToolService.FunctionDefinition>
         {
             new(
                 Name: "add_numbers",
@@ -66,7 +66,7 @@ public class OllamaToolListFormatterTests
     {
         // Arrange
         var formatter = new OllamaToolListFormatter();
-        var tools = new List<ToolService.ToolDefinition>
+        var tools = new List<ToolService.FunctionDefinition>
         {
             new(
                 Name: "greet",
@@ -98,7 +98,7 @@ public class OllamaToolListFormatterTests
     {
         // Arrange
         var formatter = new OllamaToolListFormatter();
-        var tools = new List<ToolService.ToolDefinition>
+        var tools = new List<ToolService.FunctionDefinition>
         {
             new(
                 Name: "complex_tool",
@@ -147,7 +147,7 @@ public class OllamaToolListFormatterTests
     {
         // Arrange
         var formatter = new OllamaToolListFormatter();
-        var tools = new List<ToolService.ToolDefinition>
+        var tools = new List<ToolService.FunctionDefinition>
         {
             new("tool1", "First tool", """{"type":"object","properties":{}}"""),
             new("tool2", "Second tool", """{"type":"object","properties":{}}"""),

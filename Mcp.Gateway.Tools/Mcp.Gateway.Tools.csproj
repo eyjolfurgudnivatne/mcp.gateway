@@ -7,7 +7,7 @@
 		
 		<!-- NuGet Package Metadata -->
 		<PackageId>Mcp.Gateway.Tools</PackageId>
-		<Version>1.0.1</Version>
+		<Version>1.4.0</Version>
 		<Authors>ARKo AS - AHelse Development Team</Authors>
 		<Company>ARKo AS</Company>
 		<Product>MCP Gateway</Product>
@@ -19,7 +19,7 @@
 		<PackageTags>mcp;model-context-protocol;json-rpc;websocket;github-copilot;claude;ai;tools;gateway;dotnet10</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageReleaseNotes>v1.0.1: Performance improvements - ArrayPool for WebSocket buffers (90% GC reduction), SerializeToUtf8Bytes optimization</PackageReleaseNotes>
+		<PackageReleaseNotes>v1.4.0: Added MCP Prompts support (McpPrompt attribute, prompt models, prompts/list, prompts/get, initialize prompts capability) and example PromptMcpServer.</PackageReleaseNotes>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>

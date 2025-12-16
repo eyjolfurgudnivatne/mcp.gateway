@@ -17,5 +17,5 @@ public interface IToolListFormatter
     /// </summary>
     /// <param name="tools">MCP tool definitions from ToolService</param>
     /// <returns>Formatted tool list ready for the target platform</returns>
-    object FormatToolList(IEnumerable<ToolService.ToolDefinition> tools);
+    object FormatToolList(IEnumerable<ToolService.FunctionDefinition> tools);
 }
