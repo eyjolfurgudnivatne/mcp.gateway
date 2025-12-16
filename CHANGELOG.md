@@ -8,11 +8,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned for v2.0
-- Tool lifecycle hooks for monitoring
-- Custom transport provider API
-- Enhanced streaming (compression, flow control, multiplexing)
-- resources/subscribe for live resource updates
-- Resource templates with URI variables
+- **MCP Protocol 2025-11-25 support**
+  - **Prompts enhancements:**
+    - Cursor-based pagination for `prompts/list`
+    - Dynamic prompt updates and `prompts/changed` notifications
+    - Enhanced argument validation with JSON Schema
+    - Embedded resource references in prompt messages
+  - **Tools enhancements:**
+    - Cursor-based pagination for `tools/list`
+    - Dynamic tool updates and `tools/changed` notifications
+  - **Resources enhancements:**
+    - Cursor-based pagination for `resources/list`
+    - `resources/subscribe` for live resource updates
+    - `resources/unsubscribe` to stop watching resources
+    - `resources/updated` notifications when subscribed resources change
+    - Resource templates with URI variables (e.g., `file://logs/{date}.log`)
+  - **Utilities:**
+    - **Completion** (`completion/complete`) - Auto-completion support for prompt arguments and resource URIs
+    - **Logging** - Client-to-server log forwarding with configurable log levels
+      - `logging/setLevel` - Configure which log levels to forward
+      - `notifications/message` - Client sends log messages to server
+    - **Pagination** - Cursor-based pagination pattern for all list operations
+      - Consistent cursor format across `tools/list`, `prompts/list`, `resources/list`
+      - Optional `cursor` parameter in requests
+      - `nextCursor` in responses when more results available
+- **Tool lifecycle hooks for monitoring**
+  - Pre/post invocation hooks for logging and metrics
+  - Error handling hooks for custom error reporting
+  - Performance tracking and latency monitoring
+- **Custom transport provider API**
+  - Pluggable transport system (gRPC, message queues, custom protocols)
+  - Transport-agnostic tool invocation
+- **Enhanced streaming**
+  - Compression support (gzip, brotli) for large payloads
+  - Flow control and backpressure handling
+  - Stream multiplexing over single connection
 
 ---
 
