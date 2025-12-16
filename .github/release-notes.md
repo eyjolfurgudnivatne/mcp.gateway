@@ -1,166 +1,127 @@
-# MCP Gateway v1.3.0 – TypedJsonRpc and Schema Generation
+# MCP Gateway v1.4.0 – MCP Prompts Support
 
 ## Summary
 
-- New `TypedJsonRpc<T>` helper for strongly-typed tool implementations
-- Optional JSON Schema auto-generation for `TypedJsonRpc<T>` tools
-- Extended MCP `tools/list` to surface generated schemas
-- Enum and description support based on C# attributes
+v1.4.0 introduces first-class **MCP Prompts** support alongside existing tools, including:
+
+- Attribute-based prompt registration via `McpPromptAttribute`
+- A dedicated prompt model and response types in `Mcp.Gateway.Tools`
+- A new example server `PromptMcpServer` + tests
+- Groundwork for future MCP concepts (Resources, extended server features)
 
 ---
 
 ## Highlights
 
-### New
+### New: MCP Prompts
 
-- `TypedJsonRpc<T>` – thin wrapper over `JsonRpcMessage` for tools
-  - Provides `Id`, `IdAsString`, `Method`, and `Inner` (`JsonRpcMessage`)
-  - Adds `GetParams()` returning `T` without needing `GetParams<T>()` at call-site
-  - Used only as a **convenience API** for tool authors; protocol wire format is unchanged.
-- Tool discovery extended with parameter-type awareness
-  - `ToolService` now records the first parameter type (e.g. `TypedJsonRpc<AddNumbersRequestTyped>`) for each tool.
-  - `ToolInvoker` uses this metadata to construct `TypedJsonRpc<T>` instances at runtime when invoking tools.
+- Added `[McpPrompt]` attribute in `Mcp.Gateway.Tools`:
+  - `McpPromptAttribute(string? name = null)` with:
+    - `Name` – optional; auto-generated from method name when null (same snake_case logic as tools).
+    - `Title` – optional, human-friendly title (falls back to humanized name when omitted).
+    - `Description` – optional, shown to MCP clients in `prompts/list`.
+  - Used to mark methods as **prompts**, separate from `[McpTool]`.
+- Introduced dedicated prompt response models in `Mcp.Gateway.Tools`:
+  - `PromptResponse` – wraps the MCP prompt result:
+    - `name` – name of this prompt.
+    - `description` – description of this prompt.
+    - `messages` – list of messages for the LLM to handle.
+    - `arguments` – list of arguments for the LLM to use with messages.
+  - `PromptMessage` – a single prompt message:
+    - `role` – e.g. `system`, `user`, `assistant`.
+    - `content` – prompt text.
+  - These models match the MCP `prompts/get` result shape and can be reused by all prompt implementations.
+  - MCP prompt methods implemented:
+    - `prompts/list`
+    - `prompts/get`
+    - `initialize` prompts capability flag
 
-### Schema Generator (opt-in)
+> Note: Prompts are **not** streamed in v1.4.0; they are returned as regular JSON-RPC responses with a fixed
+> `messages` array.
 
-- New internal `ToolSchemaGenerator` for tools using `TypedJsonRpc<T>` with no explicit `InputSchema`:
-  - Only runs when **both** of these are true:
-    - First parameter is `TypedJsonRpc<TParams>`
-    - `[McpTool]` has `InputSchema == null` or whitespace.
-  - Generates a minimal, valid MCP tool schema from `TParams`:
-    - Root: `{ "type": "object", "properties": { ... }, "required": [ ... ] }`
-    - `properties` from public instance properties on `TParams`.
-    - `required` contains all non-nullable properties (nullable → optional).
-- JSON type mapping from C#:
-  - `string` → `"type": "string"`
-  - `Guid` → `"type": "string", "format": "uuid"`
-  - `DateTime` / `DateTimeOffset` → `"type": "string", "format": "date-time"`
-  - `bool` → `"type": "boolean"`
-  - `int`, `long`, `short`, `byte` → `"type": "integer"`
-  - `float`, `double`, `decimal` → `"type": "number"`
-  - arrays / `IEnumerable<T>` (except `string`) → `"type": "array"`
-  - other types / nested records → `"type": "object"` (no recursion in v1.3.0).
-- Enum support:
-  - C# enums are represented as string-based enums in JSON Schema:
-    - `enum Status { Active, Disabled }` → `{ "type": "string", "enum": ["Active", "Disabled"] }`.
-- Description support:
-  - `[Description("...")]` on record properties (with `[property: Description]`) is mapped to `"description"` in JSON Schema:
-    - `[property: Description("First number to add")]` → `"description": "First number to add"`.
-  - `JsonPropertyName` is respected for property names in the generated schema.
+### New: Prompt Example Server
+
+- Added `Examples/PromptMcpServer` showcasing prompt usage:
+  - `Prompts/SimplePrompt.cs` – minimal prompt example using `JsonRpcMessage`:
+
+    ```csharp
+    [McpPrompt(Description = "Report to Santa Claus")]
+    public JsonRpcMessage SantaReportPrompt(JsonRpcMessage request)
+    {
+        return ToolResponse.Success(
+            request.Id,
+            new PromptResponse(
+                Name: "santa_report_prompt",
+                Description: "A prompt that reports to Santa Claus",
+                Messages: [
+                    new(
+                        PromptRole.System,
+                        "You are a very helpful assistant for Santa Claus."),
+                    new (
+                        PromptRole.User,
+                        "Send a letter to Santa Claus and tell him that {{name}} has been {{behavior}}.")
+                ],
+                Arguments: new {
+                    name = new {
+                        type = "string",
+                        description = "Name of the child"
+                    },
+                    behavior = new {
+                        type = "string",
+                        description = "Behavior of the child (e.g., Good, Naughty)",
+                        @enum = new[] { "Good", "Naughty" }
+                    }
+                }
+            ));
+    }
+    ```
+
+  - Demonstrates how prompts and `JsonRpcMessage` integrate cleanly with existing infrastructure.
+
+- Added `Examples/PromptMcpServerTests`:
+  - `Prompts/SimplePromptTests.cs` verifies that the prompt responds with the expected `name`, `description`, `messages` and `arguments` structure and uses
+    the `PromptResponse`/`PromptMessage` models correctly.
+
+> The example server is intended as a reference implementation for MCP Prompts, similar to how
+> `CalculatorMcpServer` demonstrates tools.
 
 ---
 
 ## Behaviour & Compatibility
 
-- `InputSchema` remains the single source of truth when provided:
-  - If a tool has `InputSchema` set on `[McpTool]`, that schema is used as-is.
-  - The schema generator is **never** applied in that case.
-- For tools using `TypedJsonRpc<TParams>` and **no** `InputSchema`:
-  - `tools/list` will now include an auto-generated `inputSchema` based on `TParams`.
-- For all existing tools using `JsonRpcMessage` and explicit `InputSchema`:
-  - Behaviour is unchanged.
-  - Wire format, tool names, and schemas are fully backward compatible.
-- `ToolInvoker` and `ToolService` maintain the same JSON-RPC and MCP semantics:
-  - No changes to `JsonRpcMessage` layout.
-  - No changes to MCP protocol methods (`initialize`, `tools/list`, `tools/call`).
+- Prompts are a **new** MCP surface area and do **not** change existing behaviour:
+  - Tools (`[McpTool]`, `tools/list`, `tools/call`) remain unchanged.
+  - Wire format for tools and streaming is unchanged.
+- Prompt types live in `Mcp.Gateway.Tools` and reuse existing JSON-RPC infrastructure:
+  - Prompt methods still return `JsonRpcMessage` via `ToolResponse.Success(...)`.
+  - `PromptResponse` and `PromptMessage` are regular record types serialized by the existing `JsonOptions`.
+- Prompt roles are represented as strings on the wire (e.g. `"system"`, `"user"`, `"assistant"`), keeping
+  compatibility with MCP/LLM clients.
+- `initialize` now includes a `prompts` capability flag when the server has registered prompts (mirroring how tools capabilities are surfaced). MCP clients can use this to detect prompt support.
 
----
-
-## Examples
-
-### Example: TypedJsonRpc tool with explicit schema (unchanged)
-
-```csharp
-[McpTool("add_numbers_typed",
-    Title = "Add Numbers (typed)",
-    Description = "Adds two numbers using TypedJsonRpc proof-of-concept. Uses same schema as add_numbers.",
-    InputSchema = @"{
-        \"type\":\"object\",
-        \"properties\":{
-            \"number1\":{\"type\":\"number\",\"description\":\"First number to add\"},
-            \"number2\":{\"type\":\"number\",\"description\":\"Second number to add\"}
-        },
-        \"required\":[\"number1\",\"number2\"]
-    }")]
-public JsonRpcMessage AddNumbersToolTyped(TypedJsonRpc<AddNumbersRequestTyped> request)
-{
-    var args = request.GetParams()
-        ?? throw new ToolInvalidParamsException(
-            "Parameters 'number1' and 'number2' are required and must be numbers.");
-
-    return ToolResponse.Success(
-        request.Id,
-        new AddNumbersResponse(args.Number1 + args.Number2));
-}
-```
-
-- Behaviour: identical to pre-v1.3.0. Schema comes from `InputSchema`, not from generator.
-
-### Example: TypedJsonRpc tool **without** schema (auto-generated)
-
-```csharp
-public sealed record AddNumbersRequestTyped(
-    [property: JsonPropertyName("number1")]
-    [property: Description("First number to add")] double Number1,
-
-    [property: JsonPropertyName("number2")]
-    [property: Description("Second number to add")] double Number2);
-
-[McpTool("add_numbers_typed_ii",
-    Title = "Add Numbers (typed)",
-    Description = "Adds two numbers using TypedJsonRpc with auto-generated schema.")]
-public JsonRpcMessage AddNumbersToolTypedII(TypedJsonRpc<AddNumbersRequestTyped> request)
-{
-    var args = request.GetParams()
-        ?? throw new ToolInvalidParamsException(
-            "Parameters 'number1' and 'number2' are required and must be numbers.");
-
-    return ToolResponse.Success(
-        request.Id,
-        new AddNumbersResponse(args.Number1 + args.Number2));
-}
-```
-
-- Generated schema (simplified):
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "number1": {
-      "type": "number",
-      "description": "First number to add"
-    },
-    "number2": {
-      "type": "number",
-      "description": "Second number to add"
-    }
-  },
-  "required": ["number1", "number2"]
-}
-```
+> v1.4.0 delivers a complete first version of MCP Prompts: attribute, response model, auto-discovery, prompts/list and prompts/get wired into ToolInvoker, and initialize-capabilities when prompts are present. 
 
 ---
 
 ## Testing
 
-- New tests in `Examples/CalculatorMcpServerTests`:
-  - `ToolsList_ReturnsAllTools` – verifies explicit schema for `add_numbers_typed`.
-  - `ToolsListII_ReturnsAllTools` – verifies auto-generated schema for `add_numbers_typed_ii`:
-    - Confirms `type: "object"`.
-    - Confirms `properties.number1/number2` with `type: "number"`.
-    - Confirms `description` values come from `[Description]` attributes.
-    - Confirms both properties are listed in `required`.
-- Existing MCP Gateway tests remain unchanged and pass with the new behaviour.
+- New example tests in `Examples/PromptMcpServerTests`:
+  - Validate that prompt endpoints:
+    - Accept both raw `JsonRpcMessage` and `TypedJsonRpc<T>` request models, depending on the example.
+    - Produce `PromptResponse` objects with correct `messages` shape.
+- Existing `Mcp.Gateway.Tests` and example tests continue to pass:
+  - No regressions to tools, transports (HTTP/WS/SSE/stdio), or streaming behaviour.
 
 ---
 
 ## Upgrade Notes
 
-- No breaking changes from v1.2.0.
-- Existing tools with explicit `InputSchema` are unaffected.
-- To opt into schema generation for a new tool:
-  1. Use `TypedJsonRpc<TParams>` as the first parameter.
-  2. Omit `InputSchema` on `[McpTool]`.
-  3. Define a record `TParams` with `JsonPropertyName` and optional `[property: Description]` attributes.
-- For tooling that parses `tools/list`, no changes are required; generated schemas follow the same shape as hand-authored ones.
+- v1.4.0 is backward compatible with v1.3.0 and v1.2.0.
+- No changes are required for existing tool implementations.
+- To start using prompts:
+  1. Add a new class in your server with methods annotated by `[McpPrompt]`.
+  2. Use `TypedJsonRpc<TRequest>` if you want a strongly-typed request model.
+  3. Return `ToolResponse.Success(request.Id, PromptResponse)` with a `messages` array that MCP clients can send to
+     their LLM.
+- Prompt roles are free-form strings at this stage; stick to `system`, `user`, and `assistant` to align with common
+  LLM conventions.

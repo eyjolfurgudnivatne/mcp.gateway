@@ -154,6 +154,9 @@ Claude can also use WebSocket (`/ws`) for full duplex and binary streaming.
 - ✅ **Typed tools & optional schema generation (v1.3.0)**  
   - `TypedJsonRpc<T>` helper for strongly-typed tool implementations  
   - Optional JSON Schema auto-generation when `InputSchema` is omitted and the tool uses `TypedJsonRpc<T>`
+- ✅ **MCP Prompts (v1.4.0)**  
+  - `[McpPrompt]` attribute and prompt models for defining reusable prompt templates  
+  - MCP prompt protocol support: `prompts/list`, `prompts/get`, and prompt capabilities in `initialize`
 - ✅ **Streaming** – text and binary streaming via `ToolConnector`
 - ✅ **DI support** – tools can take services as parameters
 - ✅ **Tested** – 70+ tests covering HTTP, WS, SSE and stdio

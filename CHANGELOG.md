@@ -9,10 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned for v2.0
 - MCP Resources support (official MCP spec feature)
-- MCP Prompts support (official MCP spec feature)
 - Tool lifecycle hooks for monitoring
 - Custom transport provider API
 - Enhanced streaming (compression, flow control, multiplexing)
+
+---
+
+## [1.4.0] - 2025-12-16
+
+### Added
+- MCP Prompts support:
+  - New `[McpPrompt]` attribute in `Mcp.Gateway.Tools` to mark prompt methods, separate from `[McpTool]`.
+    - `Name` is optional and auto-generated from the method name when omitted (same snake_case logic as tools).
+    - `Title` and `Description` are optional and surfaced to MCP clients.
+  - New prompt models in `Mcp.Gateway.Tools`:
+    - `PromptResponse` – wraps an MCP prompt result:
+      - `name` – prompt name.
+      - `description` – prompt description.
+      - `messages` – list of prompt messages for the LLM to handle.
+      - `arguments` – argument metadata used when filling the prompt.
+    - `PromptMessage` – a single message with:
+      - `role` (e.g. `system`, `user`, `assistant`)
+      - `content` (prompt text).
+  - Full MCP prompt protocol support:
+    - `prompts/list` implemented and returns all discovered prompts with metadata and arguments.
+    - `prompts/get` implemented and returns the expanded prompt `messages` for a given prompt and arguments.
+  - `initialize` now includes a `prompts` capability flag when the server has registered prompts, mirroring how tools capabilities are surfaced.
+- New example server `Examples/PromptMcpServer`:
+  - Demonstrates prompts implemented as regular methods returning `JsonRpcMessage` via `ToolResponse.Success(...)`.
+  - Example prompt `SantaReportPrompt` shows how to build `PromptResponse` with `name`, `description`, `messages` and `arguments` (including enum-like argument values).
+
+### Behaviour & Compatibility
+- Prompts are a new MCP surface area and do not change existing tool behaviour:
+  - Tools (`[McpTool]`, `tools/list`, `tools/call`) and streaming semantics are unchanged.
+- Prompt types reuse existing JSON-RPC infrastructure:
+  - Prompt methods still return `JsonRpcMessage`; `PromptResponse` / `PromptMessage` are serialized using the existing `JsonOptions`.
+  - Prompt roles are represented as strings on the wire (`"system"`, `"user"`, `"assistant"`), keeping compatibility with MCP/LLM clients.
+- v1.4.0 is backward compatible with v1.3.0 and v1.2.0; no changes are required for existing tool implementations.
+
+### Testing
+- New tests in `Examples/PromptMcpServerTests`:
+  - Verify that prompts are correctly discovered and exposed via `prompts/list` (name, description, arguments).
+  - Verify that `prompts/get` returns the expected `PromptResponse` structure (name, description, messages, arguments).
+- All existing `Mcp.Gateway.Tests` and example tests continue to pass with no regressions across tools, transports (HTTP/WebSocket/SSE/stdio), or streaming.
 
 ---
 
