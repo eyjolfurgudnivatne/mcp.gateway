@@ -54,7 +54,14 @@ public partial class ToolInvoker
         try
         {
             var requestParams = request.GetParams();
-            var uri = requestParams.GetProperty("uri").GetString();
+            
+            // Check if 'uri' parameter exists
+            if (!requestParams.TryGetProperty("uri", out var uriElement))
+            {
+                return ToolResponse.Error(request.Id, -32602, "Invalid params", "Missing 'uri' parameter");
+            }
+            
+            var uri = uriElement.GetString();
             
             if (string.IsNullOrEmpty(uri))
             {
@@ -78,37 +85,28 @@ public partial class ToolInvoker
             // Invoke resource method
             var result = _toolService.InvokeResourceDelegate(uri, resourceRequest);
 
-            // Process result (sync or async)
-            var processedResult = await ProcessResourceResultAsync(result, cancellationToken);
+            // Get function details to process the result correctly
+            var functionDetails = _toolService.GetFunctionDetails(uri);
 
-            // Extract content
-            object? resultData = null;
-            if (processedResult is JsonRpcMessage msg)
-            {
-                resultData = msg.Result;
-            }
-            else
-            {
-                resultData = processedResult;
-            }
+            // Process result (sync or async) using the shared tool result processor
+            var processedResult = await ProcessToolResultAsync(result, functionDetails, false, request.Id, cancellationToken);
 
-            // Parse as ResourceContent if possible
+            // Extract the ResourceContent from the JsonRpcMessage result
             ResourceContent? content = null;
-            if (resultData != null)
+            if (processedResult is JsonRpcMessage msg && msg.Result != null)
             {
                 try
                 {
-                    var json = JsonSerializer.Serialize(resultData, JsonOptions.Default);
+                    var json = JsonSerializer.Serialize(msg.Result, JsonOptions.Default);
                     content = JsonSerializer.Deserialize<ResourceContent>(json, JsonOptions.Default);
                 }
                 catch
                 {
-                    // If not ResourceContent, wrap in one
-                    var textContent = resultData.ToString() ?? "";
+                    // Fallback: treat result as plain text
                     content = new ResourceContent(
                         Uri: uri,
                         MimeType: resourceDef.MimeType,
-                        Text: textContent
+                        Text: msg.Result.ToString()
                     );
                 }
             }
@@ -136,41 +134,5 @@ public partial class ToolInvoker
             _logger.LogError(ex, "Error in resources/read");
             return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = ex.Message });
         }
-    }
-
-    /// <summary>
-    /// Processes resource method results (sync or async).
-    /// </summary>
-    private static async Task<object?> ProcessResourceResultAsync(
-        object? result,
-        CancellationToken cancellationToken)
-    {
-        // Task<JsonRpcMessage>
-        if (result is Task<JsonRpcMessage> jsonRpcTask)
-        {
-            return await jsonRpcTask.ConfigureAwait(false);
-        }
-
-        // Task<object?>
-        if (result is Task<object?> objectTask)
-        {
-            return await objectTask.ConfigureAwait(false);
-        }
-
-        // Task (void) - shouldn't happen for resources
-        if (result is Task voidTask)
-        {
-            await voidTask.ConfigureAwait(false);
-            return null;
-        }
-
-        // JsonRpcMessage (sync)
-        if (result is JsonRpcMessage jsonRpcMessage)
-        {
-            return jsonRpcMessage;
-        }
-
-        // Regular sync return
-        return result;
     }
 }

@@ -150,14 +150,18 @@ public partial class ToolService
     /// <summary>
     /// Registers a function with the specified name and delegate.
     /// </summary>
-    /// <param name="name">The name of the function to register. Must be a valid function name.</param>
+    /// <param name="name">The name of the function to register. Must be a valid function name (or URI for resources).</param>
     /// <param name="functionType">Type of function (Tool, Prompt, or Resource)</param>
     /// <param name="functionDelegate">The delegate for the function's operations.</param>
     /// <exception cref="ArgumentException">Thrown if validation fails</exception>
     internal void RegisterFunction(string name, FunctionTypeEnum functionType, Delegate functionDelegate)
     {
-        if (!ToolMethodNameValidator.IsValid(name, out var error))
-            throw new ArgumentException($"Invalid function name '{name}': {error}");
+        // For Resources, name is the URI - skip tool name validation
+        if (functionType != FunctionTypeEnum.Resource)
+        {
+            if (!ToolMethodNameValidator.IsValid(name, out var error))
+                throw new ArgumentException($"Invalid function name '{name}': {error}");
+        }
 
         var method = functionDelegate.Method;
         var returnType = method.ReturnType;
