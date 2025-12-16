@@ -203,6 +203,25 @@ public partial class ToolInvoker
         {
             capabilities["resources"] = new { };
         }
+
+        // Add notification capabilities (v1.6.0+)
+        // Note: Notifications require WebSocket transport
+        if (_notificationSender is not null)
+        {
+            var notifications = new Dictionary<string, object>();
+            
+            if (isTools)
+                notifications["tools"] = new { };
+            
+            if (isPrompts)
+                notifications["prompts"] = new { };
+            
+            if (hasResources)
+                notifications["resources"] = new { };
+
+            if (notifications.Count > 0)
+                capabilities["notifications"] = notifications;
+        }
         
         return ToolResponse.Success(request.Id, new
         {

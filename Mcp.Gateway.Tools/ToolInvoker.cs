@@ -15,8 +15,12 @@ using Microsoft.Extensions.Logging;
 /// - ToolInvoker.Sse.cs - Server-Sent Events transport
 /// - ToolInvoker.Protocol.cs - MCP protocol handlers
 /// - ToolInvoker.Resources.cs - MCP Resources support (v1.5.0)
+/// - ToolInvoker.Notifications.cs - Notifications support (v1.6.0)
 /// </remarks>
-public partial class ToolInvoker(ToolService _toolService, ILogger<ToolInvoker> _logger)
+public partial class ToolInvoker(
+    ToolService _toolService, 
+    ILogger<ToolInvoker> _logger,
+    Notifications.INotificationSender? _notificationSender = null)
 {
     /// <summary>
     /// Default buffer size for WebSocket frame accumulation (64KB)

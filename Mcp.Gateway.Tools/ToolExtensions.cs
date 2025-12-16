@@ -129,13 +129,14 @@ public static class ToolExtensions
     }
 
     /// <summary>
-    /// Adds ToolService and PromptService to the DI container.
-    /// Tools and Prompts are scanned lazily on first use.
+    /// Adds ToolService, ToolInvoker, and NotificationService to the DI container (v1.6.0+).
+    /// Tools, Prompts, and Resources are scanned lazily on first use.
     /// </summary>
     /// <param name="builder"></param>
     public static void AddToolsService(this WebApplicationBuilder builder)
     {
         builder.Services.AddSingleton<ToolService>();
         builder.Services.AddScoped<ToolInvoker>();
+        builder.Services.AddSingleton<Notifications.INotificationSender, Notifications.NotificationService>();
     }
 }
