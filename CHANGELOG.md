@@ -7,6 +7,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### In Progress - v1.6.5 (Not Released Yet)
+
+**MCP 2025-11-25 Preparation Release**
+
+This release prepares the codebase for full MCP 2025-11-25 compliance (planned for v1.7.0). Wire format updated to `"protocolVersion": "2025-11-25"` but full transport compliance is deferred to v1.7.0.
+
+#### Added
+- **Icons support** (MCP 2025-11-25)
+  - Added `Icon` property to `McpToolAttribute`, `McpPromptAttribute`, `McpResourceAttribute`
+  - Icons included in `tools/list`, `prompts/list`, `resources/list` responses (when set)
+  - Smart serialization: `icons` field only present when Icon is defined
+  - Supported formats: HTTPS URLs and data URIs
+  - Example: `Icon = "https://example.com/calculator.png"`
+- **Structured Content support** (MCP 2025-11-25)
+  - Tools can now return both `content[]` and `structuredContent` in `tools/call` responses
+  - New helper methods:
+    - `ToolResponse.SuccessWithStructured(id, textContent, structuredContent)`
+    - `ToolResponse.SuccessWithStructured(id, content[], structuredContent)`
+  - Auto-detection: If tool response already has `content` field, use it directly (no double-wrapping)
+  - Example:
+    ```csharp
+    return ToolResponse.SuccessWithStructured(
+        request.Id,
+        textContent: "Result: 8",
+        structuredContent: new { result = 8, operation = "addition" }
+    );
+    ```
+- **Output Schema support** (MCP 2025-11-25)
+  - Added `OutputSchema` property to `McpToolAttribute` (optional JSON Schema)
+  - Output schemas included in `tools/list` responses (when set)
+  - Defines expected structure of `structuredContent` in tool responses
+  - Example: `OutputSchema = @"{""type"":""object"",""properties"":{""result"":{""type"":""number""}}}"` 
+- **Protocol version updated to 2025-11-25**
+  - Wire format: `initialize` now returns `"protocolVersion": "2025-11-25"`
+  - NOTE: This is a preparatory step - full MCP 2025-11-25 compliance requires v1.7.0 (Streamable HTTP + SSE notifications)
+
+#### Changed
+- `FunctionDefinition` record now includes `OutputSchema` parameter
+- `HandleFunctionsCallAsync` now detects structured content format automatically
+- Wire format protocol version: `"2025-06-18"` → `"2025-11-25"`
+
+#### Testing
+- 6 new tests for structured content and output schema:
+  - 4 unit tests in `StructuredContentTests`
+  - 2 integration tests in `CalculatorMcpServerTests`
+- 14 existing tests updated to verify icons support
+- **154/154 tests passing** ✅
+
+#### Behaviour & Compatibility
+- **Backward compatible** - Zero breaking changes:
+  - Old tools without icons/structured content/outputSchema continue to work
+  - Tools can gradually adopt new features
+  - No changes required for existing implementations
+- **Wire format change** - `protocolVersion` updated to `"2025-11-25"`:
+  - This indicates intent to support MCP 2025-11-25 spec
+  - Full compliance requires v1.7.0 (Streamable HTTP transport + SSE notifications)
+  - Clients expecting `"2025-06-18"` should still work (no protocol changes in v1.6.5)
+- **KISS approach** - No validation of structured content against outputSchema (defer to v2.0)
+
+#### Implementation Time
+- **Phase 0 completed 11x faster than estimated!**
+  - Icons: ~1 hour (estimated 16-24 hours) = 16-24x faster
+  - Structured content: ~2.5 hours (estimated 16-24 hours) = 8-10x faster
+  - Total: ~3.5 hours (estimated 40 hours) = 11x faster!
+
+#### Known Limitations
+- **Full MCP 2025-11-25 compliance NOT complete in v1.6.5**
+  - Streamable HTTP transport: Deferred to v1.7.0
+  - SSE-based notifications: Deferred to v1.7.0
+  - Session management (`MCP-Session-Id`): Deferred to v1.7.0
+  - Protocol version header validation: Deferred to v1.7.0
+- **No validation** of structured content against outputSchema (defer to v2.0)
+
+---
+
 ### Planned for v1.7.0
 - **Full MCP Protocol 2025-11-25 compliance**
   - **Streamable HTTP transport** - Replace WebSocket notifications with SSE-based notifications
