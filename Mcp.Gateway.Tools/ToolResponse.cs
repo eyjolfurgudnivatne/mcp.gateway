@@ -19,4 +19,39 @@ public class ToolResponse
         JsonRpcMessage.CreateError(
             Id: Id,
             Error: Error);
+
+    /// <summary>
+    /// Creates a successful tool response with structured content (MCP 2025-11-25).
+    /// </summary>
+    /// <param name="Id">Request ID</param>
+    /// <param name="textContent">Text content to include in the content array</param>
+    /// <param name="structuredContent">Structured content object (will be serialized as JSON)</param>
+    /// <returns>JsonRpcMessage with both content array and structuredContent</returns>
+    public static JsonRpcMessage SuccessWithStructured(object? Id, string textContent, object structuredContent) =>
+        Success(Id, new
+        {
+            content = new[]
+            {
+                new
+                {
+                    type = "text",
+                    text = textContent
+                }
+            },
+            structuredContent
+        });
+
+    /// <summary>
+    /// Creates a successful tool response with structured content and custom content array (MCP 2025-11-25).
+    /// </summary>
+    /// <param name="Id">Request ID</param>
+    /// <param name="content">Custom content array (array of content objects)</param>
+    /// <param name="structuredContent">Structured content object (will be serialized as JSON)</param>
+    /// <returns>JsonRpcMessage with both content array and structuredContent</returns>
+    public static JsonRpcMessage SuccessWithStructured(object? Id, object[] content, object structuredContent) =>
+        Success(Id, new
+        {
+            content,
+            structuredContent
+        });
 }

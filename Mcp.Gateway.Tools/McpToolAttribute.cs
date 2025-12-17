@@ -65,4 +65,17 @@ public class McpToolAttribute : Attribute
     /// "https://example.com/calculator-icon.png" or "data:image/svg+xml;base64,..."
     /// </example>
     public string? Icon { get; set; }
+    
+    /// <summary>
+    /// Optional JSON Schema for output/return value (MCP 2025-11-25).
+    /// Defines the expected structure of the tool's response (structuredContent).
+    /// </summary>
+    /// <remarks>
+    /// If set, tools/list will include this schema in the tool definition.
+    /// Validation of structured content against this schema is not enforced in v1.6.5 (defer to v2.0).
+    /// </remarks>
+    /// <example>
+    /// OutputSchema = @"{""type"":""object"",""properties"":{""result"":{""type"":""number""}}}"
+    /// </example>
+    public string? OutputSchema { get; set; }
 }

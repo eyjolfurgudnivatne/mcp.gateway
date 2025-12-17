@@ -319,6 +319,20 @@ public partial class ToolInvoker
                         };
                     }
 
+                    // Add outputSchema if present (MCP 2025-11-25)
+                    if (!string.IsNullOrEmpty(t.OutputSchema))
+                    {
+                        try
+                        {
+                            var outputSchemaObj = JsonSerializer.Deserialize<object>(t.OutputSchema, JsonOptions.Default);
+                            toolObj["outputSchema"] = outputSchemaObj!;
+                        }
+                        catch
+                        {
+                            // Skip outputSchema if deserialization fails
+                        }
+                    }
+
                     return toolObj;
                 }).ToList();
 
@@ -546,7 +560,22 @@ public partial class ToolInvoker
             // TOOL: Wrap result in MCP content format
             if (functionDetails.FunctionType == FunctionTypeEnum.Tool)
             {
-                var resultJson = JsonSerializer.Serialize(resultData, JsonOptions.Default);
+                // Check if result is already in MCP content format (has "content" field)
+                // This happens when tools use ToolResponse.SuccessWithStructured()
+                if (resultData is not null)
+                {
+                    var resultJson = JsonSerializer.Serialize(resultData, JsonOptions.Default);
+                    var resultDoc = JsonDocument.Parse(resultJson);
+                    
+                    // If result already has "content" field, use it directly (structured content support)
+                    if (resultDoc.RootElement.TryGetProperty("content", out _))
+                    {
+                        return ToolResponse.Success(request.Id, resultData);
+                    }
+                }
+                
+                // Otherwise, wrap result in MCP content format (legacy behavior)
+                var serializedResult = JsonSerializer.Serialize(resultData, JsonOptions.Default);
                 var mcpResult = new
                 {
                     content = new []
@@ -554,7 +583,7 @@ public partial class ToolInvoker
                         new
                         {
                             type = "text",
-                            text = resultJson
+                            text = serializedResult
                         }
                     }
                 };

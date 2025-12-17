@@ -29,9 +29,14 @@ public class CalculatorToolTests(CalculatorMcpServerFixture fixture)
         Assert.NotNull(content);
         Assert.True(content.IsSuccessResponse, $"Failed to add numbers");
 
-        var result = content.GetResult<AddNumbersResponse>();
-        Assert.NotNull(result);
-        Assert.Equal(15, result.Result);
+        // NEW: add_numbers now returns structured content (v1.6.5)
+        var json = JsonSerializer.Serialize(content.Result, JsonOptions.Default);
+        var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        // Verify structuredContent has the result
+        Assert.True(root.TryGetProperty("structuredContent", out var structured));
+        Assert.Equal(15.0, structured.GetProperty("result").GetDouble());
     }
 
     [Fact]
