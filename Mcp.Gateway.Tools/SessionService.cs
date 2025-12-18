@@ -97,14 +97,30 @@ public sealed class SessionService
     }
 
     /// <summary>
-    /// Gets session information by ID (for debugging/monitoring).
+    /// Gets a session by ID (returns null if not found)
     /// </summary>
-    /// <param name="sessionId">Session ID</param>
-    /// <returns>Session info if found, null otherwise</returns>
+    /// <param name="sessionId">Session ID to retrieve</param>
+    /// <returns>SessionInfo if found, null otherwise</returns>
     public SessionInfo? GetSession(string sessionId)
     {
-        _sessions.TryGetValue(sessionId, out var session);
-        return session;
+        if (string.IsNullOrEmpty(sessionId))
+            return null;
+
+        if (_sessions.TryGetValue(sessionId, out var session))
+        {
+            return session;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Gets all active sessions (v1.7.0 Phase 2)
+    /// </summary>
+    /// <returns>Collection of all active sessions</returns>
+    public IEnumerable<SessionInfo> GetAllSessions()
+    {
+        return _sessions.Values.ToList();
     }
 
     /// <summary>

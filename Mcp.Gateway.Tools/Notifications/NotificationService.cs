@@ -7,62 +7,144 @@ using System.Text;
 using System.Text.Json;
 
 /// <summary>
-/// Service for managing notification subscribers and sending notifications (v1.6.0+)
-/// Thread-safe implementation for WebSocket-based notifications.
+/// Service for managing notification subscribers and sending notifications (v1.6.0+, v1.7.0 Phase 2)
+/// Thread-safe implementation for SSE and WebSocket-based notifications.
 /// </summary>
 public class NotificationService : INotificationSender
 {
-    private readonly ConcurrentBag<WebSocket> _subscribers = new();
+    private readonly EventIdGenerator _eventIdGenerator;
+    private readonly SessionService _sessionService;
+    private readonly SseStreamRegistry _sseRegistry;
     private readonly ILogger<NotificationService> _logger;
 
-    public NotificationService(ILogger<NotificationService> logger)
+    // Legacy WebSocket support (deprecated in v1.7.0)
+    private readonly ConcurrentBag<WebSocket> _subscribers = new();
+
+    public NotificationService(
+        EventIdGenerator eventIdGenerator,
+        SessionService sessionService,
+        SseStreamRegistry sseRegistry,
+        ILogger<NotificationService> logger)
     {
+        _eventIdGenerator = eventIdGenerator;
+        _sessionService = sessionService;
+        _sseRegistry = sseRegistry;
         _logger = logger;
     }
 
     /// <summary>
-    /// Adds a WebSocket subscriber for notifications
+    /// Adds a WebSocket subscriber for notifications (DEPRECATED: Use SSE via GET /mcp instead)
     /// </summary>
+    [Obsolete("WebSocket notifications are deprecated. Use SSE (GET /mcp) instead.")]
     public void AddSubscriber(WebSocket webSocket)
     {
         if (webSocket.State == WebSocketState.Open)
         {
             _subscribers.Add(webSocket);
-            _logger.LogInformation("WebSocket subscriber added. Total subscribers: {Count}", SubscriberCount);
+            _logger.LogWarning(
+                "WebSocket subscriber added (deprecated). Total subscribers: {Count}. " +
+                "Consider migrating to SSE (GET /mcp) for MCP 2025-11-25 compliance.",
+                SubscriberCount);
         }
     }
 
     /// <summary>
-    /// Removes a WebSocket subscriber
+    /// Removes a WebSocket subscriber (DEPRECATED)
     /// </summary>
+    [Obsolete("WebSocket notifications are deprecated. Use SSE (GET /mcp) instead.")]
     public void RemoveSubscriber(WebSocket webSocket)
     {
         // ConcurrentBag doesn't have Remove, but we filter out closed connections when sending
-        _logger.LogInformation("WebSocket subscriber removed");
+        _logger.LogInformation("WebSocket subscriber removed (deprecated)");
     }
 
     /// <summary>
-    /// Gets the count of active subscribers
+    /// Gets the count of active WebSocket subscribers (DEPRECATED)
     /// </summary>
+    [Obsolete("WebSocket notifications are deprecated. Use SSE (GET /mcp) instead.")]
     public int SubscriberCount => _subscribers.Count(ws => ws.State == WebSocketState.Open);
 
     /// <summary>
-    /// Sends a notification to all subscribed clients
+    /// Sends a notification to all subscribed clients (SSE + WebSocket for backward compat)
     /// </summary>
+    /// <param name="notification">Notification message to send</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     public async Task SendNotificationAsync(NotificationMessage notification, CancellationToken cancellationToken = default)
     {
+        // 1. SSE broadcast (MCP 2025-11-25 compliant) - broadcast to ALL sessions
+        await BroadcastToAllSseSessionsAsync(notification, cancellationToken);
+
+        // 2. WebSocket broadcast (legacy, deprecated but still functional)
+        await BroadcastToWebSocketAsync(notification, cancellationToken);
+    }
+
+    /// <summary>
+    /// Broadcasts notification via SSE to all active sessions
+    /// </summary>
+    private async Task BroadcastToAllSseSessionsAsync(NotificationMessage notification, CancellationToken cancellationToken)
+    {
+        var sessions = _sessionService.GetAllSessions();
+
+        foreach (var session in sessions)
+        {
+            try
+            {
+                // Generate event ID for this session
+                var eventId = _eventIdGenerator.GenerateEventId(session.Id);
+
+                // Buffer message for replay
+                session.MessageBuffer.Add(eventId, notification);
+
+                // Broadcast to SSE streams for this session
+                var sseMessage = SseEventMessage.CreateMessage(eventId, notification);
+                await _sseRegistry.BroadcastAsync(session.Id, sseMessage);
+
+                _logger.LogDebug(
+                    "Notification sent via SSE to session {SessionId}: {Method}",
+                    session.Id,
+                    notification.Method);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Failed to send SSE notification to session {SessionId}",
+                    session.Id);
+            }
+        }
+
+        if (sessions.Any())
+        {
+            _logger.LogInformation(
+                "SSE notification broadcasted: {Method} to {Count} sessions",
+                notification.Method,
+                sessions.Count());
+        }
+    }
+
+    /// <summary>
+    /// Broadcasts notification via WebSocket (deprecated but still functional)
+    /// </summary>
+    private async Task BroadcastToWebSocketAsync(NotificationMessage notification, CancellationToken cancellationToken)
+    {
+        var activeSubscribers = _subscribers.Where(ws => ws.State == WebSocketState.Open).ToList();
+
+        if (!activeSubscribers.Any())
+            return;
+
+        _logger.LogWarning(
+            "Sending notification via WebSocket (deprecated): {Method} to {Count} subscribers",
+            notification.Method,
+            activeSubscribers.Count);
+
         var json = JsonSerializer.Serialize(notification, JsonOptions.Default);
         var bytes = Encoding.UTF8.GetBytes(json);
         var buffer = new ArraySegment<byte>(bytes);
 
-        _logger.LogInformation("Sending notification: {Method} to {Count} subscribers", 
-            notification.Method, SubscriberCount);
-
         var tasks = new List<Task>();
 
-        foreach (var subscriber in _subscribers.Where(ws => ws.State == WebSocketState.Open))
+        foreach (var subscriber in activeSubscribers)
         {
-            tasks.Add(SendToSubscriberAsync(subscriber, buffer, cancellationToken));
+            tasks.Add(SendToWebSocketSubscriberAsync(subscriber, buffer, cancellationToken));
         }
 
         await Task.WhenAll(tasks);
@@ -71,7 +153,10 @@ public class NotificationService : INotificationSender
         CleanupClosedConnections();
     }
 
-    private async Task SendToSubscriberAsync(WebSocket webSocket, ArraySegment<byte> buffer, CancellationToken cancellationToken)
+    private async Task SendToWebSocketSubscriberAsync(
+        WebSocket webSocket,
+        ArraySegment<byte> buffer,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -82,22 +167,18 @@ public class NotificationService : INotificationSender
         }
         catch (WebSocketException ex)
         {
-            _logger.LogWarning(ex, "Failed to send notification to subscriber (WebSocket closed)");
+            _logger.LogWarning(ex, "Failed to send WebSocket notification (connection closed)");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error sending notification to subscriber");
+            _logger.LogError(ex, "Unexpected error sending WebSocket notification");
         }
     }
 
     private void CleanupClosedConnections()
     {
-        // ConcurrentBag doesn't support removal, so we recreate with only open connections
+        // ConcurrentBag doesn't support removal
+        // Closed connections are filtered out during SendNotificationAsync
         // This is acceptable since notifications are infrequent
-        var openConnections = _subscribers.Where(ws => ws.State == WebSocketState.Open).ToList();
-        
-        // Clear and re-add (not ideal, but ConcurrentBag limitation)
-        // In production, consider using ConcurrentDictionary instead
-        // For v1.6.0, this is acceptable for simplicity
     }
 }
