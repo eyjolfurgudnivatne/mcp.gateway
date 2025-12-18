@@ -129,12 +129,12 @@ public static class ToolExtensions
     }
 
     /// <summary>
-    /// Adds ToolService, ToolInvoker, NotificationService, EventIdGenerator, and SessionService to the DI container.
+    /// Adds ToolService, ToolInvoker, NotificationService, EventIdGenerator, SessionService, and SseStreamRegistry to the DI container.
     /// Tools, Prompts, and Resources are scanned lazily on first use.
     /// </summary>
     /// <remarks>
     /// v1.6.0: Added NotificationService
-    /// v1.7.0: Added EventIdGenerator and SessionService for MCP 2025-11-25 compliance
+    /// v1.7.0: Added EventIdGenerator, SessionService, and SseStreamRegistry for MCP 2025-11-25 compliance
     /// </remarks>
     /// <param name="builder"></param>
     public static void AddToolsService(this WebApplicationBuilder builder)
@@ -142,7 +142,8 @@ public static class ToolExtensions
         builder.Services.AddSingleton<ToolService>();
         builder.Services.AddScoped<ToolInvoker>();
         builder.Services.AddSingleton<Notifications.INotificationSender, Notifications.NotificationService>();
-        builder.Services.AddSingleton<EventIdGenerator>();  // v1.7.0
-        builder.Services.AddSingleton<SessionService>();    // v1.7.0
+        builder.Services.AddSingleton<EventIdGenerator>();     // v1.7.0
+        builder.Services.AddSingleton<SessionService>();       // v1.7.0
+        builder.Services.AddSingleton<SseStreamRegistry>();    // v1.7.0 Phase 2
     }
 }
