@@ -12,10 +12,13 @@ internal static class Routes
         group.MapGroup("/health")
             .MapHealthEndpoints();
 
+        // MCP 2025-11-25 unified endpoint (NEW in v1.7.0)
+        app.UseProtocolVersionValidation();
+        app.MapStreamableHttpEndpoint("/mcp");
+
+        // Legacy endpoints (still supported)
         group.MapHttpRpcEndpoint("/rpc");
-
         group.MapWsRpcEndpoint("/ws");
-
         group.MapSseRpcEndpoint("/sse");
 
         return app;
