@@ -129,14 +129,19 @@ public static class ToolExtensions
     }
 
     /// <summary>
-    /// Adds ToolService, ToolInvoker, and NotificationService to the DI container (v1.6.0+).
+    /// Adds ToolService, ToolInvoker, NotificationService, and EventIdGenerator to the DI container.
     /// Tools, Prompts, and Resources are scanned lazily on first use.
     /// </summary>
+    /// <remarks>
+    /// v1.6.0: Added NotificationService
+    /// v1.7.0: Added EventIdGenerator for SSE event IDs
+    /// </remarks>
     /// <param name="builder"></param>
     public static void AddToolsService(this WebApplicationBuilder builder)
     {
         builder.Services.AddSingleton<ToolService>();
         builder.Services.AddScoped<ToolInvoker>();
         builder.Services.AddSingleton<Notifications.INotificationSender, Notifications.NotificationService>();
+        builder.Services.AddSingleton<EventIdGenerator>();  // NEW: v1.7.0
     }
 }
