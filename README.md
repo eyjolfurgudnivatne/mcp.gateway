@@ -5,7 +5,7 @@
 [![.NET 10](https://img.shields.io/badge/.NET-10-purple)](https://dotnet.microsoft.com/)
 [![NuGet](https://img.shields.io/nuget/v/Mcp.Gateway.Tools.svg)](https://www.nuget.org/packages/Mcp.Gateway.Tools/)
 [![Tests](https://github.com/eyjolfurgudnivatne/mcp.gateway/actions/workflows/test.yml/badge.svg)](https://github.com/eyjolfurgudnivatne/mcp.gateway/actions/workflows/test.yml)
-[![MCP Protocol](https://img.shields.io/badge/MCP-2025--06--18-green)](https://modelcontextprotocol.io/)
+[![MCP Protocol](https://img.shields.io/badge/MCP-2025--11--25-green)](https://modelcontextprotocol.io/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **Mcp.Gateway.Tools** is a .NET library for building Model Context Protocol (MCP) servers. It makes it easy to expose C# code as tools that can be discovered and invoked by clients like **GitHub Copilot** and **Claude Desktop**.
@@ -27,14 +27,14 @@ dotnet add package Mcp.Gateway.Tools
 
 ### 2. Configure the server (`Program.cs`)
 
-Minimal HTTP + WebSocket server:
+Minimal HTTP + WebSocket server (v1.7.0 with MCP 2025-11-25 support):
 
 ```
 using Mcp.Gateway.Tools;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Register ToolService + ToolInvoker
+// Register ToolService + ToolInvoker + Session Management (v1.7.0)
 builder.AddToolsService();
 
 var app = builder.Build();
@@ -49,10 +49,14 @@ if (args.Contains("--stdio"))
 // WebSockets for streaming
 app.UseWebSockets();
 
-// MCP endpoints
-app.MapHttpRpcEndpoint("/rpc");
-app.MapWsRpcEndpoint("/ws");
-app.MapSseRpcEndpoint("/sse");
+// MCP 2025-11-25 Streamable HTTP (v1.7.0 - RECOMMENDED)
+app.UseProtocolVersionValidation();  // Protocol version validation
+app.MapStreamableHttpEndpoint("/mcp");  // Unified endpoint (POST + GET + DELETE)
+
+// Legacy endpoints (still work, deprecated)
+app.MapHttpRpcEndpoint("/rpc");  // HTTP POST only (deprecated)
+app.MapWsRpcEndpoint("/ws");     // WebSocket (keep for binary streaming)
+app.MapSseRpcEndpoint("/sse");   // SSE only (deprecated, use /mcp GET instead)
 
 app.Run();
 ```
@@ -182,32 +186,41 @@ See `Examples/PaginationMcpServer` for a demo with 120+ tools.
 
 ---
 
-## 🔔 Notifications (v1.6.0)
+## 🔔 Notifications (v1.7.0 - MCP 2025-11-25 Compliant!)
 
-Get real-time updates when tools, prompts, or resources change (WebSocket only):
+Get real-time updates when tools, prompts, or resources change via **SSE** (Server-Sent Events):
 
-### Server sends notification
+### Server sends notification via SSE
 ```json
 {
   "jsonrpc": "2.0",
-  "method": "notifications/tools/changed",
+  "method": "notifications/tools/list_changed",
   "params": {}
 }
 ```
 
-### Client re-fetches tools
-```csharp
-// Client receives notification → re-fetch tools/list
-var response = await httpClient.PostAsJsonAsync("/rpc", new {
-    jsonrpc = "2.0",
-    method = "tools/list",
-    id = 2
-});
+### Client receives notification via SSE stream
+```http
+GET /mcp HTTP/1.1
+Accept: text/event-stream
+MCP-Session-Id: abc123
+MCP-Protocol-Version: 2025-11-25
+
+HTTP/1.1 200 OK
+Content-Type: text/event-stream
+
+id: 1
+event: message
+data: {"jsonrpc":"2.0","method":"notifications/tools/list_changed","params":{}}
+
+id: 2
+event: message
+data: {"jsonrpc":"2.0","method":"notifications/prompts/list_changed","params":{}}
 ```
 
 **Notification types:**
-- `notifications/tools/changed` – Tools added, removed, or modified
-- `notifications/prompts/changed` – Prompts updated
+- `notifications/tools/list_changed` – Tools added, removed, or modified
+- `notifications/prompts/list_changed` – Prompts updated
 - `notifications/resources/updated` – Resources changed (optional `uri` parameter)
 
 **How to send notifications:**
@@ -219,7 +232,7 @@ public class MyTools(INotificationSender notificationSender)
     {
         // Your tool logic...
         
-        // Notify all WebSocket clients
+        // Notify all active SSE streams (v1.7.0)
         await notificationSender.SendNotificationAsync(
             NotificationMessage.ToolsChanged());
         
@@ -228,10 +241,23 @@ public class MyTools(INotificationSender notificationSender)
 }
 ```
 
-**Limitations:**
-- ⚠️ Requires WebSocket transport
-- ⚠️ HTTP and stdio clients must poll `tools/list` to detect changes
-- 📅 SSE-based notifications planned for v1.7.0 (full MCP 2025-11-25 compliance)
+**Features (v1.7.0):**
+- ✅ SSE-based notifications (MCP 2025-11-25 compliant)
+- ✅ Message buffering per session (100 messages)
+- ✅ `Last-Event-ID` resumption on reconnect
+- ✅ Automatic broadcast to all active sessions
+- ✅ WebSocket notifications still work (deprecated)
+
+**Migration from v1.6.x:**
+```csharp
+// v1.6.x - WebSocket only (still works!):
+notificationService.AddSubscriber(webSocket);
+
+// v1.7.0 - SSE (recommended, automatic):
+// Client opens: GET /mcp with MCP-Session-Id header
+// Server automatically broadcasts via SSE to all sessions
+// No code changes needed!
+```
 
 See `Examples/NotificationMcpServer` for a demo with manual notification triggers.
 
@@ -239,8 +265,18 @@ See `Examples/NotificationMcpServer` for a demo with manual notification trigger
 
 ## 💡 Features
 
-- ✅ **MCP 2025‑06‑18** – up to date with the current MCP specification
-- ✅ **Transports** – HTTP (`/rpc`), WebSocket (`/ws`), SSE (`/sse`), stdio
+- ✅ **MCP 2025‑11‑25** – 100% compliant with latest MCP specification (v1.7.0)
+- ✅ **Transports** 
+  - **Unified /mcp endpoint (v1.7.0):** POST + GET + DELETE for MCP 2025-11-25 compliance
+  - HTTP (`/rpc`), WebSocket (`/ws`), SSE (`/sse`), stdio
+  - Legacy endpoints still work (deprecated)
+- ✅ **Session Management (v1.7.0)** 
+  - `MCP-Session-Id` header support
+  - Configurable timeout (30 min default)
+  - Session-scoped event IDs
+- ✅ **Protocol Version Validation (v1.7.0)**
+  - `MCP-Protocol-Version` header validation
+  - Supports 2025-11-25, 2025-06-18, 2025-03-26
 - ✅ **Auto‑discovery** – tools, prompts, and resources discovered via attributes
 - ✅ **Transport‑aware filtering (v1.2.0)**  
   - HTTP/stdio: standard tools only  
@@ -261,15 +297,17 @@ See `Examples/NotificationMcpServer` for a demo with manual notification trigger
   - `nextCursor` in response when more results are available  
   - Default page size: 100 items (configurable)  
   - Alphabetically sorted results for consistent pagination
-- ✅ **Notification infrastructure (v1.6.0)**  
-  - WebSocket-based push notifications for dynamic updates  
-  - `notifications/tools/changed`, `notifications/prompts/changed`, `notifications/resources/updated`  
+- ✅ **SSE-based Notifications (v1.7.0 - MCP 2025-11-25 compliant!)**  
+  - Real-time updates via Server-Sent Events
+  - `notifications/tools/list_changed`, `notifications/prompts/list_changed`, `notifications/resources/updated`  
+  - Message buffering (100 messages per session)
+  - `Last-Event-ID` resumption on reconnect
+  - Automatic broadcast to all active sessions
   - `NotificationService` with thread-safe subscriber management  
-  - Notification capabilities in `initialize` response  
-  - **Note:** Notifications require WebSocket; HTTP/stdio clients must poll
+  - WebSocket notifications still work (deprecated)
 - ✅ **Streaming** – text and binary streaming via `ToolConnector`
 - ✅ **DI support** – tools, prompts, and resources can take services as parameters
-- ✅ **Tested** – 130 tests covering HTTP, WS, SSE and stdio
+- ✅ **Tested** – 253 tests covering HTTP, WS, SSE and stdio
 
 ---
 
