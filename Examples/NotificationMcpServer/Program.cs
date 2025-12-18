@@ -36,28 +36,33 @@ if (isStdioMode)
 // WebSockets for streaming and notifications
 app.UseWebSockets();
 
-// MCP endpoints
-app.MapHttpRpcEndpoint("/rpc");
-app.MapWsRpcEndpoint("/ws");
-app.MapSseRpcEndpoint("/sse");
+// MCP 2025-11-25 Streamable HTTP (v1.7.0 - RECOMMENDED)
+app.UseProtocolVersionValidation();  // Protocol version validation
+app.MapStreamableHttpEndpoint("/mcp");  // Unified endpoint (POST + GET + DELETE)
+
+// Legacy endpoints (still work, deprecated)
+app.MapHttpRpcEndpoint("/rpc");  // HTTP POST only (deprecated)
+app.MapWsRpcEndpoint("/ws");     // WebSocket (keep for binary streaming)
+app.MapSseRpcEndpoint("/sse");   // SSE only (deprecated, use /mcp GET instead)
 
 // API endpoint for triggering notifications (for demo purposes)
+// Note: In v1.7.0, notifications are sent via SSE to active GET /mcp streams
 app.MapPost("/api/notify/tools", async (INotificationSender notificationSender) =>
 {
     await notificationSender.SendNotificationAsync(NotificationMessage.ToolsChanged());
-    return Results.Ok(new { message = "tools/changed notification sent" });
+    return Results.Ok(new { message = "tools/list_changed notification sent via SSE" });
 });
 
 app.MapPost("/api/notify/prompts", async (INotificationSender notificationSender) =>
 {
     await notificationSender.SendNotificationAsync(NotificationMessage.PromptsChanged());
-    return Results.Ok(new { message = "prompts/changed notification sent" });
+    return Results.Ok(new { message = "prompts/list_changed notification sent via SSE" });
 });
 
 app.MapPost("/api/notify/resources", async (INotificationSender notificationSender, string? uri = null) =>
 {
     await notificationSender.SendNotificationAsync(NotificationMessage.ResourcesUpdated(uri));
-    return Results.Ok(new { message = $"resources/updated notification sent for {uri ?? "all"}" });
+    return Results.Ok(new { message = $"resources/updated notification sent via SSE for {uri ?? "all"}" });
 });
 
 app.Run();
