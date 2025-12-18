@@ -7,7 +7,7 @@
 		
 		<!-- NuGet Package Metadata -->
 		<PackageId>Mcp.Gateway.Tools</PackageId>
-		<Version>1.6.0</Version>
+		<Version>1.7.0</Version>
 		<Authors>ARKo AS - AHelse Development Team</Authors>
 		<Company>ARKo AS</Company>
 		<Product>MCP Gateway</Product>
@@ -19,7 +19,7 @@
 		<PackageTags>mcp;model-context-protocol;json-rpc;websocket;github-copilot;claude;ai;tools;gateway;dotnet10;pagination;notifications</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageReleaseNotes>v1.6.0: Cursor-based pagination for tools/list, prompts/list, resources/list (optional cursor and pageSize parameters, nextCursor in response). Notification infrastructure with NotificationService and INotificationSender (WebSocket-only, tools/prompts/resources changed notifications). Alphabetic sorting for consistent pagination. 17 new tests (9 pagination + 8 notifications). Zero breaking changes.</PackageReleaseNotes>
+		<PackageReleaseNotes>v1.7.0: MCP 2025-11-25 compliance! Unified /mcp endpoint (POST+GET+DELETE), SSE-based notifications, session management (MCP-Session-Id), protocol version validation, message buffering (100 msgs), Last-Event-ID resumption. 99 new tests (253 total). Zero breaking changes. Legacy endpoints still work (deprecated).</PackageReleaseNotes>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
