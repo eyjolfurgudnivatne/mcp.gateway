@@ -17,7 +17,7 @@ public sealed class EventIdGenerator
     {
         var id = Interlocked.Increment(ref _globalCounter);
         
-        return sessionId != null 
+        return !string.IsNullOrEmpty(sessionId)
             ? $"{sessionId}-{id}"  // Session-scoped: "session123-42"
             : $"{id}";             // Global: "42"
     }
