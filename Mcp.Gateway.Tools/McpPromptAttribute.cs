@@ -44,6 +44,15 @@ public class McpPromptAttribute : Attribute
     /// If null, will be auto-generated from method parameters (future feature).
     /// </summary>
     public string? InputSchema { get; set; }
+    
+    /// <summary>
+    /// Optional icon URL for this prompt (MCP 2025-11-25).
+    /// Provides a visual representation in MCP clients.
+    /// </summary>
+    /// <example>
+    /// "https://example.com/prompt-icon.png"
+    /// </example>
+    public string? Icon { get; set; }
 }
 
 public sealed record PromptResponse(

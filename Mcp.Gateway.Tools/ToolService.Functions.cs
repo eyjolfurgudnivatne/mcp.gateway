@@ -17,7 +17,9 @@ public partial class ToolService
         string Description, 
         string? InputSchema = null,  // For tools (JSON Schema object)
         IReadOnlyList<PromptArgument>? Arguments = null,  // For prompts (array of arguments)
-        ToolCapabilities Capabilities = ToolCapabilities.Standard);
+        ToolCapabilities Capabilities = ToolCapabilities.Standard,
+        string? Icon = null,  // MCP 2025-11-25 icon URL
+        string? OutputSchema = null);  // NEW: MCP 2025-11-25 output schema (JSON Schema)
 
     /// <summary>
     /// Returns all registered functions with their metadata for MCP tools/list or prompts/list
@@ -49,6 +51,8 @@ public partial class ToolService
                     description = attr?.Description ?? "No description available";
                     attrInputSchema = attr?.InputSchema;
                     capabilities = attr?.Capabilities ?? ToolCapabilities.Standard;
+                    var icon = attr?.Icon;  // NEW: Extract icon (v1.6.5)
+                    var outputSchema = attr?.OutputSchema;  // NEW: Extract outputSchema (v1.6.5)
                     
                     // Generate or use provided input schema
                     string? inputSchema = null;
@@ -71,7 +75,9 @@ public partial class ToolService
                         Description: description!,
                         InputSchema: inputSchema,
                         Arguments: null,  // Tools don't have arguments array
-                        Capabilities: capabilities
+                        Capabilities: capabilities,
+                        Icon: icon,  // NEW: Include icon (v1.6.5)
+                        OutputSchema: outputSchema  // NEW: Include outputSchema (v1.6.5)
                     );
                 }
 
@@ -80,6 +86,7 @@ public partial class ToolService
                 {
                     var attr = method.GetCustomAttribute<McpPromptAttribute>();
                     description = attr?.Description ?? "No description available";
+                    var icon = attr?.Icon;  // NEW: Extract icon (v1.6.5)
                     
                     // For prompts, we need to extract Arguments from PromptResponse
                     // We do this by calling the prompt method with a dummy request
@@ -110,7 +117,8 @@ public partial class ToolService
                         Description: description!,
                         InputSchema: null,  // Prompts don't have inputSchema
                         Arguments: arguments ?? Array.Empty<PromptArgument>(),
-                        Capabilities: capabilities
+                        Capabilities: capabilities,
+                        Icon: icon  // NEW: Include icon (v1.6.5)
                     );
                 }
 
@@ -120,7 +128,9 @@ public partial class ToolService
                     Description: "Unknown function type",
                     InputSchema: @"{""type"":""object"",""properties"":{}}",
                     Arguments: null,
-                    Capabilities: ToolCapabilities.Standard
+                    Capabilities: ToolCapabilities.Standard,
+                    Icon: null,  // NEW
+                    OutputSchema: null  // NEW
                 );
             });
     }

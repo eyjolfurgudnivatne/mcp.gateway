@@ -225,7 +225,7 @@ public partial class ToolInvoker
         
         return ToolResponse.Success(request.Id, new
         {
-            protocolVersion = "2025-06-18", // Updated to latest MCP protocol version
+            protocolVersion = "2025-11-25", // Updated to MCP 2025-11-25 (v1.6.5+)
             serverInfo = new
             {
                 name = "mcp-gateway",
@@ -298,12 +298,42 @@ public partial class ToolInvoker
                         schema = new { type = "object", properties = new { } };
                     }
 
-                    return new
+                    var toolObj = new Dictionary<string, object>
                     {
-                        name = t.Name,
-                        description = t.Description,
-                        inputSchema = schema
+                        ["name"] = t.Name,
+                        ["description"] = t.Description,
+                        ["inputSchema"] = schema!
                     };
+
+                    // Add icons if present (MCP 2025-11-25)
+                    if (!string.IsNullOrEmpty(t.Icon))
+                    {
+                        toolObj["icons"] = new[]
+                        {
+                            new
+                            {
+                                src = t.Icon,
+                                mimeType = (string?)null,
+                                sizes = (string[]?)null
+                            }
+                        };
+                    }
+
+                    // Add outputSchema if present (MCP 2025-11-25)
+                    if (!string.IsNullOrEmpty(t.OutputSchema))
+                    {
+                        try
+                        {
+                            var outputSchemaObj = JsonSerializer.Deserialize<object>(t.OutputSchema, JsonOptions.Default);
+                            toolObj["outputSchema"] = outputSchemaObj!;
+                        }
+                        catch
+                        {
+                            // Skip outputSchema if deserialization fails
+                        }
+                    }
+
+                    return toolObj;
                 }).ToList();
 
                 // Build response with pagination
@@ -326,12 +356,28 @@ public partial class ToolInvoker
             {
                 var promptsList = paginatedResult.Items.Select(p =>
                 {
-                    return new
+                    var promptObj = new Dictionary<string, object>
                     {
-                        name = p.Name,
-                        description = p.Description,
-                        arguments = p.Arguments ?? Array.Empty<PromptArgument>()
+                        ["name"] = p.Name,
+                        ["description"] = p.Description,
+                        ["arguments"] = p.Arguments ?? Array.Empty<PromptArgument>()
                     };
+
+                    // Add icons if present (MCP 2025-11-25)
+                    if (!string.IsNullOrEmpty(p.Icon))
+                    {
+                        promptObj["icons"] = new[]
+                        {
+                            new
+                            {
+                                src = p.Icon,
+                                mimeType = (string?)null,
+                                sizes = (string[]?)null
+                            }
+                        };
+                    }
+
+                    return promptObj;
                 }).ToList();
 
                 // Build response with pagination
@@ -514,7 +560,22 @@ public partial class ToolInvoker
             // TOOL: Wrap result in MCP content format
             if (functionDetails.FunctionType == FunctionTypeEnum.Tool)
             {
-                var resultJson = JsonSerializer.Serialize(resultData, JsonOptions.Default);
+                // Check if result is already in MCP content format (has "content" field)
+                // This happens when tools use ToolResponse.SuccessWithStructured()
+                if (resultData is not null)
+                {
+                    var resultJson = JsonSerializer.Serialize(resultData, JsonOptions.Default);
+                    var resultDoc = JsonDocument.Parse(resultJson);
+                    
+                    // If result already has "content" field, use it directly (structured content support)
+                    if (resultDoc.RootElement.TryGetProperty("content", out _))
+                    {
+                        return ToolResponse.Success(request.Id, resultData);
+                    }
+                }
+                
+                // Otherwise, wrap result in MCP content format (legacy behavior)
+                var serializedResult = JsonSerializer.Serialize(resultData, JsonOptions.Default);
                 var mcpResult = new
                 {
                     content = new []
@@ -522,7 +583,7 @@ public partial class ToolInvoker
                         new
                         {
                             type = "text",
-                            text = resultJson
+                            text = serializedResult
                         }
                     }
                 };

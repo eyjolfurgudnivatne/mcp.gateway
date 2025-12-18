@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 /// - ToolInvoker.cs (this file) - Core infrastructure and utilities
 /// - ToolInvoker.Http.cs - HTTP transport
 /// - ToolInvoker.WebSocket.cs - WebSocket transport
-/// - ToolInvoker.Sse.cs - Server-Sent Events transport
+/// - ToolInvoker.Sse.cs - Server-Sent Events transport (v1.5.0+, event IDs v1.7.0+)
 /// - ToolInvoker.Protocol.cs - MCP protocol handlers
 /// - ToolInvoker.Resources.cs - MCP Resources support (v1.5.0)
 /// - ToolInvoker.Notifications.cs - Notifications support (v1.6.0)
@@ -20,7 +20,8 @@ using Microsoft.Extensions.Logging;
 public partial class ToolInvoker(
     ToolService _toolService, 
     ILogger<ToolInvoker> _logger,
-    Notifications.INotificationSender? _notificationSender = null)
+    Notifications.INotificationSender? _notificationSender = null,
+    EventIdGenerator? _eventIdGenerator = null)  // NEW: Optional EventIdGenerator for SSE event IDs (v1.7.0)
 {
     /// <summary>
     /// Default buffer size for WebSocket frame accumulation (64KB)

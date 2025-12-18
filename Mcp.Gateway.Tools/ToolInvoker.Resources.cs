@@ -47,12 +47,31 @@ public partial class ToolInvoker
             // Apply pagination
             var paginatedResult = Pagination.CursorHelper.Paginate(allResources, cursor, pageSize);
             
-            var resourcesList = paginatedResult.Items.Select(r => new
+            var resourcesList = paginatedResult.Items.Select(r =>
             {
-                uri = r.Uri,
-                name = r.Name,
-                description = r.Description,
-                mimeType = r.MimeType
+                var resourceObj = new Dictionary<string, object>
+                {
+                    ["uri"] = r.Uri,
+                    ["name"] = r.Name,
+                    ["description"] = r.Description ?? "",
+                    ["mimeType"] = r.MimeType ?? "text/plain"
+                };
+
+                // Add icons if present (MCP 2025-11-25)
+                if (!string.IsNullOrEmpty(r.Icon))
+                {
+                    resourceObj["icons"] = new[]
+                    {
+                        new
+                        {
+                            src = r.Icon,
+                            mimeType = (string?)null,
+                            sizes = (string[]?)null
+                        }
+                    };
+                }
+
+                return resourceObj;
             }).ToList();
 
             // Build response with pagination

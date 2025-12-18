@@ -8,11 +8,13 @@ namespace Mcp.Gateway.Tools;
 /// <param name="Name">Human-readable name of the resource</param>
 /// <param name="Description">Optional description of what the resource provides</param>
 /// <param name="MimeType">MIME type of the resource content (e.g., "text/plain", "application/json")</param>
+/// <param name="Icon">Optional icon URL for MCP 2025-11-25 (e.g., "https://example.com/icon.png")</param>
 public sealed record ResourceDefinition(
     string Uri,
     string Name,
     string? Description,
-    string? MimeType);
+    string? MimeType,
+    string? Icon = null);  // NEW: MCP 2025-11-25 icon URL
 
 /// <summary>
 /// Represents the content of a resource (from resources/read).

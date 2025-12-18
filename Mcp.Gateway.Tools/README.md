@@ -4,7 +4,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Mcp.Gateway.Tools.svg)](https://www.nuget.org/packages/Mcp.Gateway.Tools/)
 [![.NET 10](https://img.shields.io/badge/.NET-10-purple)](https://dotnet.microsoft.com/)
-[![MCP Protocol](https://img.shields.io/badge/MCP-2025--06--18-green)](https://modelcontextprotocol.io/)
+[![MCP Protocol](https://img.shields.io/badge/MCP-2025--11--25-green)](https://modelcontextprotocol.io/)
 
 `Mcp.Gateway.Tools` contains the infrastructure for MCP tools, prompts, and resources:
 
@@ -22,14 +22,14 @@ See the root `README.md` for a high‑level overview and client integration.
 
 ## 🔧 Register tool infrastructure
 
-In your `Program.cs`:
+In your `Program.cs` (v1.7.0 with MCP 2025-11-25 support):
 
-```
+```csharp
 using Mcp.Gateway.Tools;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Register ToolService + ToolInvoker
+// Register ToolService + ToolInvoker + Session Management (v1.7.0)
 builder.AddToolsService();
 
 var app = builder.Build();
@@ -39,10 +39,14 @@ var app = builder.Build();
 // WebSockets must be enabled before WS/SSE routes
 app.UseWebSockets();
 
-// MCP endpoints
-app.MapHttpRpcEndpoint("/rpc");
-app.MapWsRpcEndpoint("/ws");
-app.MapSseRpcEndpoint("/sse");
+// MCP 2025-11-25 Streamable HTTP (v1.7.0 - RECOMMENDED)
+app.UseProtocolVersionValidation();  // Protocol version validation
+app.MapStreamableHttpEndpoint("/mcp");  // Unified endpoint (POST + GET + DELETE)
+
+// Legacy endpoints (still work, deprecated)
+app.MapHttpRpcEndpoint("/rpc");  // HTTP POST only (deprecated)
+app.MapWsRpcEndpoint("/ws");     // WebSocket (keep for binary streaming)
+app.MapSseRpcEndpoint("/sse");   // SSE only (deprecated, use /mcp GET instead)
 
 app.Run();
 ```
@@ -51,6 +55,10 @@ app.Run();
 
 - `ToolService` as a singleton (discovers/validates tools)
 - `ToolInvoker` as scoped (handles JSON‑RPC and MCP methods)
+- `EventIdGenerator` as singleton (v1.7.0 - SSE event IDs)
+- `SessionService` as singleton (v1.7.0 - session management)
+- `SseStreamRegistry` as singleton (v1.7.0 - SSE stream management)
+- `INotificationSender` → `NotificationService` as singleton (notification infrastructure)
 
 ---
 
@@ -69,6 +77,7 @@ public class CalculatorTools
     [McpTool("add_numbers",
         Title = "Add Numbers",
         Description = "Adds two numbers and returns the result.",
+        Icon = "https://example.com/icons/calculator.png",  // NEW: Icon (v1.6.5)
         InputSchema = @"{
             ""type"":""object"",
             ""properties"":{
@@ -89,6 +98,40 @@ public class CalculatorTools
     }
 }
 ```
+
+**Icons (v1.6.5+):**
+
+Tools, prompts, and resources can include optional icons for visual representation in MCP clients:
+
+```csharp
+[McpTool("calculator_add",
+    Icon = "https://example.com/icons/calculator.png")]
+
+[McpPrompt("summarize",
+    Icon = "https://example.com/icons/document.png")]
+
+[McpResource("file://logs/app.log",
+    Icon = "https://example.com/icons/log-file.png")]
+```
+
+Icons are serialized as a single-item array in the MCP protocol:
+```json
+{
+  "name": "add_numbers",
+  "icons": [
+    {
+      "src": "https://example.com/icons/calculator.png",
+      "mimeType": null,
+      "sizes": null
+    }
+  ]
+}
+```
+
+The `Icon` property accepts:
+- ✅ HTTPS URLs: `"https://example.com/icon.png"`
+- ✅ Data URIs: `"data:image/svg+xml;base64,..."`
+- ℹ️ `mimeType` and `sizes` are automatically set to `null` (client infers from URL)
 
 ### With validation and DI (from `DevTestServer/Tools/Calculator.cs`)
 
@@ -461,9 +504,9 @@ See `Examples/PaginationMcpServer` for a complete example with 120+ tools.
 
 ---
 
-## 🔔 Notifications (v1.6.0)
+## 🔔 Notifications (v1.7.0 - MCP 2025-11-25 Compliant!)
 
-Send real-time updates to WebSocket clients when your tools, prompts, or resources change:
+Send real-time updates via **SSE** (Server-Sent Events) when your tools, prompts, or resources change:
 
 ### Using INotificationSender
 
@@ -487,7 +530,7 @@ public class MyTools
         // Reload your tools (e.g., scan file system, refresh cache)
         await ReloadToolsFromFileSystem();
         
-        // Notify all WebSocket clients
+        // Notify all active SSE streams (automatic broadcast!)
         await _notificationSender.SendNotificationAsync(
             NotificationMessage.ToolsChanged());
         
@@ -529,20 +572,30 @@ await notificationSender.SendNotificationAsync(
     NotificationMessage.ResourcesUpdated("file://config/settings.json"));
 ```
 
-### How it works
+### How it works (v1.7.0)
 
-1. **Client connects** via WebSocket (`/ws`)
-2. **Client sends `initialize`** → Server responds with notification capabilities
+1. **Client connects** via `GET /mcp` with `MCP-Session-Id` header
+2. **Server opens SSE stream** with keep-alive pings
 3. **Server detects change** (tool added, resource updated, etc.)
-4. **Server sends notification** to all WebSocket subscribers:
-   ```json
-   {
-     "jsonrpc": "2.0",
-     "method": "notifications/tools/changed",
-     "params": {}
-   }
+4. **Server broadcasts notification** to all active SSE streams:
+   ```http
+   id: 42
+   event: message
+   data: {"jsonrpc":"2.0","method":"notifications/tools/list_changed","params":{}}
    ```
 5. **Client re-fetches** tools/list, prompts/list, or resources/list
+
+### Message buffering and resumption (v1.7.0)
+
+Notifications are automatically buffered per session (max 100 messages) for Last-Event-ID resumption:
+
+```http
+GET /mcp HTTP/1.1
+MCP-Session-Id: abc123
+Last-Event-ID: 42  # Resume from event 42
+
+# Server replays events 43, 44, 45, ... then streams new events
+```
 
 ### Notification capabilities
 
@@ -565,11 +618,21 @@ When `NotificationService` is registered (automatic via `AddToolsService()`), th
 
 **Note:** Only capabilities for registered function types are included. If your server has no prompts, `notifications.prompts` will not be present.
 
-### Limitations (v1.6.0)
+### Migration from v1.6.x (v1.7.0)
 
-- ⚠️ **WebSocket-only**: HTTP and stdio clients cannot receive push notifications
-  - HTTP/stdio clients must poll `tools/list` / `prompts/list` / `resources/list`
-- 📅 **SSE support planned**: v1.7.0 will add SSE-based notifications for full MCP 2025-11-25 compliance
+**Good news:** No code changes needed! Notifications automatically work via SSE in v1.7.0.
+
+```csharp
+// v1.6.x - WebSocket only (still works!)
+notificationService.AddSubscriber(webSocket);
+
+// v1.7.0 - SSE automatic (recommended)
+// Client opens: GET /mcp with MCP-Session-Id
+// Server automatically broadcasts via SSE
+// No code changes needed!
+```
+
+WebSocket notifications are **deprecated but still functional** for backward compatibility.
 
 See `Examples/NotificationMcpServer` for a complete example with manual notification triggers.
 

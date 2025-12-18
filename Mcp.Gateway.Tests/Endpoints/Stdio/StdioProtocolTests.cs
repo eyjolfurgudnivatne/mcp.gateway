@@ -30,7 +30,7 @@ public class StdioProtocolTests(McpGatewayFixture fixture)
         var resultJson = JsonSerializer.Serialize(msg.Result, JsonOptions.Default);
         var resultDoc = JsonDocument.Parse(resultJson);
         
-        Assert.Equal("2025-06-18", resultDoc.RootElement.GetProperty("protocolVersion").GetString());  // Updated to match current protocol version
+        Assert.Equal("2025-11-25", resultDoc.RootElement.GetProperty("protocolVersion").GetString());  // Updated to MCP 2025-11-25 (v1.6.5)
         Assert.True(resultDoc.RootElement.TryGetProperty("serverInfo", out var serverInfo));
         Assert.Equal("mcp-gateway", serverInfo.GetProperty("name").GetString());
     }

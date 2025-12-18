@@ -27,7 +27,7 @@ public class NotificationCapabilitiesTests(NotificationMcpServerFixture fixture)
 
         // Assert - Response structure
         Assert.True(response.TryGetProperty("result", out var result));
-        Assert.Equal("2025-06-18", result.GetProperty("protocolVersion").GetString());
+        Assert.Equal("2025-11-25", result.GetProperty("protocolVersion").GetString());
 
         // Should have serverInfo
         Assert.True(result.TryGetProperty("serverInfo", out var serverInfo));
