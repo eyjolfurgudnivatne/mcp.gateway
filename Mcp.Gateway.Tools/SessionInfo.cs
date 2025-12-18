@@ -25,7 +25,12 @@ public sealed class SessionInfo
     /// <summary>
     /// Event ID counter for session-scoped SSE events.
     /// Atomically incremented for each SSE event in this session.
-    /// Must be a field (not property) for Interlocked operations.
     /// </summary>
     public long EventIdCounter;
+    
+    /// <summary>
+    /// Message buffer for SSE notification replay (v1.7.0 Phase 2).
+    /// Stores recent messages for Last-Event-ID resumption.
+    /// </summary>
+    public MessageBuffer MessageBuffer { get; } = new(100);
 }
