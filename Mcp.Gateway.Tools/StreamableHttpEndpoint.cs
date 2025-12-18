@@ -111,8 +111,7 @@ public static class StreamableHttpEndpoint
         app.MapGet(pattern, async (
             HttpContext context,
             SessionService? sessionService,
-            EventIdGenerator? eventIdGenerator,
-            Notifications.INotificationSender? notificationService,
+            SseStreamRegistry? sseRegistry,
             ILogger<ToolInvoker> logger,
             CancellationToken ct) =>
         {
@@ -164,24 +163,49 @@ public static class StreamableHttpEndpoint
 
             await context.Response.StartAsync(ct);
 
-            // 3. Get Last-Event-ID for resumption (future enhancement)
+            // 3. Get Last-Event-ID for resumption
             var lastEventId = context.Request.Headers["Last-Event-ID"].ToString();
-            if (!string.IsNullOrEmpty(lastEventId))
+            
+            // 4. Replay buffered messages (v1.7.0 Phase 2)
+            if (sessionService != null && !string.IsNullOrEmpty(sessionId))
             {
-                logger.LogInformation(
-                    "SSE stream resumption requested from event ID: {LastEventId}",
-                    lastEventId);
+                var session = sessionService.GetSession(sessionId);
+                if (session != null)
+                {
+                    var bufferedMessages = session.MessageBuffer.GetMessagesAfter(lastEventId);
+                    var replayCount = 0;
+                    
+                    foreach (var buffered in bufferedMessages)
+                    {
+                        var sseMessage = SseEventMessage.CreateMessage(buffered.EventId, buffered.Message);
+                        await WriteSseEventAsync(context.Response, sseMessage, ct);
+                        replayCount++;
+                    }
+                    
+                    if (replayCount > 0)
+                    {
+                        logger.LogInformation(
+                            "Replayed {Count} buffered messages to session {SessionId} (after event ID: {LastEventId})",
+                            replayCount,
+                            sessionId,
+                            lastEventId ?? "none");
+                    }
+                }
             }
 
-            // 4. Open long-lived SSE stream
-            logger.LogInformation("Opening SSE stream for session: {SessionId}", sessionId);
+            // 5. Register SSE stream for future notifications (v1.7.0 Phase 2)
+            if (sseRegistry != null && !string.IsNullOrEmpty(sessionId))
+            {
+                sseRegistry.Register(sessionId, context.Response, ct);
+                logger.LogInformation("Registered SSE stream for session: {SessionId}", sessionId);
+            }
+
+            // 6. Open long-lived SSE stream
             await OpenSseStreamAsync(
                 context.Response,
                 sessionId,
-                lastEventId,
                 sessionService,
-                eventIdGenerator,
-                notificationService,
+                sseRegistry,
                 logger,
                 ct);
         });
@@ -248,23 +272,19 @@ public static class StreamableHttpEndpoint
     /// <summary>
     /// Opens a long-lived SSE stream for server-to-client messages.
     /// Sends keep-alive pings every 30 seconds.
+    /// Handles cleanup on disconnect (v1.7.0 Phase 2).
     /// </summary>
     private static async Task OpenSseStreamAsync(
         HttpResponse response,
         string? sessionId,
-        string? lastEventId,
         SessionService? sessionService,
-        EventIdGenerator? eventIdGenerator,
-        Notifications.INotificationSender? notificationService,
+        SseStreamRegistry? sseRegistry,
         ILogger logger,
         CancellationToken ct)
     {
         try
         {
-            // TODO Phase 2: Implement message replay after lastEventId
-            // TODO Phase 2: Subscribe to notification channels
-            // For now: Send keep-alive pings to maintain connection
-
+            // Keep connection alive with periodic pings
             while (!ct.IsCancellationRequested)
             {
                 // Send keep-alive comment (no event ID needed)
@@ -284,5 +304,46 @@ public static class StreamableHttpEndpoint
         {
             logger.LogError(ex, "Error in SSE stream for session: {SessionId}", sessionId);
         }
+        finally
+        {
+            // Unregister SSE stream on disconnect (v1.7.0 Phase 2)
+            if (sseRegistry != null && !string.IsNullOrEmpty(sessionId))
+            {
+                sseRegistry.Unregister(sessionId, response);
+                logger.LogInformation("Unregistered SSE stream for session: {SessionId}", sessionId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Writes an SSE event to the HTTP response stream (v1.7.0 Phase 2).
+    /// </summary>
+    private static async Task WriteSseEventAsync(
+        HttpResponse response,
+        SseEventMessage message,
+        CancellationToken ct)
+    {
+        // Write event ID
+        if (!string.IsNullOrEmpty(message.Id))
+        {
+            await response.WriteAsync($"id: {message.Id}\n", ct);
+        }
+
+        // Write event type (optional, defaults to "message")
+        if (!string.IsNullOrEmpty(message.Event))
+        {
+            await response.WriteAsync($"event: {message.Event}\n", ct);
+        }
+
+        // Write retry interval (optional)
+        if (message.Retry.HasValue)
+        {
+            await response.WriteAsync($"retry: {message.Retry.Value}\n", ct);
+        }
+
+        // Write data
+        var json = JsonSerializer.Serialize(message.Data, JsonOptions.Default);
+        await response.WriteAsync($"data: {json}\n\n", ct);
+        await response.Body.FlushAsync(ct);
     }
 }
