@@ -244,6 +244,29 @@ info: Terminated session: 10993b8c365c44e9bb77dcff6a4edc39
 
 ---
 
-**Created by:** ARKo AS - AHelse Development Team  
-**Last Updated:** 19. desember 2025, kl. 02:15  
-**Version:** 1.0 (Initial Compatibility Guide)
+## Release note: 1.7.1
+
+We are releasing a 1.7.1 patch to provide a temporary compatibility helper for older MCP clients (e.g., older GitHub Copilot builds) that expect earlier protocol versions.
+
+### What 1.7.1 includes
+- `MCP_PROTOCOL_VERSION` environment variable to configure the protocol version returned in the `initialize` response.
+- Documentation and compatibility guidance in this file and `CHANGELOG.md`.
+
+### Usage guidance
+Set `MCP_PROTOCOL_VERSION` to `2025-06-18` to maintain compatibility with older clients while they are updated. Remove the environment variable once clients have migrated to `2025-11-25`.
+
+Example (PowerShell):
+```powershell
+$env:MCP_PROTOCOL_VERSION = "2025-06-18"
+# Start server
+dotnet run --project Examples/DateTimeMcpServer
+```
+
+Example (launchSettings.json):
+```json
+"environmentVariables": {
+  "MCP_PROTOCOL_VERSION": "2025-06-18"
+}
+```
+
+**Note:** This is a temporary workaround. The recommended path is to update clients to support MCP 2025-11-25.

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `MCP_PROTOCOL_VERSION` environment variable to allow servers to report a configurable protocol version for temporary compatibility with older clients (e.g., GitHub Copilot expecting 2025-06-18). See docs for usage and migration guidance.
+- Compatibility guide: `.internal/notes/v1.7.0/github-copilot-compatibility.md` added to repository.
+
+---
+
+## [1.7.1] - 2025-12-19
+
+**Patch:** Backwards compatibility helper and documentation updates.
+
+### Added
+- Configurable `initialize` protocol version via environment variable `MCP_PROTOCOL_VERSION` (fallback `2025-11-25`). Useful to temporarily present older protocol version to legacy clients during migration.
+- Documentation: Compatibility guide for GitHub Copilot and MCP clients (see `.internal/notes/v1.7.0/github-copilot-compatibility.md`).
+
+### Fixed
+- Addressed client startup failures where clients expected older MCP protocol versions by adding configurable protocol version support.
+
 ---
 
 ## [1.7.0] - 2025-12-19
@@ -102,16 +119,7 @@ This release achieves **full MCP 2025-11-25 compliance** with Streamable HTTP tr
   - 99 new tests for v1.7.0 features
   - Phase 1: 60 tests (SSE Event IDs, Session Management, Protocol Version, /mcp endpoint)
   - Phase 2: 39 tests (Message Buffer, SSE Stream Registry, Notification broadcast)
-- New test files:
-  - `EventIdGeneratorTests.cs` (8 tests)
-  - `SseEventMessageTests.cs` (8 tests)
-  - `SessionServiceTests.cs` (19 tests)
-  - `McpProtocolVersionMiddlewareTests.cs` (9 tests)
-  - `SseEventIdTests.cs` (5 integration tests)
-  - `McpEndpointTests.cs` (11 integration tests)
-  - `MessageBufferTests.cs` (20 tests)
-  - `SseStreamRegistryTests.cs` (19 tests)
-- All existing tests pass with zero regression
+  - All existing tests pass with zero regression
 
 ### Behaviour & Compatibility
 - **Backward compatible** - Zero breaking changes:
