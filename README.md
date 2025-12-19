@@ -305,6 +305,143 @@ See `Examples/NotificationMcpServer` for a demo with manual notification trigger
 
 ---
 
+## 📊 Lifecycle Hooks (v1.8.0)
+
+Monitor and track tool invocations with **Lifecycle Hooks** - perfect for metrics, logging, and production monitoring:
+
+### Built-in Hooks
+
+**LoggingToolLifecycleHook** - Simple logging integration:
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.AddToolsService();
+builder.AddToolLifecycleHook<LoggingToolLifecycleHook>();  // Log all invocations
+
+var app = builder.Build();
+```
+
+**MetricsToolLifecycleHook** - In-memory metrics tracking:
+```csharp
+builder.AddToolLifecycleHook<MetricsToolLifecycleHook>();
+
+// Expose metrics via HTTP endpoint
+app.MapGet("/metrics", (IEnumerable<IToolLifecycleHook> hooks) =>
+{
+    var metricsHook = hooks.OfType<MetricsToolLifecycleHook>().FirstOrDefault();
+    var metrics = metricsHook?.GetMetrics();
+    
+    return Results.Json(new
+    {
+        timestamp = DateTime.UtcNow,
+        metrics = metrics?.Select(kvp => new
+        {
+            tool = kvp.Key,
+            invocations = kvp.Value.InvocationCount,
+            successes = kvp.Value.SuccessCount,
+            failures = kvp.Value.FailureCount,
+            successRate = Math.Round(kvp.Value.SuccessRate * 100, 2),
+            avgDuration = Math.Round(kvp.Value.AverageDuration.TotalMilliseconds, 2)
+        })
+    });
+});
+```
+
+### Custom Hooks
+
+Implement `IToolLifecycleHook` for custom monitoring:
+
+```csharp
+using Mcp.Gateway.Tools.Lifecycle;
+
+public class PrometheusHook : IToolLifecycleHook
+{
+    private readonly Counter _invocations;
+    private readonly Histogram _duration;
+    
+    public PrometheusHook()
+    {
+        _invocations = Metrics.CreateCounter(
+            "mcp_tool_invocations_total",
+            "Total tool invocations",
+            new CounterConfiguration { LabelNames = new[] { "tool", "status" } });
+        
+        _duration = Metrics.CreateHistogram(
+            "mcp_tool_duration_seconds",
+            "Tool execution duration",
+            new HistogramConfiguration { LabelNames = new[] { "tool" } });
+    }
+    
+    public Task OnToolInvokingAsync(string toolName, JsonRpcMessage request)
+    {
+        _invocations.WithLabels(toolName, "started").Inc();
+        return Task.CompletedTask;
+    }
+    
+    public Task OnToolCompletedAsync(string toolName, JsonRpcMessage response, TimeSpan duration)
+    {
+        _invocations.WithLabels(toolName, "success").Inc();
+        _duration.WithLabels(toolName).Observe(duration.TotalSeconds);
+        return Task.CompletedTask;
+    }
+    
+    public Task OnToolFailedAsync(string toolName, Exception error, TimeSpan duration)
+    {
+        _invocations.WithLabels(toolName, "failure").Inc();
+        return Task.CompletedTask;
+    }
+}
+
+// Register custom hook
+builder.AddToolLifecycleHook<PrometheusHook>();
+```
+
+### Tracked Metrics
+
+Per tool, `MetricsToolLifecycleHook` tracks:
+- **Invocation count** - Total calls (success + failures)
+- **Success/Failure count** - Breakdown by outcome
+- **Success rate** - Percentage of successful invocations
+- **Duration** - Min, Max, Average execution time
+- **Error types** - Count of errors by exception type
+
+### Example Output
+
+```json
+{
+  "timestamp": "2025-12-19T16:30:00Z",
+  "metrics": [
+    {
+      "tool": "add_numbers",
+      "invocations": 150,
+      "successes": 150,
+      "failures": 0,
+      "successRate": 100.0,
+      "avgDuration": 1.23
+    },
+    {
+      "tool": "divide",
+      "invocations": 50,
+      "successes": 48,
+      "failures": 2,
+      "successRate": 96.0,
+      "avgDuration": 1.15
+    }
+  ]
+}
+```
+
+**Features:**
+- ✅ **Fire-and-forget** - Hooks don't block tool execution
+- ✅ **Exception-safe** - Hook errors are logged, not propagated
+- ✅ **Multiple hooks** - Register as many as needed
+- ✅ **Zero config** - Optional, backward compatible
+- ✅ **Production-ready** - Thread-safe metrics tracking
+
+See `Examples/MetricsMcpServer` for a complete demo with metrics endpoint and tests.
+
+---
+
 ## 💡 Features
 
 - ✅ **MCP 2025‑11‑25** – 100% compliant with latest MCP specification (v1.7.0)
@@ -347,9 +484,15 @@ See `Examples/NotificationMcpServer` for a demo with manual notification trigger
   - Automatic broadcast to all active sessions
   - `NotificationService` with thread-safe subscriber management  
   - WebSocket notifications still work (deprecated)
+- ✅ **Lifecycle Hooks (v1.8.0)**
+  - Monitor tool invocations with `IToolLifecycleHook`
+  - Built-in hooks: `LoggingToolLifecycleHook`, `MetricsToolLifecycleHook`
+  - Track invocation count, success rate, duration, errors
+  - Fire-and-forget pattern (exception-safe)
+  - Production-ready metrics for Prometheus, Application Insights
 - ✅ **Streaming** – text and binary streaming via `ToolConnector`
 - ✅ **DI support** – tools, prompts, and resources can take services as parameters
-- ✅ **Tested** – 253 tests covering HTTP, WS, SSE and stdio
+- ✅ **Tested** – 258 tests covering HTTP, WS, SSE and stdio
 
 ---
 
@@ -367,6 +510,7 @@ See `Examples/NotificationMcpServer` for a demo with manual notification trigger
   - `Examples/ResourceMcpServer` – file, system, and database resources
   - `Examples/PaginationMcpServer` – pagination with 120+ mock tools (v1.6.0)
   - `Examples/NotificationMcpServer` – WebSocket notifications demo (v1.6.0)
+  - `Examples/MetricsMcpServer` – lifecycle hooks with metrics endpoint (v1.8.0)
 
 ---
 
