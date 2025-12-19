@@ -48,6 +48,7 @@ public partial class ToolInvoker(
     /// <summary>
     /// Invokes lifecycle hooks for tool invocation (v1.8.0).
     /// Fire-and-forget - hooks should not throw exceptions.
+    /// EXCEPTION: ToolInvalidParamsException is re-thrown (used for authorization).
     /// </summary>
     protected async Task InvokeLifecycleHooksAsync(
         Func<IToolLifecycleHook, Task> hookAction)
@@ -60,9 +61,14 @@ public partial class ToolInvoker(
             {
                 await hookAction(hook).ConfigureAwait(false);
             }
+            catch (ToolInvalidParamsException)
+            {
+                // Re-throw ToolInvalidParamsException (used for authorization)
+                throw;
+            }
             catch (Exception ex)
             {
-                // Log but don't propagate hook errors
+                // Log but don't propagate other hook errors
                 _logger.LogWarning(ex, "Lifecycle hook {HookType} threw exception", hook.GetType().Name);
             }
         }
