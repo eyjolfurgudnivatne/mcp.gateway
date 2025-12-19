@@ -196,6 +196,84 @@ public partial class ToolInvoker
         catch (ToolInvalidParamsException ex)
         {
             _logger.LogWarning(ex, "Invalid params for tool");
+            
+            // Try to get tool details for schema information (v1.8.0)
+            try
+            {
+                // Use ToolName from exception if available
+                var toolName = ex.ToolName;
+                if (!string.IsNullOrEmpty(toolName))
+                {
+                    var toolDef = _toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Tool)
+                        .Concat(_toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Prompt))
+                        .FirstOrDefault(t => t.Name.Equals(toolName, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (toolDef is not null && !string.IsNullOrEmpty(toolDef.InputSchema))
+                    {
+                        // Parse schema to extract helpful info
+                        var schemaDoc = JsonDocument.Parse(toolDef.InputSchema);
+                        var schemaRoot = schemaDoc.RootElement;
+                        
+                        // Extract required fields
+                        var requiredFields = new List<string>();
+                        if (schemaRoot.TryGetProperty("required", out var reqProp))
+                        {
+                            foreach (var field in reqProp.EnumerateArray())
+                            {
+                                var fieldName = field.GetString();
+                                if (!string.IsNullOrEmpty(fieldName))
+                                    requiredFields.Add(fieldName);
+                            }
+                        }
+                        
+                        // Build example with ALL required fields (v1.8.0)
+                        var exampleParams = new List<string>();
+                        if (schemaRoot.TryGetProperty("properties", out var propsProp))
+                        {
+                            foreach (var prop in propsProp.EnumerateObject())
+                            {
+                                if (requiredFields.Contains(prop.Name))
+                                {
+                                    var propType = prop.Value.TryGetProperty("type", out var typeProp) 
+                                        ? typeProp.GetString() ?? "unknown" 
+                                        : "unknown";
+                                    
+                                    var exampleValue = propType switch
+                                    {
+                                        "string" => "\"example\"",
+                                        "number" => "42",
+                                        "integer" => "42",
+                                        "boolean" => "true",
+                                        _ => "..."
+                                    };
+                                    
+                                    exampleParams.Add($"\"{prop.Name}\": {exampleValue}");
+                                }
+                            }
+                        }
+                        
+                        var exampleJson = exampleParams.Any() 
+                            ? $"{{ {string.Join(", ", exampleParams)} }}" 
+                            : null;
+                        
+                        return ToolResponse.Error(id, -32602, "Invalid params", new
+                        {
+                            detail = ex.Message,
+                            tool = toolName,
+                            requiredFields = requiredFields.Any() ? requiredFields : null,
+                            example = exampleJson,
+                            hint = requiredFields.Any() 
+                                ? $"Required fields: {string.Join(", ", requiredFields)}" 
+                                : "Check tool schema for parameter details"
+                        });
+                    }
+                }
+            }
+            catch
+            {
+                // If schema extraction fails, fall back to simple error
+            }
+            
             return ToolResponse.Error(id, -32602, "Invalid params", new { detail = ex.Message });
         }
         catch (Exception ex)
