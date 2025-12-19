@@ -16,6 +16,7 @@ public class NotificationService : INotificationSender
     private readonly SessionService _sessionService;
     private readonly SseStreamRegistry _sseRegistry;
     private readonly ILogger<NotificationService> _logger;
+    private readonly ResourceSubscriptionRegistry? _subscriptionRegistry;  // v1.8.0 Phase 4
 
     // Legacy WebSocket support (deprecated in v1.7.0)
     private readonly ConcurrentBag<WebSocket> _subscribers = new();
@@ -24,12 +25,14 @@ public class NotificationService : INotificationSender
         EventIdGenerator eventIdGenerator,
         SessionService sessionService,
         SseStreamRegistry sseRegistry,
-        ILogger<NotificationService> logger)
+        ILogger<NotificationService> logger,
+        ResourceSubscriptionRegistry? subscriptionRegistry = null)  // v1.8.0 Phase 4 (optional)
     {
         _eventIdGenerator = eventIdGenerator;
         _sessionService = sessionService;
         _sseRegistry = sseRegistry;
         _logger = logger;
+        _subscriptionRegistry = subscriptionRegistry;
     }
 
     /// <summary>
@@ -85,10 +88,39 @@ public class NotificationService : INotificationSender
     {
         var sessions = _sessionService.GetAllSessions();
 
+        // Check if this is a resource notification with URI (v1.8.0 Phase 4)
+        string? notificationUri = null;
+        if (notification.Method == "notifications/resources/updated" && 
+            notification.Params is JsonElement paramsElement &&
+            paramsElement.ValueKind == JsonValueKind.Object &&
+            paramsElement.TryGetProperty("uri", out var uriElement))
+        {
+            notificationUri = uriElement.GetString();
+        }
+
+        var sentCount = 0;
+
         foreach (var session in sessions)
         {
             try
             {
+                // Filter by subscription (v1.8.0 Phase 4)
+                if (notificationUri != null)
+                {
+                    // This is a resource notification - check subscription
+                    var subscriptionRegistry = GetResourceSubscriptionRegistry();
+                    
+                    if (subscriptionRegistry != null && 
+                        !subscriptionRegistry.IsSubscribed(session.Id, notificationUri))
+                    {
+                        _logger.LogDebug(
+                            "Skipping resource notification to session {SessionId} (not subscribed to {Uri})",
+                            session.Id,
+                            notificationUri);
+                        continue; // Skip this session
+                    }
+                }
+
                 // Generate event ID for this session
                 var eventId = _eventIdGenerator.GenerateEventId(session.Id);
 
@@ -98,6 +130,8 @@ public class NotificationService : INotificationSender
                 // Broadcast to SSE streams for this session
                 var sseMessage = SseEventMessage.CreateMessage(eventId, notification);
                 await _sseRegistry.BroadcastAsync(session.Id, sseMessage);
+
+                sentCount++;
 
                 _logger.LogDebug(
                     "Notification sent via SSE to session {SessionId}: {Method}",
@@ -112,12 +146,13 @@ public class NotificationService : INotificationSender
             }
         }
 
-        if (sessions.Any())
+        if (sentCount > 0)
         {
             _logger.LogInformation(
-                "SSE notification broadcasted: {Method} to {Count} sessions",
+                "SSE notification broadcasted: {Method} to {Count} sessions{UriInfo}",
                 notification.Method,
-                sessions.Count());
+                sentCount,
+                notificationUri != null ? $" (URI: {notificationUri})" : "");
         }
     }
 
@@ -180,5 +215,14 @@ public class NotificationService : INotificationSender
         // ConcurrentBag doesn't support removal
         // Closed connections are filtered out during SendNotificationAsync
         // This is acceptable since notifications are infrequent
+    }
+
+    /// <summary>
+    /// Helper method to get ResourceSubscriptionRegistry (v1.8.0 Phase 4)
+    /// Returns null if not available (subscriptions not enabled)
+    /// </summary>
+    private ResourceSubscriptionRegistry? GetResourceSubscriptionRegistry()
+    {
+        return _subscriptionRegistry;
     }
 }

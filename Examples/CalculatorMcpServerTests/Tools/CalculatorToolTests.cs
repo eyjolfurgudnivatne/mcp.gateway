@@ -40,6 +40,33 @@ public class CalculatorToolTests(CalculatorMcpServerFixture fixture)
     }
 
     [Fact]
+    public async Task AddNumbers_Mcp_ReturnsSum()
+    {
+        // Arrange
+        var request = JsonRpcMessage.CreateRequest(
+            "add_numbers",
+            Guid.NewGuid().ToString("D"),
+            new AddNumbersRequest(5, 10));
+
+        // Act
+        var response = await fixture.HttpClient.PostAsJsonAsync("/mcp", request, fixture.CancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadFromJsonAsync<JsonRpcMessage>(fixture.CancellationToken);
+        Assert.NotNull(content);
+        Assert.True(content.IsSuccessResponse, $"Failed to add numbers");
+
+        // NEW: add_numbers now returns structured content (v1.6.5)
+        var json = JsonSerializer.Serialize(content.Result, JsonOptions.Default);
+        var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        // Verify structuredContent has the result
+        Assert.True(root.TryGetProperty("structuredContent", out var structured));
+        Assert.Equal(15.0, structured.GetProperty("result").GetDouble());
+    }
+
+    [Fact]
     public async Task MultiplyNumbers_ReturnsProduct()
     {
         // Arrange

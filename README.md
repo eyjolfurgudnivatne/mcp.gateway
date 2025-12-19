@@ -65,18 +65,55 @@ See `DevTestServer/Program.cs` for a more complete setup with health endpoint an
 
 ### 3. Create your first tool
 
+#### 3.1. Simplest Tool (Auto-generated Schema)
+
+The easiest way to create a tool using **strongly-typed parameters** and **automatic schema generation**:
+
+```csharp
+using Mcp.Gateway.Tools;
+
+public class MyTools
+{
+    [McpTool("greet")]
+    public JsonRpcMessage Greet(TypedJsonRpc<GreetParams> request)
+    {
+        var name = request.Params.Name;
+        return ToolResponse.Success(
+            request.Id,
+            new { message = $"Hello, {name}!" });
+    }
+}
+
+public record GreetParams(string Name);
 ```
+
+**Benefits:**
+- ✅ **No manual JSON Schema** - automatically generated from `GreetParams`
+- ✅ **Strongly-typed** - IntelliSense and compile-time safety
+- ✅ **Clean code** - easy to read and maintain
+
+#### 3.2. Advanced Tool (Custom Schema)
+
+For complex validation or when you need full control over the JSON Schema:
+
+```csharp
 using Mcp.Gateway.Tools;
 
 public class MyTools
 {
     [McpTool("greet",
         Title = "Greet user",
-        Description = "Greets a user by name.",
+        Description = "Greets a user by name with custom validation.",
         InputSchema = @"{
             ""type"":""object"",
-            ""properties"":{
-                ""name"":{ ""type"":""string"", ""description"":""Name of the user"" }
+            ""properties"":
+            {
+                ""name"":{ 
+                    ""type"":""string"",
+                    ""description"":""Name of the user"",
+                    ""minLength"": 2,
+                    ""maxLength"": 50
+                }
             },
             ""required"": [""name""]
         }")]
@@ -89,6 +126,11 @@ public class MyTools
     }
 }
 ```
+
+**When to use:**
+- ✅ Custom validation rules (minLength, maxLength, pattern, etc.)
+- ✅ Complex schema features not supported by auto-generation
+- ✅ Full control over JSON Schema
 
 More complete tool examples:
 
@@ -263,6 +305,276 @@ See `Examples/NotificationMcpServer` for a demo with manual notification trigger
 
 ---
 
+## 📊 Lifecycle Hooks (v1.8.0)
+
+Monitor and track tool invocations with **Lifecycle Hooks** - perfect for metrics, logging, authorization, and production monitoring:
+
+### Built-in Hooks
+
+**LoggingToolLifecycleHook** - Simple logging integration:
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.AddToolsService();
+builder.AddToolLifecycleHook<LoggingToolLifecycleHook>();  // Log all invocations
+
+var app = builder.Build();
+```
+
+**MetricsToolLifecycleHook** - In-memory metrics tracking:
+```csharp
+builder.AddToolLifecycleHook<MetricsToolLifecycleHook>();
+
+// Expose metrics via HTTP endpoint
+app.MapGet("/metrics", (IEnumerable<IToolLifecycleHook> hooks) =>
+{
+    var metricsHook = hooks.OfType<MetricsToolLifecycleHook>().FirstOrDefault();
+    var metrics = metricsHook?.GetMetrics();
+    
+    return Results.Json(new
+    {
+        timestamp = DateTime.UtcNow,
+        metrics = metrics?.Select(kvp => new
+        {
+            tool = kvp.Key,
+            invocations = kvp.Value.InvocationCount,
+            successes = kvp.Value.SuccessCount,
+            failures = kvp.Value.FailureCount,
+            successRate = Math.Round(kvp.Value.SuccessRate * 100, 2),
+            avgDuration = Math.Round(kvp.Value.AverageDuration.TotalMilliseconds, 2)
+        })
+    });
+});
+```
+
+### Authorization Hooks
+
+Implement role-based authorization using lifecycle hooks:
+
+```csharp
+using Mcp.Gateway.Tools.Lifecycle;
+
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+public class RequireRoleAttribute : Attribute
+{
+    public string Role { get; }
+    public RequireRoleAttribute(string role) => Role = role;
+}
+
+public class AuthorizationHook : IToolLifecycleHook
+{
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    
+    public Task OnToolInvokingAsync(string toolName, JsonRpcMessage request)
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        var requiredRoles = GetRequiredRoles(toolName);
+        var userRoles = httpContext?.Items["UserRoles"] as List<string>;
+        
+        if (!HasRequiredRole(requiredRoles, userRoles))
+        {
+            throw new ToolInvalidParamsException(
+                $"Insufficient permissions to invoke '{toolName}'.",
+                toolName);
+        }
+        
+        return Task.CompletedTask;
+    }
+    
+    // ... other methods
+}
+
+// Usage on tools:
+[McpTool("delete_user")]
+[RequireRole("Admin")]
+public JsonRpcMessage DeleteUser(JsonRpcMessage request) { /* ... */ }
+
+// Register authorization hook:
+builder.AddToolLifecycleHook<AuthorizationHook>();
+```
+
+See `docs/Authorization.md` for complete authorization guide and production patterns.
+
+### Custom Hooks
+
+Implement `IToolLifecycleHook` for custom monitoring:
+
+```csharp
+using Mcp.Gateway.Tools.Lifecycle;
+
+public class PrometheusHook : IToolLifecycleHook
+{
+    private readonly Counter _invocations;
+    private readonly Histogram _duration;
+    
+    public PrometheusHook()
+    {
+        _invocations = Metrics.CreateCounter(
+            "mcp_tool_invocations_total",
+            "Total tool invocations",
+            new CounterConfiguration { LabelNames = new[] { "tool", "status" } });
+        
+        _duration = Metrics.CreateHistogram(
+            "mcp_tool_duration_seconds",
+            "Tool execution duration",
+            new HistogramConfiguration { LabelNames = new[] { "tool" } });
+    }
+    
+    public Task OnToolInvokingAsync(string toolName, JsonRpcMessage request)
+    {
+        _invocations.WithLabels(toolName, "started").Inc();
+        return Task.CompletedTask;
+    }
+    
+    public Task OnToolCompletedAsync(string toolName, JsonRpcMessage response, TimeSpan duration)
+    {
+        _invocations.WithLabels(toolName, "success").Inc();
+        _duration.WithLabels(toolName).Observe(duration.TotalSeconds);
+        return Task.CompletedTask;
+    }
+    
+    public Task OnToolFailedAsync(string toolName, Exception error, TimeSpan duration)
+    {
+        _invocations.WithLabels(toolName, "failure").Inc();
+        return Task.CompletedTask;
+    }
+}
+
+// Register custom hook
+builder.AddToolLifecycleHook<PrometheusHook>();
+```
+
+### Tracked Metrics
+
+Per tool, `MetricsToolLifecycleHook` tracks:
+- **Invocation count** - Total calls (success + failures)
+- **Success/Failure count** - Breakdown by outcome
+- **Success rate** - Percentage of successful invocations
+- **Duration** - Min, Max, Average execution time
+- **Error types** - Count of errors by exception type
+
+### Example Output
+
+```json
+{
+  "timestamp": "2025-12-19T16:30:00Z",
+  "metrics": [
+    {
+      "tool": "add_numbers",
+      "invocations": 150,
+      "successes": 150,
+      "failures": 0,
+      "successRate": 100.0,
+      "avgDuration": 1.23
+    },
+    {
+      "tool": "divide",
+      "invocations": 50,
+      "successes": 48,
+      "failures": 2,
+      "successRate": 96.0,
+      "avgDuration": 1.15
+    }
+  ]
+}
+```
+
+**Features:**
+- ✅ **Fire-and-forget** - Hooks don't block tool execution
+- ✅ **Exception-safe** - Hook errors are logged, not propagated (except `ToolInvalidParamsException` for authorization)
+- ✅ **Multiple hooks** - Register as many as needed
+- ✅ **Zero config** - Optional, backward compatible
+- ✅ **Production-ready** - Thread-safe metrics tracking
+- ✅ **Authorization support** - Use for role-based access control
+
+See:
+- `Examples/MetricsMcpServer` - Metrics endpoint demo
+- `Examples/AuthorizationMcpServer` - Role-based authorization
+- `docs/LifecycleHooks.md` - Complete API reference
+- `docs/Authorization.md` - Authorization patterns and best practices
+
+---
+
+## 📦 Resource Subscriptions (v1.8.0)
+
+Subscribe to specific resources for targeted notifications - reduces bandwidth and improves performance for high-frequency updates:
+
+### Subscribe to Resources
+
+```csharp
+// Client subscribes to a specific resource URI
+{
+  "jsonrpc": "2.0",
+  "method": "resources/subscribe",
+  "params": {
+    "uri": "file://data/users.json"
+  },
+  "id": 1
+}
+
+// Server confirms subscription
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "subscribed": true,
+    "uri": "file://data/users.json"
+  },
+  "id": 1
+}
+```
+
+### Filtered Notifications
+
+Only subscribers receive notifications for their subscribed resources:
+
+```csharp
+// Server notifies ONLY sessions subscribed to this URI
+await notificationSender.SendNotificationAsync(
+    NotificationMessage.ResourcesUpdated("file://data/users.json"));
+
+// Notification sent ONLY to subscribed sessions
+{
+  "jsonrpc": "2.0",
+  "method": "notifications/resources/updated",
+  "params": {
+    "uri": "file://data/users.json"
+  }
+}
+```
+
+### Unsubscribe
+
+```csharp
+{
+  "jsonrpc": "2.0",
+  "method": "resources/unsubscribe",
+  "params": {
+    "uri": "file://data/users.json"
+  },
+  "id": 2
+}
+```
+
+**Features:**
+- ✅ **Exact URI matching** - Subscribe to specific resources only (no wildcards in v1.8.0)
+- ✅ **Session-based** - Subscriptions tied to MCP sessions
+- ✅ **Automatic cleanup** - Subscriptions cleared on session expiry/deletion
+- ✅ **Notification filtering** - Server only sends to subscribed sessions
+- ✅ **Requires session management** - Must use `/mcp` endpoint with `MCP-Session-Id`
+
+**When to use:**
+- ✅ High-frequency resource updates (e.g., live metrics)
+- ✅ Many resources, few clients interested in each
+- ✅ Reducing notification bandwidth
+
+**Limitations (v1.8.0):**
+- ❌ Exact URI matching only (wildcards planned for v1.9.0)
+- ❌ Requires session management (not available on `/rpc` endpoint)
+
+See `Examples/ResourceMcpServer/README.md` for complete subscription workflow and examples.
+
+---
+
 ## 💡 Features
 
 - ✅ **MCP 2025‑11‑25** – 100% compliant with latest MCP specification (v1.7.0)
@@ -305,9 +617,21 @@ See `Examples/NotificationMcpServer` for a demo with manual notification trigger
   - Automatic broadcast to all active sessions
   - `NotificationService` with thread-safe subscriber management  
   - WebSocket notifications still work (deprecated)
+- ✅ **Lifecycle Hooks (v1.8.0)**
+  - Monitor tool invocations with `IToolLifecycleHook`
+  - Built-in hooks: `LoggingToolLifecycleHook`, `MetricsToolLifecycleHook`
+  - Track invocation count, success rate, duration, errors
+  - Fire-and-forget pattern (exception-safe)
+  - Production-ready metrics for Prometheus, Application Insights
+- ✅ **Resource Subscriptions (v1.8.0)**
+  - Optional MCP 2025-11-25 feature
+  - `resources/subscribe` and `resources/unsubscribe` methods
+  - Notification filtering by subscribed URI
+  - Session-based with automatic cleanup
+  - Exact URI matching (wildcards in v1.9.0)
 - ✅ **Streaming** – text and binary streaming via `ToolConnector`
 - ✅ **DI support** – tools, prompts, and resources can take services as parameters
-- ✅ **Tested** – 253 tests covering HTTP, WS, SSE and stdio
+- ✅ **Tested** – 273 tests covering HTTP, WS, SSE and stdio
 
 ---
 
@@ -315,9 +639,12 @@ See `Examples/NotificationMcpServer` for a demo with manual notification trigger
 
 - **Library README:** `Mcp.Gateway.Tools/README.md`  
   Details for the tools API (attributes, JsonRpc models, etc.)
-- **MCP protocol:** `docs/MCP-Protocol.md`
-- **Streaming protocol:** `docs/StreamingProtocol.md`
-- **JSON‑RPC 2.0:** `docs/JSON-RPC-2.0-spec.md`
+- **Documentation:**
+  - `docs/MCP-Protocol.md` - MCP protocol specification
+  - `docs/StreamingProtocol.md` - Streaming protocol details
+  - `docs/JSON-RPC-2.0-spec.md` - JSON-RPC 2.0 specification
+  - `docs/LifecycleHooks.md` - Lifecycle hooks API reference (v1.8.0)
+  - `docs/Authorization.md` - Authorization patterns and best practices (v1.8.0)
 - **Examples:**
   - `Examples/CalculatorMcpServer` – calculator server
   - `Examples/DateTimeMcpServer` – date/time tools
@@ -325,6 +652,8 @@ See `Examples/NotificationMcpServer` for a demo with manual notification trigger
   - `Examples/ResourceMcpServer` – file, system, and database resources
   - `Examples/PaginationMcpServer` – pagination with 120+ mock tools (v1.6.0)
   - `Examples/NotificationMcpServer` – WebSocket notifications demo (v1.6.0)
+  - `Examples/MetricsMcpServer` – lifecycle hooks with metrics endpoint (v1.8.0)
+  - `Examples/AuthorizationMcpServer` – role-based authorization (v1.8.0)
 
 ---
 

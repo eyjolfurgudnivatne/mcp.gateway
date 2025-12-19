@@ -64,11 +64,38 @@ app.Run();
 
 ## 🧩 Defining tools
 
-### Basic tool
+### 3.1. Simplest Tool (Auto-generated Schema)
 
-Based on `Examples/CalculatorMcpServer/Tools/CalculatorTools.cs`:
+The easiest way to create a tool using **strongly-typed parameters** and **automatic schema generation**:
 
+```csharp
+using Mcp.Gateway.Tools;
+
+public class MyTools
+{
+    [McpTool("greet")]
+    public JsonRpcMessage Greet(TypedJsonRpc<GreetParams> request)
+    {
+        var name = request.Params.Name;
+        return ToolResponse.Success(
+            request.Id,
+            new { message = $"Hello, {name}!" });
+    }
+}
+
+public record GreetParams(string Name);
 ```
+
+**Benefits:**
+- ✅ **No manual JSON Schema** - automatically generated from `GreetParams`
+- ✅ **Strongly-typed** - IntelliSense and compile-time safety
+- ✅ **Clean code** - easy to read and maintain
+
+### 3.2. Advanced Tool (Custom Schema)
+
+For complex validation or when you need full control over the JSON Schema:
+
+```csharp
 using CalculatorMcpServer.Models;
 using Mcp.Gateway.Tools;
 
@@ -80,7 +107,8 @@ public class CalculatorTools
         Icon = "https://example.com/icons/calculator.png",  // NEW: Icon (v1.6.5)
         InputSchema = @"{
             ""type"":""object"",
-            ""properties"":{
+            ""properties"":
+            {
                 ""number1"":{""type"":""number"",""description"":""First number""},
                 ""number2"":{""type"":""number"",""description"":""Second number""}
             },
@@ -98,6 +126,11 @@ public class CalculatorTools
     }
 }
 ```
+
+**When to use:**
+- ✅ Custom validation rules (minLength, maxLength, pattern, etc.)
+- ✅ Complex schema features not supported by auto-generation
+- ✅ Full control over JSON Schema
 
 **Icons (v1.6.5+):**
 
@@ -133,7 +166,9 @@ The `Icon` property accepts:
 - ✅ Data URIs: `"data:image/svg+xml;base64,..."`
 - ℹ️ `mimeType` and `sizes` are automatically set to `null` (client infers from URL)
 
-### With validation and DI (from `DevTestServer/Tools/Calculator.cs`)
+### 3.3. With Validation and DI
+
+For tools that need dependency injection and advanced validation (from `DevTestServer/Tools/Calculator.cs`):
 
 ```
 using DevTestServer.MyServices;

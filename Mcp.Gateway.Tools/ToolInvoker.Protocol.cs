@@ -107,6 +107,17 @@ public partial class ToolInvoker
                 return await HandleResourcesReadAsync(message, cancellationToken);
             }
 
+            // MCP Resource Subscriptions (v1.8.0 Phase 4)
+            if (message.Method == "resources/subscribe")
+            {
+                return HandleResourcesSubscribe(message);
+            }
+            
+            if (message.Method == "resources/unsubscribe")
+            {
+                return HandleResourcesUnsubscribe(message);
+            }
+
             // MCP notifications (client → server, no response expected)
             if (message.Method?.StartsWith("notifications/") == true)
             {
@@ -154,23 +165,133 @@ public partial class ToolInvoker
                 args = [message];
             }
 
-            // Invoke the tool
-            var result = _toolService.InvokeFunctionDelegate(
+            // Invoke the tool with lifecycle hooks (v1.8.0)
+            return await InvokeToolWithHooksAsync(
                 message.Method,
-                toolDetails,
-                args);
+                message,
+                async () =>
+                {
+                    // Invoke the tool
+                    var result = _toolService.InvokeFunctionDelegate(
+                        message.Method,
+                        toolDetails,
+                        args);
 
-            // Handle different return types
-            return await ProcessToolResultAsync(result, toolDetails, message.IsNotification, id, cancellationToken);
+                    // Handle different return types
+                    return await ProcessToolResultAsync(result, toolDetails, message.IsNotification, id, cancellationToken);
+                });
         }
         catch (ToolNotFoundException ex)
         {
             _logger.LogWarning(ex, "Tool not found: {Method}", ex.Message);
+            
+            // Suggest similar tool names (v1.8.0)
+            var allTools = _toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Tool)
+                .Concat(_toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Prompt))
+                .Select(t => t.Name)
+                .ToList();
+            
+            var requestedTool = id?.ToString() ?? "unknown";
+            var similarTools = StringSimilarity.FindSimilarStrings(
+                ex.Message.Replace("Function '", "").Replace("' is not configured.", ""),
+                allTools,
+                maxResults: 3,
+                maxDistance: 3);
+            
+            if (similarTools.Any())
+            {
+                return ToolResponse.Error(id, -32601, "Method not found", new
+                {
+                    detail = ex.Message,
+                    requestedTool = ex.Message.Replace("Function '", "").Replace("' is not configured.", ""),
+                    suggestions = similarTools,
+                    hint = $"Did you mean: {string.Join(", ", similarTools)}?"
+                });
+            }
+            
             return ToolResponse.Error(id, -32601, "Method not found", new { detail = ex.Message });
         }
         catch (ToolInvalidParamsException ex)
         {
             _logger.LogWarning(ex, "Invalid params for tool");
+            
+            // Try to get tool details for schema information (v1.8.0)
+            try
+            {
+                // Use ToolName from exception if available
+                var toolName = ex.ToolName;
+                if (!string.IsNullOrEmpty(toolName))
+                {
+                    var toolDef = _toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Tool)
+                        .Concat(_toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Prompt))
+                        .FirstOrDefault(t => t.Name.Equals(toolName, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (toolDef is not null && !string.IsNullOrEmpty(toolDef.InputSchema))
+                    {
+                        // Parse schema to extract helpful info
+                        var schemaDoc = JsonDocument.Parse(toolDef.InputSchema);
+                        var schemaRoot = schemaDoc.RootElement;
+                        
+                        // Extract required fields
+                        var requiredFields = new List<string>();
+                        if (schemaRoot.TryGetProperty("required", out var reqProp))
+                        {
+                            foreach (var field in reqProp.EnumerateArray())
+                            {
+                                var fieldName = field.GetString();
+                                if (!string.IsNullOrEmpty(fieldName))
+                                    requiredFields.Add(fieldName);
+                            }
+                        }
+                        
+                        // Build example with ALL required fields (v1.8.0)
+                        var exampleParams = new List<string>();
+                        if (schemaRoot.TryGetProperty("properties", out var propsProp))
+                        {
+                            foreach (var prop in propsProp.EnumerateObject())
+                            {
+                                if (requiredFields.Contains(prop.Name))
+                                {
+                                    var propType = prop.Value.TryGetProperty("type", out var typeProp) 
+                                        ? typeProp.GetString() ?? "unknown" 
+                                        : "unknown";
+                                    
+                                    var exampleValue = propType switch
+                                    {
+                                        "string" => "\"example\"",
+                                        "number" => "42",
+                                        "integer" => "42",
+                                        "boolean" => "true",
+                                        _ => "..."
+                                    };
+                                    
+                                    exampleParams.Add($"\"{prop.Name}\": {exampleValue}");
+                                }
+                            }
+                        }
+                        
+                        var exampleJson = exampleParams.Any() 
+                            ? $"{{ {string.Join(", ", exampleParams)} }}" 
+                            : null;
+                        
+                        return ToolResponse.Error(id, -32602, "Invalid params", new
+                        {
+                            detail = ex.Message,
+                            tool = toolName,
+                            requiredFields = requiredFields.Any() ? requiredFields : null,
+                            example = exampleJson,
+                            hint = requiredFields.Any() 
+                                ? $"Required fields: {string.Join(", ", requiredFields)}" 
+                                : "Check tool schema for parameter details"
+                        });
+                    }
+                }
+            }
+            catch
+            {
+                // If schema extraction fails, fall back to simple error
+            }
+            
             return ToolResponse.Error(id, -32602, "Invalid params", new { detail = ex.Message });
         }
         catch (Exception ex)
@@ -223,9 +344,12 @@ public partial class ToolInvoker
                 capabilities["notifications"] = notifications;
         }
         
+        // Make protocol version configurable for compatibility with older clients
+        var protocolVersion = Environment.GetEnvironmentVariable("MCP_PROTOCOL_VERSION") ?? "2025-11-25";
+
         return ToolResponse.Success(request.Id, new
         {
-            protocolVersion = "2025-11-25", // Updated to MCP 2025-11-25 (v1.6.5+)
+            protocolVersion = protocolVersion, // Configurable protocol version
             serverInfo = new
             {
                 name = "mcp-gateway",
@@ -527,25 +651,32 @@ public partial class ToolInvoker
                     "This tool must be called via StreamMessage, not tools/call");
             }
 
-            object? result = null;
+            // Invoke tool with lifecycle hooks (v1.8.0)
+            var processedResult = await InvokeToolWithHooksAsync(
+                functionName,
+                functionRequest,
+                async () =>
+                {
+                    object? result = null;
 
-            // If the tool expects a TypedJsonRpc<T>, wrap the JsonRpcMessage accordingly.
-            if (functionDetails.FunctionArgumentType.IsTypedJsonRpc)
-            {
-                var paramType = functionDetails.FunctionArgumentType.ParameterType;
+                    // If the tool expects a TypedJsonRpc<T>, wrap the JsonRpcMessage accordingly.
+                    if (functionDetails.FunctionArgumentType.IsTypedJsonRpc)
+                    {
+                        var paramType = functionDetails.FunctionArgumentType.ParameterType;
 
-                var functionTypedRequest = Activator.CreateInstance(paramType, functionRequest)
-                    ?? throw new ToolInternalErrorException($"{functionName}: Failed to create TypedJsonRpc instance for parameter type '{paramType}'");
+                        var functionTypedRequest = Activator.CreateInstance(paramType, functionRequest)
+                            ?? throw new ToolInternalErrorException($"{functionName}: Failed to create TypedJsonRpc instance for parameter type '{paramType}'");
 
-                result = _toolService.InvokeFunctionDelegate(functionName, functionDetails, functionTypedRequest);
-            }
-            else
-            {
-                result = _toolService.InvokeFunctionDelegate(functionName, functionDetails, functionRequest);
-            }
+                        result = _toolService.InvokeFunctionDelegate(functionName, functionDetails, functionTypedRequest);
+                    }
+                    else
+                    {
+                        result = _toolService.InvokeFunctionDelegate(functionName, functionDetails, functionRequest);
+                    }
 
-            var processedResult = await ProcessToolResultAsync(result, functionDetails, false, request.Id, cancellationToken);
-
+                    return await ProcessToolResultAsync(result, functionDetails, false, request.Id, cancellationToken);
+                });
+            
             // Extract the actual result data
             object? resultData = null;
             if (processedResult is JsonRpcMessage msg)

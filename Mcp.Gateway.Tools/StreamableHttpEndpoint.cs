@@ -68,6 +68,12 @@ public static class StreamableHttpEndpoint
                 }
             }
 
+            // Store sessionId in HttpContext.Items for access by handlers (v1.8.0 Phase 4)
+            if (!string.IsNullOrEmpty(sessionId))
+            {
+                context.Items["SessionId"] = sessionId;
+            }
+
             // 2. Parse JSON-RPC request
             JsonDocument? doc = null;
             try
@@ -214,6 +220,7 @@ public static class StreamableHttpEndpoint
         app.MapDelete(pattern, async (
             HttpContext context,
             SessionService? sessionService,
+            ResourceSubscriptionRegistry? subscriptionRegistry,  // v1.8.0 Phase 4
             ILogger<ToolInvoker> logger) =>
         {
             if (sessionService == null)
@@ -244,6 +251,19 @@ public static class StreamableHttpEndpoint
                     }
                 });
                 return;
+            }
+
+            // Cleanup resource subscriptions first (v1.8.0 Phase 4)
+            if (subscriptionRegistry != null)
+            {
+                var clearedCount = subscriptionRegistry.ClearSession(sessionId);
+                if (clearedCount > 0)
+                {
+                    logger.LogInformation(
+                        "Cleared {Count} resource subscription(s) for session {SessionId}",
+                        clearedCount,
+                        sessionId);
+                }
             }
 
             var deleted = sessionService.DeleteSession(sessionId);

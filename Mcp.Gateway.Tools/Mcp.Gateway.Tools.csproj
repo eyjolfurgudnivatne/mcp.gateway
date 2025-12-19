@@ -7,7 +7,7 @@
 		
 		<!-- NuGet Package Metadata -->
 		<PackageId>Mcp.Gateway.Tools</PackageId>
-		<Version>1.7.0</Version>
+		<Version>1.8.0</Version>
 		<Authors>ARKo AS - AHelse Development Team</Authors>
 		<Company>ARKo AS</Company>
 		<Product>MCP Gateway</Product>
@@ -16,10 +16,10 @@
 		<PackageProjectUrl>https://github.com/eyjolfurgudnivatne/mcp.gateway</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/eyjolfurgudnivatne/mcp.gateway.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<PackageTags>mcp;model-context-protocol;json-rpc;websocket;github-copilot;claude;ai;tools;gateway;dotnet10;pagination;notifications</PackageTags>
+		<PackageTags>mcp;model-context-protocol;json-rpc;websocket;github-copilot;claude;ai;tools;gateway;dotnet10;pagination;notifications;lifecycle-hooks;resource-subscriptions</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageReleaseNotes>v1.7.0: MCP 2025-11-25 compliance! Unified /mcp endpoint (POST+GET+DELETE), SSE-based notifications, session management (MCP-Session-Id), protocol version validation, message buffering (100 msgs), Last-Event-ID resumption. 99 new tests (253 total). Zero breaking changes. Legacy endpoints still work (deprecated).</PackageReleaseNotes>
+		<PackageReleaseNotes>v1.8.0: Quality of Life &amp; Optional MCP Features - Tool Lifecycle Hooks (monitor invocations, metrics, authorization), Resource Subscriptions (optional MCP 2025-11-25 feature, exact URI matching), Better Error Messages (tool suggestions, schema hints), Authorization Support (role-based access control example). New: IToolLifecycleHook interface, LoggingToolLifecycleHook, MetricsToolLifecycleHook, resources/subscribe, resources/unsubscribe, AuthorizationMcpServer example, MetricsMcpServer example. 100% backward compatible, 273/273 tests passing, 2000+ lines new documentation. See: https://github.com/eyjolfurgudnivatne/mcp.gateway/releases/tag/v1.8.0</PackageReleaseNotes>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>

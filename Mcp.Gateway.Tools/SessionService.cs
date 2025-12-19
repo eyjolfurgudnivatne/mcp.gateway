@@ -10,14 +10,19 @@ public sealed class SessionService
 {
     private readonly ConcurrentDictionary<string, SessionInfo> _sessions = new();
     private readonly TimeSpan _sessionTimeout;
+    private readonly Action<string>? _onSessionDeleted;  // v1.8.0 Phase 4 - callback for cleanup
 
     /// <summary>
     /// Initializes a new instance of SessionService with configurable timeout.
     /// </summary>
     /// <param name="sessionTimeout">Session timeout duration. Default: 30 minutes.</param>
-    public SessionService(TimeSpan? sessionTimeout = null)
+    /// <param name="onSessionDeleted">Optional callback invoked when a session is deleted (v1.8.0 Phase 4)</param>
+    public SessionService(
+        TimeSpan? sessionTimeout = null,
+        Action<string>? onSessionDeleted = null)
     {
         _sessionTimeout = sessionTimeout ?? TimeSpan.FromMinutes(30);
+        _onSessionDeleted = onSessionDeleted;
     }
 
     /// <summary>
@@ -58,6 +63,10 @@ public sealed class SessionService
         if (DateTime.UtcNow - session.LastActivity > _sessionTimeout)
         {
             _sessions.TryRemove(sessionId, out _);
+            
+            // Notify cleanup callback (v1.8.0 Phase 4)
+            _onSessionDeleted?.Invoke(sessionId);
+            
             return false;
         }
 
@@ -76,7 +85,15 @@ public sealed class SessionService
         if (string.IsNullOrEmpty(sessionId))
             return false;
 
-        return _sessions.TryRemove(sessionId, out _);
+        var removed = _sessions.TryRemove(sessionId, out _);
+        
+        // Notify cleanup callback (v1.8.0 Phase 4)
+        if (removed)
+        {
+            _onSessionDeleted?.Invoke(sessionId);
+        }
+        
+        return removed;
     }
 
     /// <summary>
@@ -143,7 +160,12 @@ public sealed class SessionService
         foreach (var sessionId in expiredSessions)
         {
             if (_sessions.TryRemove(sessionId, out _))
+            {
                 removedCount++;
+                
+                // Notify cleanup callback (v1.8.0 Phase 4)
+                _onSessionDeleted?.Invoke(sessionId);
+            }
         }
 
         return removedCount;

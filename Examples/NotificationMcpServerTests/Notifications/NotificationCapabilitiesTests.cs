@@ -104,7 +104,7 @@ public class NotificationCapabilitiesTests(NotificationMcpServerFixture fixture)
         var json = JsonDocument.Parse(content).RootElement;
 
         Assert.True(json.TryGetProperty("message", out var message));
-        Assert.Equal("tools/changed notification sent", message.GetString());
+        Assert.Equal("tools/list_changed notification sent via SSE", message.GetString());
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public class NotificationCapabilitiesTests(NotificationMcpServerFixture fixture)
         var json = JsonDocument.Parse(content).RootElement;
 
         Assert.True(json.TryGetProperty("message", out var message));
-        Assert.Equal("prompts/changed notification sent", message.GetString());
+        Assert.Equal("prompts/list_changed notification sent via SSE", message.GetString());
     }
 
     [Fact]
@@ -136,7 +136,7 @@ public class NotificationCapabilitiesTests(NotificationMcpServerFixture fixture)
         var json = JsonDocument.Parse(content).RootElement;
 
         Assert.True(json.TryGetProperty("message", out var message));
-        Assert.Contains("resources/updated notification sent", message.GetString());
+        Assert.Contains("resources/updated notification sent via SSE", message.GetString());
     }
 
     [Fact]

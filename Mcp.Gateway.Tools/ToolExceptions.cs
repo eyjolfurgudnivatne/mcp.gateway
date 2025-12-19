@@ -1,4 +1,4 @@
-﻿namespace Mcp.Gateway.Tools;
+namespace Mcp.Gateway.Tools;
 
 /// <summary>
 /// Invalid JSON was received by the server.
@@ -27,8 +27,17 @@ public class ToolNotFoundException(string message) : Exception(message) { }
 /// </summary>
 /// <remarks>-32602 Invalid params</remarks>
 /// <param name="message">Extra error information passed to data propery.</param>
-public class ToolInvalidParamsException(string message) : Exception(message) { }
-
+public class ToolInvalidParamsException : Exception
+{
+    public string? ToolName { get; }
+    
+    public ToolInvalidParamsException(string message) : base(message) { }
+    
+    public ToolInvalidParamsException(string message, string toolName) : base(message)
+    {
+        ToolName = toolName;
+    }
+}
 
 /// <summary>
 /// Internal JSON-RPC error.
@@ -36,3 +45,21 @@ public class ToolInvalidParamsException(string message) : Exception(message) { }
 /// <remarks>-32603 Internal error</remarks>
 /// <param name="message">Extra error information passed to data propery.</param>
 public class ToolInternalErrorException(string message) : Exception(message) { }
+
+/// <summary>
+/// Session not found or expired (v1.8.0).
+/// Used for better error guidance when sessions expire.
+/// </summary>
+/// <remarks>-32001 Session error (custom code)</remarks>
+public class SessionExpiredException : Exception
+{
+    public string SessionId { get; }
+    public int TimeoutMinutes { get; }
+    
+    public SessionExpiredException(string sessionId, int timeoutMinutes = 30) 
+        : base($"Session '{sessionId}' not found or expired after {timeoutMinutes} minutes of inactivity")
+    {
+        SessionId = sessionId;
+        TimeoutMinutes = timeoutMinutes;
+    }
+}

@@ -35,13 +35,13 @@ if (isStdioMode)
 // Enable WebSockets (must be before mapping)
 app.UseWebSockets();
 
-// HTTP endpoint (easy testing with curl/Postman)
-app.MapHttpRpcEndpoint("/rpc");
+// MCP 2025-11-25 Streamable HTTP (v1.7.0 - RECOMMENDED)
+app.UseProtocolVersionValidation();  // Protocol version validation
+app.MapStreamableHttpEndpoint("/mcp");  // Unified endpoint (POST + GET + DELETE)
 
-// WebSocket endpoint (full-duplex, streaming support)
-app.MapWsRpcEndpoint("/ws");
-
-// SSE endpoint (remote MCP clients, e.g. Claude Desktop)
-app.MapSseRpcEndpoint("/sse");
+// Legacy endpoints (still work, deprecated)
+app.MapHttpRpcEndpoint("/rpc");  // HTTP POST only (deprecated)
+app.MapWsRpcEndpoint("/ws");     // WebSocket (keep for binary streaming)
+app.MapSseRpcEndpoint("/sse");   // SSE only (deprecated, use /mcp GET instead)
 
 app.Run();
