@@ -65,18 +65,55 @@ See `DevTestServer/Program.cs` for a more complete setup with health endpoint an
 
 ### 3. Create your first tool
 
+#### 3.1. Simplest Tool (Auto-generated Schema)
+
+The easiest way to create a tool using **strongly-typed parameters** and **automatic schema generation**:
+
+```csharp
+using Mcp.Gateway.Tools;
+
+public class MyTools
+{
+    [McpTool("greet")]
+    public JsonRpcMessage Greet(TypedJsonRpc<GreetParams> request)
+    {
+        var name = request.Params.Name;
+        return ToolResponse.Success(
+            request.Id,
+            new { message = $"Hello, {name}!" });
+    }
+}
+
+public record GreetParams(string Name);
 ```
+
+**Benefits:**
+- ✅ **No manual JSON Schema** - automatically generated from `GreetParams`
+- ✅ **Strongly-typed** - IntelliSense and compile-time safety
+- ✅ **Clean code** - easy to read and maintain
+
+#### 3.2. Advanced Tool (Custom Schema)
+
+For complex validation or when you need full control over the JSON Schema:
+
+```csharp
 using Mcp.Gateway.Tools;
 
 public class MyTools
 {
     [McpTool("greet",
         Title = "Greet user",
-        Description = "Greets a user by name.",
+        Description = "Greets a user by name with custom validation.",
         InputSchema = @"{
             ""type"":""object"",
-            ""properties"":{
-                ""name"":{ ""type"":""string"", ""description"":""Name of the user"" }
+            ""properties"":
+            {
+                ""name"":{ 
+                    ""type"":""string"",
+                    ""description"":""Name of the user"",
+                    ""minLength"": 2,
+                    ""maxLength"": 50
+                }
             },
             ""required"": [""name""]
         }")]
@@ -89,6 +126,11 @@ public class MyTools
     }
 }
 ```
+
+**When to use:**
+- ✅ Custom validation rules (minLength, maxLength, pattern, etc.)
+- ✅ Complex schema features not supported by auto-generation
+- ✅ Full control over JSON Schema
 
 More complete tool examples:
 
