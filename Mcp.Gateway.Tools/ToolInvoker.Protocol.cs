@@ -154,14 +154,21 @@ public partial class ToolInvoker
                 args = [message];
             }
 
-            // Invoke the tool
-            var result = _toolService.InvokeFunctionDelegate(
+            // Invoke the tool with lifecycle hooks (v1.8.0)
+            return await InvokeToolWithHooksAsync(
                 message.Method,
-                toolDetails,
-                args);
+                message,
+                async () =>
+                {
+                    // Invoke the tool
+                    var result = _toolService.InvokeFunctionDelegate(
+                        message.Method,
+                        toolDetails,
+                        args);
 
-            // Handle different return types
-            return await ProcessToolResultAsync(result, toolDetails, message.IsNotification, id, cancellationToken);
+                    // Handle different return types
+                    return await ProcessToolResultAsync(result, toolDetails, message.IsNotification, id, cancellationToken);
+                });
         }
         catch (ToolNotFoundException ex)
         {
@@ -633,25 +640,32 @@ public partial class ToolInvoker
                     "This tool must be called via StreamMessage, not tools/call");
             }
 
-            object? result = null;
+            // Invoke tool with lifecycle hooks (v1.8.0)
+            var processedResult = await InvokeToolWithHooksAsync(
+                functionName,
+                functionRequest,
+                async () =>
+                {
+                    object? result = null;
 
-            // If the tool expects a TypedJsonRpc<T>, wrap the JsonRpcMessage accordingly.
-            if (functionDetails.FunctionArgumentType.IsTypedJsonRpc)
-            {
-                var paramType = functionDetails.FunctionArgumentType.ParameterType;
+                    // If the tool expects a TypedJsonRpc<T>, wrap the JsonRpcMessage accordingly.
+                    if (functionDetails.FunctionArgumentType.IsTypedJsonRpc)
+                    {
+                        var paramType = functionDetails.FunctionArgumentType.ParameterType;
 
-                var functionTypedRequest = Activator.CreateInstance(paramType, functionRequest)
-                    ?? throw new ToolInternalErrorException($"{functionName}: Failed to create TypedJsonRpc instance for parameter type '{paramType}'");
+                        var functionTypedRequest = Activator.CreateInstance(paramType, functionRequest)
+                            ?? throw new ToolInternalErrorException($"{functionName}: Failed to create TypedJsonRpc instance for parameter type '{paramType}'");
 
-                result = _toolService.InvokeFunctionDelegate(functionName, functionDetails, functionTypedRequest);
-            }
-            else
-            {
-                result = _toolService.InvokeFunctionDelegate(functionName, functionDetails, functionRequest);
-            }
+                        result = _toolService.InvokeFunctionDelegate(functionName, functionDetails, functionTypedRequest);
+                    }
+                    else
+                    {
+                        result = _toolService.InvokeFunctionDelegate(functionName, functionDetails, functionRequest);
+                    }
 
-            var processedResult = await ProcessToolResultAsync(result, functionDetails, false, request.Id, cancellationToken);
-
+                    return await ProcessToolResultAsync(result, functionDetails, false, request.Id, cancellationToken);
+                });
+            
             // Extract the actual result data
             object? resultData = null;
             if (processedResult is JsonRpcMessage msg)

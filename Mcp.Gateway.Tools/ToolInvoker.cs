@@ -91,10 +91,22 @@ public partial class ToolInvoker(
             stopwatch.Stop();
 
             // Fire OnToolCompleted hook
-            if (result is JsonRpcMessage response)
+            // Extract JsonRpcMessage for hook (if available)
+            JsonRpcMessage? responseMessage = null;
+            if (result is JsonRpcMessage directMessage)
+            {
+                responseMessage = directMessage;
+            }
+            else if (result != null)
+            {
+                // Create a synthetic response for hooks
+                responseMessage = ToolResponse.Success(request.Id, result);
+            }
+
+            if (responseMessage != null)
             {
                 await InvokeLifecycleHooksAsync(hook => 
-                    hook.OnToolCompletedAsync(toolName, response, stopwatch.Elapsed));
+                    hook.OnToolCompletedAsync(toolName, responseMessage, stopwatch.Elapsed));
             }
 
             return result;
