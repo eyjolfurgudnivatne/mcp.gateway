@@ -13,16 +13,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.7.2] - 2025-12-19
+## [1.7.3] - 2025-12-19
 
-**Patch:** Fixes missing MCP_PROTOCOL_VERSION environment variable support in v1.7.1 NuGet package.
+**CRITICAL PATCH:** This is the FIRST working version with `MCP_PROTOCOL_VERSION` environment variable support.
+
+### ⚠️ Important Notice
+**v1.7.1 and v1.7.2 NuGet packages were both built from wrong commits and do NOT include the environment variable fix.**
+
+- v1.7.1: Tagged before code change was committed
+- v1.7.2: First build also had wrong code, second tag couldn't replace NuGet package
+
+**Use v1.7.3 for working MCP_PROTOCOL_VERSION support!**
 
 ### Fixed
-- **v1.7.1 NuGet package bug:** The v1.7.1 release on NuGet.org was built from a commit that still had hardcoded `protocolVersion = "2025-11-25"` in `HandleInitialize()`. This patch (v1.7.2) includes the correct implementation that reads `Environment.GetEnvironmentVariable("MCP_PROTOCOL_VERSION") ?? "2025-11-25"`.
-- Servers using v1.7.2 can now correctly advertise an older protocol version by setting the `MCP_PROTOCOL_VERSION` environment variable (e.g., `MCP_PROTOCOL_VERSION=2025-06-18` for GitHub Copilot compatibility).
+- **MCP_PROTOCOL_VERSION environment variable NOW WORKS:** `HandleInitialize()` correctly reads `Environment.GetEnvironmentVariable("MCP_PROTOCOL_VERSION") ?? "2025-11-25"`.
+- Servers can now advertise older protocol versions for compatibility with legacy MCP clients.
 
 ### Usage
-Set environment variable before starting server:
 ```powershell
 # PowerShell
 $env:MCP_PROTOCOL_VERSION = "2025-06-18"
@@ -38,12 +45,19 @@ See `.internal/notes/v1.7.0/github-copilot-compatibility.md` for full compatibil
 
 ---
 
+## [1.7.2] - 2025-12-19
+
+**CRITICAL BUG:** This version was published TWICE to NuGet.org:
+1. First publish: Built from wrong commit (missing env variable fix)
+2. Second tag: Had correct code but couldn't replace NuGet package (NuGet policy)
+
+⚠️ **DO NOT USE v1.7.2 - Use v1.7.3 instead!**
+
+---
+
 ## [1.7.1] - 2025-12-19
 
-**Patch:** Backwards compatibility helper and documentation updates.
-
-### Known Issue
-⚠️ **v1.7.1 NuGet package was built from wrong commit:** The published v1.7.1 package on NuGet.org does not include the `MCP_PROTOCOL_VERSION` environment variable support due to a tagging error. **Use v1.7.2 instead** for working environment variable support.
+**Known Issue:** ⚠️ v1.7.1 NuGet package does not include `MCP_PROTOCOL_VERSION` support due to tagging error. **Use v1.7.3 instead.**
 
 ### Added
 - Configurable `initialize` protocol version via environment variable `MCP_PROTOCOL_VERSION` (fallback `2025-11-25`). Useful to temporarily present older protocol version to legacy clients during migration.
