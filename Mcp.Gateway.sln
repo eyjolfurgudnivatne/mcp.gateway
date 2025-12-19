@@ -174,6 +174,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.6.0", "v1.6.0", "{0C3D1F
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "v1.7.0", "v1.7.0", "{DF47E754-591F-46BE-9169-2A5C6C626EC1}"
 	ProjectSection(SolutionItems) = preProject
+		.internal\notes\v1.7.0\github-copilot-compatibility.md = .internal\notes\v1.7.0\github-copilot-compatibility.md
 		.internal\notes\v1.7.0\omw-to-2025-11-25.md = .internal\notes\v1.7.0\omw-to-2025-11-25.md
 		.internal\notes\v1.7.0\phase-1-streamable-http-design.md = .internal\notes\v1.7.0\phase-1-streamable-http-design.md
 		.internal\notes\v1.7.0\phase-2-sse-notifications-design.md = .internal\notes\v1.7.0\phase-2-sse-notifications-design.md
