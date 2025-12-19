@@ -223,9 +223,12 @@ public partial class ToolInvoker
                 capabilities["notifications"] = notifications;
         }
         
+        // Make protocol version configurable for compatibility with older clients
+        var protocolVersion = Environment.GetEnvironmentVariable("MCP_PROTOCOL_VERSION") ?? "2025-11-25";
+
         return ToolResponse.Success(request.Id, new
         {
-            protocolVersion = "2025-11-25", // Updated to MCP 2025-11-25 (v1.6.5+)
+            protocolVersion = protocolVersion, // Configurable protocol version
             serverInfo = new
             {
                 name = "mcp-gateway",
