@@ -307,7 +307,7 @@ See `Examples/NotificationMcpServer` for a demo with manual notification trigger
 
 ## 📊 Lifecycle Hooks (v1.8.0)
 
-Monitor and track tool invocations with **Lifecycle Hooks** - perfect for metrics, logging, and production monitoring:
+Monitor and track tool invocations with **Lifecycle Hooks** - perfect for metrics, logging, authorization, and production monitoring:
 
 ### Built-in Hooks
 
@@ -346,6 +346,54 @@ app.MapGet("/metrics", (IEnumerable<IToolLifecycleHook> hooks) =>
     });
 });
 ```
+
+### Authorization Hooks
+
+Implement role-based authorization using lifecycle hooks:
+
+```csharp
+using Mcp.Gateway.Tools.Lifecycle;
+
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+public class RequireRoleAttribute : Attribute
+{
+    public string Role { get; }
+    public RequireRoleAttribute(string role) => Role = role;
+}
+
+public class AuthorizationHook : IToolLifecycleHook
+{
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    
+    public Task OnToolInvokingAsync(string toolName, JsonRpcMessage request)
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        var requiredRoles = GetRequiredRoles(toolName);
+        var userRoles = httpContext?.Items["UserRoles"] as List<string>;
+        
+        if (!HasRequiredRole(requiredRoles, userRoles))
+        {
+            throw new ToolInvalidParamsException(
+                $"Insufficient permissions to invoke '{toolName}'.",
+                toolName);
+        }
+        
+        return Task.CompletedTask;
+    }
+    
+    // ... other methods
+}
+
+// Usage on tools:
+[McpTool("delete_user")]
+[RequireRole("Admin")]
+public JsonRpcMessage DeleteUser(JsonRpcMessage request) { /* ... */ }
+
+// Register authorization hook:
+builder.AddToolLifecycleHook<AuthorizationHook>();
+```
+
+See `docs/Authorization.md` for complete authorization guide and production patterns.
 
 ### Custom Hooks
 
@@ -433,12 +481,17 @@ Per tool, `MetricsToolLifecycleHook` tracks:
 
 **Features:**
 - ✅ **Fire-and-forget** - Hooks don't block tool execution
-- ✅ **Exception-safe** - Hook errors are logged, not propagated
+- ✅ **Exception-safe** - Hook errors are logged, not propagated (except `ToolInvalidParamsException` for authorization)
 - ✅ **Multiple hooks** - Register as many as needed
 - ✅ **Zero config** - Optional, backward compatible
 - ✅ **Production-ready** - Thread-safe metrics tracking
+- ✅ **Authorization support** - Use for role-based access control
 
-See `Examples/MetricsMcpServer` for a complete demo with metrics endpoint and tests.
+See:
+- `Examples/MetricsMcpServer` - Metrics endpoint demo
+- `Examples/AuthorizationMcpServer` - Role-based authorization
+- `docs/LifecycleHooks.md` - Complete API reference
+- `docs/Authorization.md` - Authorization patterns and best practices
 
 ---
 
@@ -500,9 +553,12 @@ See `Examples/MetricsMcpServer` for a complete demo with metrics endpoint and te
 
 - **Library README:** `Mcp.Gateway.Tools/README.md`  
   Details for the tools API (attributes, JsonRpc models, etc.)
-- **MCP protocol:** `docs/MCP-Protocol.md`
-- **Streaming protocol:** `docs/StreamingProtocol.md`
-- **JSON‑RPC 2.0:** `docs/JSON-RPC-2.0-spec.md`
+- **Documentation:**
+  - `docs/MCP-Protocol.md` - MCP protocol specification
+  - `docs/StreamingProtocol.md` - Streaming protocol details
+  - `docs/JSON-RPC-2.0-spec.md` - JSON-RPC 2.0 specification
+  - `docs/LifecycleHooks.md` - Lifecycle hooks API reference (v1.8.0)
+  - `docs/Authorization.md` - Authorization patterns and best practices (v1.8.0)
 - **Examples:**
   - `Examples/CalculatorMcpServer` – calculator server
   - `Examples/DateTimeMcpServer` – date/time tools
@@ -511,6 +567,7 @@ See `Examples/MetricsMcpServer` for a complete demo with metrics endpoint and te
   - `Examples/PaginationMcpServer` – pagination with 120+ mock tools (v1.6.0)
   - `Examples/NotificationMcpServer` – WebSocket notifications demo (v1.6.0)
   - `Examples/MetricsMcpServer` – lifecycle hooks with metrics endpoint (v1.8.0)
+  - `Examples/AuthorizationMcpServer` – role-based authorization (v1.8.0)
 
 ---
 
