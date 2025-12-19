@@ -68,6 +68,12 @@ public static class StreamableHttpEndpoint
                 }
             }
 
+            // Store sessionId in HttpContext.Items for access by handlers (v1.8.0 Phase 4)
+            if (!string.IsNullOrEmpty(sessionId))
+            {
+                context.Items["SessionId"] = sessionId;
+            }
+
             // 2. Parse JSON-RPC request
             JsonDocument? doc = null;
             try

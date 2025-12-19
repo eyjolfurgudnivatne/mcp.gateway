@@ -107,6 +107,17 @@ public partial class ToolInvoker
                 return await HandleResourcesReadAsync(message, cancellationToken);
             }
 
+            // MCP Resource Subscriptions (v1.8.0 Phase 4)
+            if (message.Method == "resources/subscribe")
+            {
+                return HandleResourcesSubscribe(message);
+            }
+            
+            if (message.Method == "resources/unsubscribe")
+            {
+                return HandleResourcesUnsubscribe(message);
+            }
+
             // MCP notifications (client → server, no response expected)
             if (message.Method?.StartsWith("notifications/") == true)
             {

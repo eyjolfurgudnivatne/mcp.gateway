@@ -24,7 +24,9 @@ public partial class ToolInvoker(
     ILogger<ToolInvoker> _logger,
     Notifications.INotificationSender? _notificationSender = null,
     EventIdGenerator? _eventIdGenerator = null,  // Optional EventIdGenerator for SSE event IDs (v1.7.0)
-    IEnumerable<IToolLifecycleHook>? _lifecycleHooks = null)  // NEW: Optional lifecycle hooks (v1.8.0)
+    IEnumerable<IToolLifecycleHook>? _lifecycleHooks = null,  // Optional lifecycle hooks (v1.8.0)
+    IServiceProvider? _serviceProvider = null,  // Optional IServiceProvider for resource subscriptions (v1.8.0 Phase 4)
+    Microsoft.AspNetCore.Http.IHttpContextAccessor? _httpContextAccessor = null)  // Optional IHttpContextAccessor for session access (v1.8.0 Phase 4)
 {
     /// <summary>
     /// Default buffer size for WebSocket frame accumulation (64KB)

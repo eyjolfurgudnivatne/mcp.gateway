@@ -129,13 +129,13 @@ public static class ToolExtensions
     }
 
     /// <summary>
-    /// Adds ToolService, ToolInvoker, NotificationService, EventIdGenerator, SessionService, and SseStreamRegistry to the DI container.
+    /// Adds ToolService, ToolInvoker, NotificationService, EventIdGenerator, SessionService, SseStreamRegistry, and ResourceSubscriptionRegistry to the DI container.
     /// Tools, Prompts, and Resources are scanned lazily on first use.
     /// </summary>
     /// <remarks>
     /// v1.6.0: Added NotificationService
     /// v1.7.0: Added EventIdGenerator, SessionService, and SseStreamRegistry for MCP 2025-11-25 compliance
-    /// v1.8.0: Lifecycle hooks are optional - register your own implementations via AddSingleton&lt;IToolLifecycleHook&gt;
+    /// v1.8.0: Added ResourceSubscriptionRegistry for resource subscriptions, Lifecycle hooks are optional - register your own implementations via AddSingleton&lt;IToolLifecycleHook&gt;
     /// </remarks>
     /// <param name="builder"></param>
     public static void AddToolsService(this WebApplicationBuilder builder)
@@ -146,6 +146,7 @@ public static class ToolExtensions
         builder.Services.AddSingleton<EventIdGenerator>();     // v1.7.0
         builder.Services.AddSingleton<SessionService>();       // v1.7.0
         builder.Services.AddSingleton<SseStreamRegistry>();    // v1.7.0 Phase 2
+        builder.Services.AddSingleton<ResourceSubscriptionRegistry>();  // v1.8.0 Phase 4
         
         // v1.8.0: Lifecycle hooks are optional
         // Users can register their own hooks via:

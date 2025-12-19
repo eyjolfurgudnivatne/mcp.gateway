@@ -5,6 +5,7 @@ using System.Text.Json;
 
 /// <summary>
 /// ToolInvoker partial class - MCP Resources support (v1.5.0)
+/// Resource Subscriptions support (v1.8.0 Phase 4)
 /// </summary>
 public partial class ToolInvoker
 {
@@ -187,6 +188,197 @@ public partial class ToolInvoker
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in resources/read");
+            return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Handles MCP resources/subscribe request (v1.8.0 Phase 4).
+    /// Subscribes a session to updates for a specific resource URI.
+    /// Exact URI matching only (no wildcards in v1.8.0).
+    /// </summary>
+    /// <param name="request">The JSON-RPC request</param>
+    /// <returns>JSON-RPC response indicating success or failure</returns>
+    private JsonRpcMessage HandleResourcesSubscribe(JsonRpcMessage request)
+    {
+        try
+        {
+            // Extract session ID from HttpContext (if available)
+            string? sessionId = null;
+            
+            if (_httpContextAccessor?.HttpContext is not null)
+            {
+                sessionId = _httpContextAccessor.HttpContext.Request.Headers["MCP-Session-Id"].ToString();
+                
+                // Fallback: Check HttpContext.Items (set by StreamableHttpEndpoint)
+                if (string.IsNullOrEmpty(sessionId))
+                {
+                    sessionId = _httpContextAccessor.HttpContext.Items["SessionId"] as string;
+                }
+            }
+            
+            if (string.IsNullOrEmpty(sessionId))
+            {
+                return ToolResponse.Error(
+                    request.Id,
+                    -32000,
+                    "Session required",
+                    new { detail = "Resource subscriptions require an active session. Use POST /mcp to initialize." });
+            }
+
+            var requestParams = request.GetParams();
+            
+            // Check if 'uri' parameter exists
+            if (!requestParams.TryGetProperty("uri", out var uriElement))
+            {
+                return ToolResponse.Error(request.Id, -32602, "Invalid params", "Missing 'uri' parameter");
+            }
+            
+            var uri = uriElement.GetString();
+            
+            if (string.IsNullOrEmpty(uri))
+            {
+                return ToolResponse.Error(request.Id, -32602, "Invalid params", "Missing 'uri' parameter");
+            }
+
+            // Validate that resource exists
+            try
+            {
+                _ = _toolService.GetResourceDefinition(uri);
+            }
+            catch (ToolNotFoundException)
+            {
+                return ToolResponse.Error(
+                    request.Id,
+                    -32601,
+                    "Resource not found",
+                    new { detail = $"Resource '{uri}' is not configured" });
+            }
+
+            // Get ResourceSubscriptionRegistry from DI
+            if (_serviceProvider is null)
+            {
+                _logger.LogWarning("IServiceProvider not available for resource subscriptions");
+                return ToolResponse.Error(
+                    request.Id,
+                    -32603,
+                    "Internal error",
+                    new { detail = "Subscription service not available" });
+            }
+
+            var subscriptionRegistry = _serviceProvider.GetService(typeof(ResourceSubscriptionRegistry)) 
+                as ResourceSubscriptionRegistry;
+            
+            if (subscriptionRegistry is null)
+            {
+                _logger.LogError("ResourceSubscriptionRegistry not found in DI container");
+                return ToolResponse.Error(
+                    request.Id,
+                    -32603,
+                    "Internal error",
+                    new { detail = "Subscription service not available" });
+            }
+
+            // Subscribe session to resource
+            var wasAdded = subscriptionRegistry.Subscribe(sessionId, uri);
+            
+            _logger.LogInformation(
+                "Session '{SessionId}' subscribed to resource '{Uri}' (new={WasAdded})",
+                sessionId, uri, wasAdded);
+
+            return ToolResponse.Success(request.Id, new { subscribed = true, uri });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in resources/subscribe");
+            return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Handles MCP resources/unsubscribe request (v1.8.0 Phase 4).
+    /// Unsubscribes a session from updates for a specific resource URI.
+    /// </summary>
+    /// <param name="request">The JSON-RPC request</param>
+    /// <returns>JSON-RPC response indicating success or failure</returns>
+    private JsonRpcMessage HandleResourcesUnsubscribe(JsonRpcMessage request)
+    {
+        try
+        {
+            // Extract session ID from HttpContext (if available)
+            string? sessionId = null;
+            
+            if (_httpContextAccessor?.HttpContext is not null)
+            {
+                sessionId = _httpContextAccessor.HttpContext.Request.Headers["MCP-Session-Id"].ToString();
+                
+                // Fallback: Check HttpContext.Items (set by StreamableHttpEndpoint)
+                if (string.IsNullOrEmpty(sessionId))
+                {
+                    sessionId = _httpContextAccessor.HttpContext.Items["SessionId"] as string;
+                }
+            }
+            
+            if (string.IsNullOrEmpty(sessionId))
+            {
+                return ToolResponse.Error(
+                    request.Id,
+                    -32000,
+                    "Session required",
+                    new { detail = "Resource subscriptions require an active session. Use POST /mcp to initialize." });
+            }
+
+            var requestParams = request.GetParams();
+            
+            // Check if 'uri' parameter exists
+            if (!requestParams.TryGetProperty("uri", out var uriElement))
+            {
+                return ToolResponse.Error(request.Id, -32602, "Invalid params", "Missing 'uri' parameter");
+            }
+            
+            var uri = uriElement.GetString();
+            
+            if (string.IsNullOrEmpty(uri))
+            {
+                return ToolResponse.Error(request.Id, -32602, "Invalid params", "Missing 'uri' parameter");
+            }
+
+            // Get ResourceSubscriptionRegistry from DI
+            if (_serviceProvider is null)
+            {
+                _logger.LogWarning("IServiceProvider not available for resource subscriptions");
+                return ToolResponse.Error(
+                    request.Id,
+                    -32603,
+                    "Internal error",
+                    new { detail = "Subscription service not available" });
+            }
+
+            var subscriptionRegistry = _serviceProvider.GetService(typeof(ResourceSubscriptionRegistry)) 
+                as ResourceSubscriptionRegistry;
+            
+            if (subscriptionRegistry is null)
+            {
+                _logger.LogError("ResourceSubscriptionRegistry not found in DI container");
+                return ToolResponse.Error(
+                    request.Id,
+                    -32603,
+                    "Internal error",
+                    new { detail = "Subscription service not available" });
+            }
+
+            // Unsubscribe session from resource
+            var wasRemoved = subscriptionRegistry.Unsubscribe(sessionId, uri);
+            
+            _logger.LogInformation(
+                "Session '{SessionId}' unsubscribed from resource '{Uri}' (removed={WasRemoved})",
+                sessionId, uri, wasRemoved);
+
+            return ToolResponse.Success(request.Id, new { unsubscribed = true, uri });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in resources/unsubscribe");
             return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = ex.Message });
         }
     }
