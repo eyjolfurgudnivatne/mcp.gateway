@@ -7,7 +7,7 @@
 		
 		<!-- NuGet Package Metadata -->
 		<PackageId>Mcp.Gateway.Tools</PackageId>
-		<Version>1.7.1</Version>
+		<Version>1.7.2</Version>
 		<Authors>ARKo AS - AHelse Development Team</Authors>
 		<Company>ARKo AS</Company>
 		<Product>MCP Gateway</Product>
@@ -19,7 +19,7 @@
 		<PackageTags>mcp;model-context-protocol;json-rpc;websocket;github-copilot;claude;ai;tools;gateway;dotnet10;pagination;notifications</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageReleaseNotes>v1.7.1 (patch): Backwards compatibility helper and documentation updates. Adds `MCP_PROTOCOL_VERSION` environment variable to allow servers to advertise a configurable protocol version (fallback `2025-11-25`) to support legacy MCP clients during migration. Includes documentation and compatibility guidance for GitHub Copilot (.internal/notes/v1.7.0/github-copilot-compatibility.md). All tests remain passing. See CHANGELOG.md for full details (v1.7.0 major features + v1.7.1 patch).</PackageReleaseNotes>
+		<PackageReleaseNotes>v1.7.2 (patch): Fixes MCP_PROTOCOL_VERSION environment variable support (missing in v1.7.1 NuGet package). Allows servers to advertise a configurable protocol version (fallback 2025-11-25) to support legacy MCP clients during migration. Set MCP_PROTOCOL_VERSION=2025-06-18 for older clients. See CHANGELOG.md and .internal/notes/v1.7.0/github-copilot-compatibility.md for details.</PackageReleaseNotes>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>

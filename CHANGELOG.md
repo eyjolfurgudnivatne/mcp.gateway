@@ -13,9 +13,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.2] - 2025-12-19
+
+**Patch:** Fixes missing MCP_PROTOCOL_VERSION environment variable support in v1.7.1 NuGet package.
+
+### Fixed
+- **v1.7.1 NuGet package bug:** The v1.7.1 release on NuGet.org was built from a commit that still had hardcoded `protocolVersion = "2025-11-25"` in `HandleInitialize()`. This patch (v1.7.2) includes the correct implementation that reads `Environment.GetEnvironmentVariable("MCP_PROTOCOL_VERSION") ?? "2025-11-25"`.
+- Servers using v1.7.2 can now correctly advertise an older protocol version by setting the `MCP_PROTOCOL_VERSION` environment variable (e.g., `MCP_PROTOCOL_VERSION=2025-06-18` for GitHub Copilot compatibility).
+
+### Usage
+Set environment variable before starting server:
+```powershell
+# PowerShell
+$env:MCP_PROTOCOL_VERSION = "2025-06-18"
+dotnet run
+
+# Or in launchSettings.json:
+"environmentVariables": {
+  "MCP_PROTOCOL_VERSION": "2025-06-18"
+}
+```
+
+See `.internal/notes/v1.7.0/github-copilot-compatibility.md` for full compatibility guide.
+
+---
+
 ## [1.7.1] - 2025-12-19
 
 **Patch:** Backwards compatibility helper and documentation updates.
+
+### Known Issue
+⚠️ **v1.7.1 NuGet package was built from wrong commit:** The published v1.7.1 package on NuGet.org does not include the `MCP_PROTOCOL_VERSION` environment variable support due to a tagging error. **Use v1.7.2 instead** for working environment variable support.
 
 ### Added
 - Configurable `initialize` protocol version via environment variable `MCP_PROTOCOL_VERSION` (fallback `2025-11-25`). Useful to temporarily present older protocol version to legacy clients during migration.
