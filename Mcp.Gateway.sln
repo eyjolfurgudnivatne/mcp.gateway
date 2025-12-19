@@ -20,6 +20,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{74DBB65B-8717-4BC6-B042-79FDA377A533}"
 	ProjectSection(SolutionItems) = preProject
 		docs\JSON-RPC-2.0-spec.md = docs\JSON-RPC-2.0-spec.md
+		docs\LifecycleHooks.md = docs\LifecycleHooks.md
 		docs\MCP-Protocol-Verification.md = docs\MCP-Protocol-Verification.md
 		docs\MCP-Protocol.md = docs\MCP-Protocol.md
 		docs\StreamingProtocol.md = docs\StreamingProtocol.md
