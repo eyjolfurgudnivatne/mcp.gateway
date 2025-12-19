@@ -495,6 +495,86 @@ See:
 
 ---
 
+## 📦 Resource Subscriptions (v1.8.0)
+
+Subscribe to specific resources for targeted notifications - reduces bandwidth and improves performance for high-frequency updates:
+
+### Subscribe to Resources
+
+```csharp
+// Client subscribes to a specific resource URI
+{
+  "jsonrpc": "2.0",
+  "method": "resources/subscribe",
+  "params": {
+    "uri": "file://data/users.json"
+  },
+  "id": 1
+}
+
+// Server confirms subscription
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "subscribed": true,
+    "uri": "file://data/users.json"
+  },
+  "id": 1
+}
+```
+
+### Filtered Notifications
+
+Only subscribers receive notifications for their subscribed resources:
+
+```csharp
+// Server notifies ONLY sessions subscribed to this URI
+await notificationSender.SendNotificationAsync(
+    NotificationMessage.ResourcesUpdated("file://data/users.json"));
+
+// Notification sent ONLY to subscribed sessions
+{
+  "jsonrpc": "2.0",
+  "method": "notifications/resources/updated",
+  "params": {
+    "uri": "file://data/users.json"
+  }
+}
+```
+
+### Unsubscribe
+
+```csharp
+{
+  "jsonrpc": "2.0",
+  "method": "resources/unsubscribe",
+  "params": {
+    "uri": "file://data/users.json"
+  },
+  "id": 2
+}
+```
+
+**Features:**
+- ✅ **Exact URI matching** - Subscribe to specific resources only (no wildcards in v1.8.0)
+- ✅ **Session-based** - Subscriptions tied to MCP sessions
+- ✅ **Automatic cleanup** - Subscriptions cleared on session expiry/deletion
+- ✅ **Notification filtering** - Server only sends to subscribed sessions
+- ✅ **Requires session management** - Must use `/mcp` endpoint with `MCP-Session-Id`
+
+**When to use:**
+- ✅ High-frequency resource updates (e.g., live metrics)
+- ✅ Many resources, few clients interested in each
+- ✅ Reducing notification bandwidth
+
+**Limitations (v1.8.0):**
+- ❌ Exact URI matching only (wildcards planned for v1.9.0)
+- ❌ Requires session management (not available on `/rpc` endpoint)
+
+See `Examples/ResourceMcpServer/README.md` for complete subscription workflow and examples.
+
+---
+
 ## 💡 Features
 
 - ✅ **MCP 2025‑11‑25** – 100% compliant with latest MCP specification (v1.7.0)
@@ -543,9 +623,15 @@ See:
   - Track invocation count, success rate, duration, errors
   - Fire-and-forget pattern (exception-safe)
   - Production-ready metrics for Prometheus, Application Insights
+- ✅ **Resource Subscriptions (v1.8.0)**
+  - Optional MCP 2025-11-25 feature
+  - `resources/subscribe` and `resources/unsubscribe` methods
+  - Notification filtering by subscribed URI
+  - Session-based with automatic cleanup
+  - Exact URI matching (wildcards in v1.9.0)
 - ✅ **Streaming** – text and binary streaming via `ToolConnector`
 - ✅ **DI support** – tools, prompts, and resources can take services as parameters
-- ✅ **Tested** – 258 tests covering HTTP, WS, SSE and stdio
+- ✅ **Tested** – 273 tests covering HTTP, WS, SSE and stdio
 
 ---
 
