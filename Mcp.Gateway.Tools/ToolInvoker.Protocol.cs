@@ -166,6 +166,31 @@ public partial class ToolInvoker
         catch (ToolNotFoundException ex)
         {
             _logger.LogWarning(ex, "Tool not found: {Method}", ex.Message);
+            
+            // Suggest similar tool names (v1.8.0)
+            var allTools = _toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Tool)
+                .Concat(_toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Prompt))
+                .Select(t => t.Name)
+                .ToList();
+            
+            var requestedTool = id?.ToString() ?? "unknown";
+            var similarTools = StringSimilarity.FindSimilarStrings(
+                ex.Message.Replace("Function '", "").Replace("' is not configured.", ""),
+                allTools,
+                maxResults: 3,
+                maxDistance: 3);
+            
+            if (similarTools.Any())
+            {
+                return ToolResponse.Error(id, -32601, "Method not found", new
+                {
+                    detail = ex.Message,
+                    requestedTool = ex.Message.Replace("Function '", "").Replace("' is not configured.", ""),
+                    suggestions = similarTools,
+                    hint = $"Did you mean: {string.Join(", ", similarTools)}?"
+                });
+            }
+            
             return ToolResponse.Error(id, -32601, "Method not found", new { detail = ex.Message });
         }
         catch (ToolInvalidParamsException ex)
