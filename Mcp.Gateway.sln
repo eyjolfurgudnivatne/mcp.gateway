@@ -19,6 +19,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mcp.Gateway.Tests", "Mcp.Ga
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{74DBB65B-8717-4BC6-B042-79FDA377A533}"
 	ProjectSection(SolutionItems) = preProject
+		docs\Authorization.md = docs\Authorization.md
 		docs\JSON-RPC-2.0-spec.md = docs\JSON-RPC-2.0-spec.md
 		docs\LifecycleHooks.md = docs\LifecycleHooks.md
 		docs\MCP-Protocol-Verification.md = docs\MCP-Protocol-Verification.md
