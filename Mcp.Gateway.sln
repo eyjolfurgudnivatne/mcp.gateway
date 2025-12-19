@@ -24,6 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{74DBB65B-8
 		docs\LifecycleHooks.md = docs\LifecycleHooks.md
 		docs\MCP-Protocol-Verification.md = docs\MCP-Protocol-Verification.md
 		docs\MCP-Protocol.md = docs\MCP-Protocol.md
+		docs\ResourceSubscriptions.md = docs\ResourceSubscriptions.md
 		docs\StreamingProtocol.md = docs\StreamingProtocol.md
 	EndProjectSection
 EndProject

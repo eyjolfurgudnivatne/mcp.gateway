@@ -16,10 +16,10 @@
 		<PackageProjectUrl>https://github.com/eyjolfurgudnivatne/mcp.gateway</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/eyjolfurgudnivatne/mcp.gateway.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<PackageTags>mcp;model-context-protocol;json-rpc;websocket;github-copilot;claude;ai;tools;gateway;dotnet10;pagination;notifications</PackageTags>
+		<PackageTags>mcp;model-context-protocol;json-rpc;websocket;github-copilot;claude;ai;tools;gateway;dotnet10;pagination;notifications;lifecycle-hooks;resource-subscriptions</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageReleaseNotes>v1.7.3 (patch): CRITICAL FIX - v1.7.1 and v1.7.2 NuGet packages were built from wrong commits and do NOT support MCP_PROTOCOL_VERSION environment variable. v1.7.3 is the FIRST working version with this feature. Set MCP_PROTOCOL_VERSION=2025-06-18 for GitHub Copilot compatibility. See CHANGELOG.md for details.</PackageReleaseNotes>
+		<PackageReleaseNotes>v1.8.0: Quality of Life &amp; Optional MCP Features - Tool Lifecycle Hooks (monitor invocations, metrics, authorization), Resource Subscriptions (optional MCP 2025-11-25 feature, exact URI matching), Better Error Messages (tool suggestions, schema hints), Authorization Support (role-based access control example). New: IToolLifecycleHook interface, LoggingToolLifecycleHook, MetricsToolLifecycleHook, resources/subscribe, resources/unsubscribe, AuthorizationMcpServer example, MetricsMcpServer example. 100% backward compatible, 273/273 tests passing, 2000+ lines new documentation. See: https://github.com/eyjolfurgudnivatne/mcp.gateway/releases/tag/v1.8.0</PackageReleaseNotes>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
