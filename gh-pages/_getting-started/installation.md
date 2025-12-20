@@ -286,7 +286,6 @@ Now that you have MCP Gateway installed:
 
 ### Visual Studio 2022
 
-- **C# DevKit** - Enhanced C# support
 - **REST Client** - Test endpoints directly in VS
 
 ### VS Code
