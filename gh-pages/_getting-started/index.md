@@ -355,9 +355,8 @@ dotnet restore
 ## Need Help?
 
 - 📚 [API Reference](/mcp.gateway/api/tools/) - Complete API documentation
-- 💻 [Examples](/mcp.gateway/examples/) - Working example servers
+- 💻 Examples - [Calculator](/mcp.gateway/examples/calculator/), [DateTime](/mcp.gateway/examples/datetime/), [Metrics](/mcp.gateway/examples/metrics/)
 - 🐛 [GitHub Issues](https://github.com/eyjolfurgudnivatne/mcp.gateway/issues) - Report bugs
-- 💬 [GitHub Discussions](https://github.com/eyjolfurgudnivatne/mcp.gateway/discussions) - Ask questions
 
 ## Next Steps
 
@@ -365,8 +364,8 @@ Ready to dive deeper? Here's what to explore next:
 
 1. **[Installation Guide](/mcp.gateway/getting-started/installation/)** - Detailed setup and configuration
 2. **[Build Your First Tool](/mcp.gateway/getting-started/first-tool/)** - Complete step-by-step tutorial
-3. **[Features Overview](/mcp.gateway/features/)** - Explore lifecycle hooks, authorization, and more
-4. **[Examples](/mcp.gateway/examples/)** - Learn from complete working servers
+3. **[Lifecycle Hooks](/mcp.gateway/features/lifecycle-hooks/)** - Monitor tool invocations
+4. **[Calculator Example](/mcp.gateway/examples/calculator/)** - Basic arithmetic operations
 5. **[API Reference](/mcp.gateway/api/tools/)** - Deep dive into the API
 
 <style>
