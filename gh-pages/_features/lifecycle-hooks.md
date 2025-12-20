@@ -376,6 +376,6 @@ Tool with both hooks:   1.26ms (+2.5%)
 
 ## See Also
 
-- [Authorization](/features/authorization/) - Use lifecycle hooks for role-based access control
-- [Examples: Metrics Server](/examples/metrics/) - Complete example with metrics endpoint
-- [API Reference: Lifecycle Hooks](/api/lifecycle-hooks/) - Complete API documentation
+- [Authorization](/mcp.gateway/features/authorization/) - Use lifecycle hooks for role-based access control
+- [Metrics Example](/mcp.gateway/examples/metrics/) - Complete example with metrics endpoint
+- [Tools API](/mcp.gateway/api/tools/) - Complete Tools API reference
