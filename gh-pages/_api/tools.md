@@ -260,9 +260,15 @@ Marks a method as an MCP tool.
 **InputSchema auto-generation:**
 - If not provided, MCP Gateway automatically generates `inputSchema` from the tool's parameter type
 - Uses `TypedJsonRpc<T>` parameter type to infer JSON Schema
-- Includes property names, types, descriptions (from XML comments), and required fields
-- Example: `TypedJsonRpc<AddParams>` where `AddParams` is `record AddParams(double A, double B)`
-  generates schema with `number` properties for `A` and `B`
+- Includes property names, types, descriptions (from `[Description]` attribute), and required fields
+- Example: `TypedJsonRpc<AddParams>` where `AddParams` is:
+  ```csharp
+  record AddParams(
+      [property: Description("First number")] double A,
+      [property: Description("Second number")] double B
+  );
+  ```
+  generates schema with `number` properties for `A` and `B` with descriptions
 
 ## Tool Responses
 
