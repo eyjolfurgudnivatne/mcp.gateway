@@ -30,9 +30,12 @@ Notifications allow servers to push updates to clients in real-time:
 
 ### 1. Server-Side: Send Notification
 
+Inject `INotificationSender` to send notifications:
+
 ```csharp
 using Mcp.Gateway.Tools.Notifications;
 
+// Option 1: Constructor injection (class must be registered in DI)
 public class MyTools
 {
     private readonly INotificationSender _notificationSender;
@@ -59,7 +62,37 @@ public class MyTools
         return ToolResponse.Success(request.Id, new { done = true });
     }
 }
+
+// Register in DI:
+builder.Services.AddScoped<MyTools>();
+
+// Option 2: Method parameter injection (no registration needed)
+public class MyTools
+{
+    [McpTool("long_operation")]
+    public async Task<JsonRpcMessage> LongOperation(
+        JsonRpcMessage request,
+        INotificationSender notificationSender)  // ← Automatically injected!
+    {
+        // Send progress notification
+        await notificationSender.SendNotificationAsync(
+            NotificationMessage.Progress("Starting operation..."));
+        
+        await Task.Delay(1000);
+        
+        await notificationSender.SendNotificationAsync(
+            NotificationMessage.Progress("50% complete"));
+        
+        await Task.Delay(1000);
+        
+        return ToolResponse.Success(request.Id, new { done = true });
+    }
+}
 ```
+
+**Parameter resolution order:**
+1. `JsonRpcMessage` - The request (always first parameter)
+2. Additional parameters - Resolved from DI container
 
 ### 2. Client-Side: Receive Notifications
 
@@ -184,6 +217,6 @@ eventSource.addEventListener('error', (error) => {
 
 ## See Also
 
-- [Resource Subscriptions](/features/resource-subscriptions/) - Subscribe to specific resources
-- [Session Management](/features/sessions/) - Session lifecycle
-- [MCP Protocol](/docs/mcp-protocol/) - Protocol specification
+- [Resource Subscriptions](/mcp.gateway/features/resource-subscriptions/) - Subscribe to specific resources
+- [Session Management](/mcp.gateway/features/sessions/) - Session lifecycle (Coming Soon)
+- [Getting Started](/mcp.gateway/getting-started/index/) - Quick start guide
