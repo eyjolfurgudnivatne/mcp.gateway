@@ -4,6 +4,7 @@ title: MCP Gateway
 description: Production-ready Model Context Protocol (MCP) Gateway for .NET 10
 baseurl: "/mcp.gateway"
 url: "https://eyjolfurgudnivatne.github.io"
+version: 1.8.0
 
 # Build settings
 markdown: kramdown
@@ -44,12 +45,13 @@ navigation:
   - title: GitHub
     url: https://github.com/eyjolfurgudnivatne/mcp.gateway
 
-# Defaults
+# Defaults - Use MCP layout by default
 defaults:
   - scope:
       path: ""
     values:
-      layout: default
+      layout: mcp-default
+      toc: true
 
 # Exclude from build
 exclude:
