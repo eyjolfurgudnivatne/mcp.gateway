@@ -9,6 +9,15 @@
   <!-- Favicon -->
   <link rel="icon" href="{{ site.baseurl }}/assets/images/favicon.ico">
   
+  <!-- Theme: Load immediately to prevent flash -->
+  <script>
+    // Load theme before page render to prevent flash
+    (function() {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+  
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
