@@ -554,4 +554,4 @@ public async Task PromptsGet_ValidPrompt_ReturnsMessages()
 
 - [Tools API](/mcp.gateway/api/tools/) - Tool invocation reference
 - [Resources API](/mcp.gateway/api/resources/) - Resource access reference
-- [Prompt Example](/mcp.gateway/examples/prompt/) - Complete prompt server example (Coming Soon)
+- [Prompt Example](/mcp.gateway/examples/prompt/) - Complete prompt server example
