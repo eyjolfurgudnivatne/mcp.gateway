@@ -642,9 +642,9 @@ public JsonRpcMessage SystemMetrics(JsonRpcMessage request)
 
 ## Links
 
-- **Getting Started:** [/getting-started/index/](/mcp.gateway/getting-started/index/)
-- **Tools API:** [/api/tools/](/mcp.gateway/api/tools/)
-- **Examples:** [/examples/calculator/](/mcp.gateway/examples/calculator/)
+- **Getting Started:** [/mcp.gateway/getting-started/index/](/mcp.gateway/getting-started/index/)
+- **Tools API:** [/mcp.gateway/api/tools/](/mcp.gateway/api/tools/)
+- **Examples:** [/mcp.gateway/examples/calculator/](/mcp.gateway/examples/calculator/)
 - **GitHub:** https://github.com/eyjolfurgudnivatne/mcp.gateway
 - **NuGet:** https://www.nuget.org/packages/Mcp.Gateway.Tools/
 
