@@ -5,8 +5,6 @@ description: Subscribe to specific resources for targeted notifications
 breadcrumbs:
   - title: Home
     url: /
-  - title: Features
-    url: /features/
   - title: Resource Subscriptions
     url: /features/resource-subscriptions/
 toc: true

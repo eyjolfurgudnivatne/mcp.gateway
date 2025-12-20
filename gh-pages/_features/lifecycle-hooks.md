@@ -5,8 +5,6 @@ description: Monitor and track tool invocations for metrics, logging, and produc
 breadcrumbs:
   - title: Home
     url: /
-  - title: Features
-    url: /features/
   - title: Lifecycle Hooks
     url: /features/lifecycle-hooks/
 toc: true

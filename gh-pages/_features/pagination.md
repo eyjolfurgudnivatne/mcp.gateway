@@ -5,8 +5,6 @@ description: Handle large result sets with cursor-based pagination
 breadcrumbs:
   - title: Home
     url: /
-  - title: Features
-    url: /features/
   - title: Pagination
     url: /features/pagination/
 toc: true

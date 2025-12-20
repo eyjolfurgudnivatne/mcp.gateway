@@ -5,8 +5,6 @@ description: Real-time server-to-client notifications using SSE
 breadcrumbs:
   - title: Home
     url: /
-  - title: Features
-    url: /features/
   - title: Notifications
     url: /features/notifications/
 toc: true

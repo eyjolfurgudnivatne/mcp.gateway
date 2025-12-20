@@ -5,8 +5,6 @@ description: Role-based authorization for MCP tools using lifecycle hooks
 breadcrumbs:
   - title: Home
     url: /
-  - title: Features
-    url: /features/
   - title: Authorization
     url: /features/authorization/
 toc: true
