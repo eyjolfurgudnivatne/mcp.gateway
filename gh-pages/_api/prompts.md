@@ -6,7 +6,6 @@ breadcrumbs:
   - title: Home
     url: /
   - title: API Reference
-    url: /api/
   - title: Prompts API
     url: /api/prompts/
 toc: true

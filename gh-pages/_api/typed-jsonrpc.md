@@ -6,7 +6,6 @@ breadcrumbs:
   - title: Home
     url: /
   - title: API Reference
-    url: /api/
   - title: TypedJsonRpc<T>
     url: /api/typed-jsonrpc/
 toc: true
