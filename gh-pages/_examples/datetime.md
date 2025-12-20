@@ -6,7 +6,7 @@ breadcrumbs:
   - title: Home
     url: /
   - title: Examples
-    url: /examples/
+    url: /examples/datetime/
   - title: DateTime Server
     url: /examples/datetime/
 toc: true
@@ -680,7 +680,7 @@ Full source code available at:
 
 ## See Also
 
-- [Getting Started](/getting-started/) - Build your first tool
-- [Tools API](/api/tools/) - Complete Tools API reference
-- [Examples: Calculator](/examples/calculator/) - Basic arithmetic operations
-- [Examples: Metrics](/examples/metrics/) - Add metrics tracking
+- [Getting Started](/mcp.gateway/getting-started/index/) - Build your first tool
+- [Tools API](/mcp.gateway/api/tools/) - Complete Tools API reference
+- [Calculator Example](/mcp.gateway/examples/calculator/) - Basic arithmetic operations
+- [Metrics Example](/mcp.gateway/examples/metrics/) - Add metrics tracking

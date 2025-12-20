@@ -6,7 +6,7 @@ breadcrumbs:
   - title: Home
     url: /
   - title: Examples
-    url: /examples/
+    url: /examples/metrics/
   - title: Metrics Server
     url: /examples/metrics/
 toc: true
@@ -505,6 +505,6 @@ Full source code available at:
 
 ## See Also
 
-- [Lifecycle Hooks](/features/lifecycle-hooks/) - Complete lifecycle hooks guide
-- [Authorization Example](/examples/authorization/) - Add role-based access control
-- [API Reference: Lifecycle Hooks](/api/lifecycle-hooks/) - Complete API docs
+- [Lifecycle Hooks](/mcp.gateway/features/lifecycle-hooks/) - Complete lifecycle hooks guide
+- [Authorization Example](/mcp.gateway/examples/authorization/) - Add role-based access control
+- [Lifecycle Hooks API](/mcp.gateway/api/lifecycle-hooks/) - Complete API docs

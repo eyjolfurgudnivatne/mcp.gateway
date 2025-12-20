@@ -6,7 +6,7 @@ breadcrumbs:
   - title: Home
     url: /
   - title: Examples
-    url: /examples/
+    url: /examples/authorization/
   - title: Authorization Server
     url: /examples/authorization/
 toc: true
@@ -556,6 +556,6 @@ Full source code available at:
 
 ## See Also
 
-- [Authorization Guide](/features/authorization/) - Complete authorization patterns
-- [Lifecycle Hooks](/features/lifecycle-hooks/) - Hook infrastructure
-- [API Reference: Lifecycle Hooks](/api/lifecycle-hooks/) - Complete API docs
+- [Authorization Guide](/mcp.gateway/features/authorization/) - Complete authorization patterns
+- [Lifecycle Hooks](/mcp.gateway/features/lifecycle-hooks/) - Hook infrastructure
+- [Lifecycle Hooks API](/mcp.gateway/api/lifecycle-hooks/) - Complete API docs

@@ -5,6 +5,8 @@ description: Complete MCP server with file and system resources
 breadcrumbs:
   - title: Home
     url: /
+  - title: Examples
+    url: /examples/resource/    
   - title: Resource Server
     url: /examples/resource/
 prev: false

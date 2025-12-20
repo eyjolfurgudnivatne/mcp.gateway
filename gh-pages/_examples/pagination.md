@@ -5,6 +5,8 @@ description: Test pagination with 120 mock tools, prompts, and resources
 breadcrumbs:
   - title: Home
     url: /
+  - title: Examples
+    url: /examples/pagination/    
   - title: Pagination Server
     url: /examples/pagination/
 prev: false

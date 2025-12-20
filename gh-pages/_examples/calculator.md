@@ -6,7 +6,7 @@ breadcrumbs:
   - title: Home
     url: /
   - title: Examples
-    url: /examples/
+    url: /examples/calculator/
   - title: Calculator Server
     url: /examples/calculator/
 toc: true
@@ -430,7 +430,7 @@ Full source code available at:
 
 ## See Also
 
-- [Getting Started](/getting-started/) - Basic tutorial
-- [Tools API](/api/tools/) - Complete Tools API reference
-- [Examples: Metrics Server](/examples/metrics/) - Add metrics to calculator
-- [Examples: Authorization Server](/examples/authorization/) - Add role-based access
+- [Getting Started](/mcp.gateway/getting-started/index/) - Basic tutorial
+- [Tools API](/mcp.gateway/api/tools/) - Complete Tools API reference
+- [Metrics Example](/mcp.gateway/examples/metrics/) - Add metrics to calculator
+- [Authorization Example](/mcp.gateway/examples/authorization/) - Add role-based access

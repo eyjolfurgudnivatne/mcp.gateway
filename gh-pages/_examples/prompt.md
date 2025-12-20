@@ -5,6 +5,8 @@ description: Reusable prompt templates with dynamic arguments
 breadcrumbs:
   - title: Home
     url: /
+  - title: Examples
+    url: /examples/prompt/
   - title: Prompt Server
     url: /examples/prompt/
 prev: false
