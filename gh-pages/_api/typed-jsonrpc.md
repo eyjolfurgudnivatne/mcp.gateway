@@ -634,7 +634,6 @@ public class MyClass
 
 ## See Also
 
-- [Tools API](/api/tools/) - Complete Tools API reference
-- [Getting Started](/getting-started/first-tool/) - Build your first tool
-- [Examples: DateTime Server](/examples/datetime/) - Real-world usage
-- [JSON Schema](https://json-schema.org/) - JSON Schema specification
+- [Tools API](/mcp.gateway/api/tools/) - Complete Tools API reference
+- [Getting Started](/mcp.gateway/getting-started/first-tool/) - Build your first tool
+- [DateTime Example](/mcp.gateway/examples/datetime/) - Real-world TypedJsonRpc usage
