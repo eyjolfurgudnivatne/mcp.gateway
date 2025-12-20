@@ -242,6 +242,7 @@ Marks a method as an MCP tool.
     string? Title = null,           // Optional: Display title
     string? Description = null,     // Optional: Description
     string? Icon = null,            // Optional: Icon URL
+    string? InputSchema = null,     // Optional: Input JSON Schema (auto-generated if not provided)
     string? OutputSchema = null)]   // Optional: Output JSON Schema
 ```
 
@@ -249,11 +250,19 @@ Marks a method as an MCP tool.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `name` | string | Yes | Tool identifier (a-z, 0-9, _, -) |
+| `name` | string | Yes | Tool identifier (a-z, 0-9, _, -, .) |
 | `Title` | string | No | Human-readable title |
 | `Description` | string | No | Tool description for AI |
 | `Icon` | string | No | Icon URL (v1.6.5+) |
+| `InputSchema` | string | No | Input JSON Schema (auto-generated from parameters if not provided) |
 | `OutputSchema` | string | No | Output JSON Schema (v1.6.5+) |
+
+**InputSchema auto-generation:**
+- If not provided, MCP Gateway automatically generates `inputSchema` from the tool's parameter type
+- Uses `TypedJsonRpc<T>` parameter type to infer JSON Schema
+- Includes property names, types, descriptions (from XML comments), and required fields
+- Example: `TypedJsonRpc<AddParams>` where `AddParams` is `record AddParams(double A, double B)`
+  generates schema with `number` properties for `A` and `B`
 
 ## Tool Responses
 
@@ -369,7 +378,11 @@ public async Task<JsonRpcMessage> FetchData(JsonRpcMessage request)
 
 ## Dependency Injection
 
-Tools support constructor injection:
+Tools support both constructor injection and method parameter injection:
+
+### Option 1: Constructor Injection
+
+Requires class registration in DI container:
 
 ```csharp
 public class MyTools
@@ -394,9 +407,43 @@ public class MyTools
     }
 }
 
-// Register service in Program.cs
+// Register in Program.cs
+builder.Services.AddScoped<MyTools>();
 builder.Services.AddSingleton<IMyService, MyService>();
 ```
+
+### Option 2: Method Parameter Injection
+
+No class registration needed - parameters resolved from DI:
+
+```csharp
+public class MyTools
+{
+    [McpTool("my_tool")]
+    public async Task<JsonRpcMessage> MyTool(
+        JsonRpcMessage request,
+        ILogger<MyTools> logger,        // ← Automatically injected!
+        IMyService service)             // ← Automatically injected!
+    {
+        logger.LogInformation("Tool invoked");
+        var result = await service.DoSomethingAsync();
+        return ToolResponse.Success(request.Id, result);
+    }
+}
+
+// Only register services (class auto-discovered)
+builder.Services.AddSingleton<IMyService, MyService>();
+```
+
+**Parameter resolution order:**
+1. `JsonRpcMessage` or `TypedJsonRpc<T>` - The request (must be first parameter)
+2. Additional parameters - Resolved from DI container (in order)
+
+**Benefits of method parameter injection:**
+- ✅ No class registration needed
+- ✅ Simpler for tools with few dependencies
+- ✅ Clear what each tool needs
+- ✅ Easier testing (mock parameters directly)
 
 ## Error Codes
 
@@ -469,7 +516,7 @@ return ToolResponse.Success(request.Id, "42");
 
 ## See Also
 
-- [Getting Started](/getting-started/) - Build your first tool
-- [Examples](/examples/) - Complete tool examples
-- [Lifecycle Hooks](/features/lifecycle-hooks/) - Monitor tool invocations
-- [Authorization](/features/authorization/) - Secure your tools
+- [Getting Started](/mcp.gateway/getting-started/index/) - Build your first tool
+- [Calculator Example](/mcp.gateway/examples/calculator/) - Complete tool examples
+- [Lifecycle Hooks](/mcp.gateway/features/lifecycle-hooks/) - Monitor tool invocations
+- [Authorization](/mcp.gateway/features/authorization/) - Secure your tools
