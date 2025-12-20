@@ -413,6 +413,6 @@ public async Task AdminTool_WithUserToken_ReturnsUnauthorized()
 
 ## See Also
 
-- [Lifecycle Hooks](/features/lifecycle-hooks/) - Hook infrastructure
-- [Examples: Authorization Server](/examples/authorization/) - Complete working example
-- [API Reference: Lifecycle Hooks](/api/lifecycle-hooks/) - Complete API documentation
+- [Lifecycle Hooks](/mcp.gateway/features/lifecycle-hooks/) - Hook infrastructure
+- [Authorization Example](/mcp.gateway/examples/authorization/) - Complete working example
+- [Lifecycle Hooks API](/mcp.gateway/api/lifecycle-hooks/) - Complete API documentation
