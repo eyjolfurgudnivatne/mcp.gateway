@@ -313,4 +313,4 @@ public async Task ListUsers_LastPage_ReturnsNullCursor()
 
 - [Tools API](/mcp.gateway/api/tools/) - Complete Tools API reference
 - [Resources API](/mcp.gateway/api/resources/) - Resources pagination
-- [Pagination Example](/mcp.gateway/examples/pagination/) - Complete example (Coming Soon)
+- [Pagination Example](/mcp.gateway/examples/pagination/) - Complete example

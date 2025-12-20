@@ -505,7 +505,7 @@ builder.AddToolLifecycleHook<CustomHook>();
 
 ## See Also
 
-- [Lifecycle Hooks Guide](/features/lifecycle-hooks/) - Complete guide with examples
-- [Authorization](/features/authorization/) - Role-based access control using hooks
-- [Examples: Metrics Server](/examples/metrics/) - Complete working example
-- [Examples: Authorization Server](/examples/authorization/) - Authorization with hooks
+- [Lifecycle Hooks Guide](/mcp.gateway/features/lifecycle-hooks/) - Complete guide with examples
+- [Authorization](/mcp.gateway/features/authorization/) - Role-based access control using hooks
+- [Metrics Example](/mcp.gateway/examples/metrics/) - Complete metrics server example
+- [Authorization Example](/mcp.gateway/examples/authorization/) - Authorization with hooks
