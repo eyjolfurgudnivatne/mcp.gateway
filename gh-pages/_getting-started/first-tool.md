@@ -9,6 +9,8 @@ breadcrumbs:
     url: /getting-started/index/
   - title: Your First Tool
     url: /getting-started/first-tool/
+prev: false
+next: false
 toc: true
 ---
 

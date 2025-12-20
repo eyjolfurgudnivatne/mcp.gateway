@@ -9,6 +9,8 @@ breadcrumbs:
     url: /getting-started/index/
   - title: Installation
     url: /getting-started/installation/
+prev: false
+next: false
 toc: true
 ---
 

@@ -7,6 +7,8 @@ breadcrumbs:
     url: /
   - title: Getting Started
     url: /getting-started/index/
+prev: false
+next: false
 toc: true
 ---
 
