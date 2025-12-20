@@ -13,9 +13,12 @@
 The main product in this repo is `Mcp.Gateway.Tools`.  
 `DevTestServer` and `Mcp.Gateway.Tests` are used for development and verification only – they are not part of the product.
 
+**Complete documentation:** https://eyjolfurgudnivatne.github.io/mcp.gateway/
+
 ---
 
 ## ⚡ Getting started
+
 
 ### 1. Install the package
 
