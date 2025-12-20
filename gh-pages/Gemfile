@@ -1,11 +1,17 @@
 source "https://rubygems.org"
 
+# Jekyll and core plugins
 gem "jekyll", "~> 4.3"
 gem "jekyll-remote-theme"
-gem "jekyll-feed"
+gem "jekyll-feed", "~> 0.12"
 gem "jekyll-seo-tag"
 gem "jekyll-sitemap"
+
+# Required for Jekyll 4.3+
 gem "webrick", "~> 1.8"
+
+# GitHub Pages compatibility
+gem "github-pages", group: :jekyll_plugins
 
 # Windows-specific gems
 platforms :mingw, :x64_mingw, :mswin, :jruby do
