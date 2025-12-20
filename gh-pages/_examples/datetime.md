@@ -25,6 +25,8 @@ The DateTime server demonstrates:
 - ✅ **Weekend checking** - Saturday/Sunday detection
 - ✅ **Week numbers** - ISO 8601 week of year
 - ✅ **Timezone handling** - TimeZoneInfo integration
+- ✅ **TypedJsonRpc<T>** - Type-safe parameter handling
+- ✅ **Auto-generated tool names** - From method names
 
 ## Complete Code
 
@@ -65,12 +67,11 @@ namespace DateTimeMcpServer.Tools;
 
 public class DateTimeTools
 {
-    [McpTool("get_current_datetime",
-        Title = "Get current date and time",
-        Description = "Get current date and time in specified timezone")]
-    public JsonRpcMessage GetCurrentDateTime(JsonRpcMessage message)
+    [McpTool(Title = "Get current date and time",
+             Description = "Get current date and time in specified timezone (default: local).")]
+    public JsonRpcMessage GetCurrentDatetime(TypedJsonRpc<CurrentDateTimeRequest> message)
     {
-        var request = message.GetParams<CurrentDateTimeRequest>();
+        var request = message.GetParams();
         TimeZoneInfo tz;
 
         try
@@ -90,10 +91,10 @@ public class DateTimeTools
         return ToolResponse.Success(
             message.Id,
             new CurrentDateTimeResponse(
-                Timestamp: now.ToString("o"),
+                DateTime: now.ToString("o"),  // ISO 8601 format
                 Date: now.ToString("yyyy-MM-dd"),
                 Time: now.ToString("HH:mm:ss"),
-                Timezone: tz.Id,
+                TimeZone: tz.Id,
                 DayOfWeek: now.ToString("dddd"),
                 WeekNumber: System.Globalization.ISOWeek.GetWeekOfYear(now),
                 Year: now.Year,
@@ -103,8 +104,8 @@ public class DateTimeTools
     }
 
     [McpTool("get_iso8601_timestamp",
-        Title = "Get current timestamp",
-        Description = "Get current timestamp in ISO 8601 format (UTC)")]
+             Title = "Get current timestamp",
+             Description = "Get current timestamp in ISO 8601 format (UTC)")]
     public JsonRpcMessage GetIso8601Timestamp(JsonRpcMessage message)
     {
         return ToolResponse.Success(
@@ -114,12 +115,11 @@ public class DateTimeTools
             ));
     }
 
-    [McpTool("add_days",
-        Title = "Add or subtract days",
-        Description = "Add or subtract days from a date")]
-    public JsonRpcMessage AddDays(JsonRpcMessage message)
+    [McpTool(Title = "Add or subtract days",
+             Description = "Add or subtract days from a date")]
+    public JsonRpcMessage AddDays(TypedJsonRpc<AddDaysRequest> message)
     {
-        var request = message.GetParams<AddDaysRequest>();
+        var request = message.GetParams();
 
         DateTime baseDate = DateTime.Now;
         if (!string.IsNullOrWhiteSpace(request?.Date))
@@ -132,19 +132,18 @@ public class DateTimeTools
         return ToolResponse.Success(
             message.Id,
             new AddDaysResponse(
-                OriginalDate: baseDate.ToString("yyyy-MM-dd"),
-                ResultDate: result.ToString("yyyy-MM-dd"),
+                Original: baseDate.ToString("yyyy-MM-dd"),
+                Result: result.ToString("yyyy-MM-dd"),
                 DaysAdded: request?.Days ?? 0,
-                ResultDayOfWeek: result.ToString("dddd")
+                DayOfWeek: result.ToString("dddd")
             ));
     }
 
-    [McpTool("is_weekend",
-        Title = "Check if weekend",
-        Description = "Check if a date is a weekend (Saturday or Sunday)")]
-    public JsonRpcMessage IsWeekend(JsonRpcMessage message)
+    [McpTool(Title = "Check if weekend",
+             Description = "Check if a date is a weekend (Saturday or Sunday)")]
+    public JsonRpcMessage IsWeekend(TypedJsonRpc<IsWeekendRequest> message)
     {
-        var request = message.GetParams<IsWeekendRequest>();
+        var request = message.GetParams();
 
         DateTime baseDate = DateTime.Now;
         if (!string.IsNullOrWhiteSpace(request?.Date))
@@ -164,12 +163,11 @@ public class DateTimeTools
             ));
     }
 
-    [McpTool("get_weeknumber",
-        Title = "Get week number",
-        Description = "Get ISO 8601 week number for a date")]
-    public JsonRpcMessage GetWeeknumber(JsonRpcMessage message)
+    [McpTool(Title = "Get week number",
+             Description = "Get ISO 8601 week number for a date")]
+    public JsonRpcMessage GetWeeknumber(TypedJsonRpc<GetWeeknumberRequest> message)
     {
-        var request = message.GetParams<GetWeeknumberRequest>();
+        var request = message.GetParams();
 
         DateTime baseDate = DateTime.Now;
         if (!string.IsNullOrWhiteSpace(request?.Date))
@@ -190,46 +188,68 @@ public class DateTimeTools
 }
 ```
 
-### Models
+### Models (DateTimeModels.cs)
 
 ```csharp
+using System.ComponentModel;
+using System.Text.Json.Serialization;
+
 namespace DateTimeMcpServer.Models;
 
 // Requests
-public record CurrentDateTimeRequest(string? TimezoneName);
-public record AddDaysRequest(string? Date, int? Days);
-public record IsWeekendRequest(string? Date);
-public record GetWeeknumberRequest(string? Date);
+public sealed record CurrentDateTimeRequest(
+    [property: JsonPropertyName("timezoneName")]
+    [property: Description("Timezone name (e.g., 'Europe/Oslo', 'UTC')")] 
+    string? TimezoneName);
+
+public sealed record AddDaysRequest(
+    [property: JsonPropertyName("date")]
+    [property: Description("Starting date in YYYY-MM-DD format (defaults to today)")] 
+    string? Date,
+    [property: JsonPropertyName("days")]
+    [property: Description("Number of days to add (positive) or subtract (negative)")] 
+    int Days = 0);
+
+public sealed record IsWeekendRequest(
+    [property: JsonPropertyName("date")]
+    [property: Description("Date in YYYY-MM-DD format (defaults to today)")] 
+    string? Date);
+
+public sealed record GetWeeknumberRequest(
+    [property: JsonPropertyName("date")]
+    [property: Description("Starting date in YYYY-MM-DD format (defaults to today)")] 
+    string? Date);
 
 // Responses
-public record CurrentDateTimeResponse(
-    string Timestamp,
-    string Date,
-    string Time,
-    string Timezone,
-    string DayOfWeek,
-    int WeekNumber,
-    int Year,
-    int Month,
-    int Day);
+public sealed record CurrentDateTimeResponse(
+    [property: JsonPropertyName("datetime")] string DateTime,
+    [property: JsonPropertyName("date")] string Date,
+    [property: JsonPropertyName("time")] string Time,
+    [property: JsonPropertyName("timezone")] string TimeZone,
+    [property: JsonPropertyName("dayOfWeek")] string DayOfWeek,
+    [property: JsonPropertyName("weekNumber")] int WeekNumber,
+    [property: JsonPropertyName("year")] int Year,
+    [property: JsonPropertyName("month")] int Month,
+    [property: JsonPropertyName("day")] int Day);
 
-public record Iso8601TimestampResponse(string Timestamp);
+public sealed record Iso8601TimestampResponse(
+    [property: JsonPropertyName("timestamp")] string Timestamp);
 
-public record AddDaysResponse(
-    string OriginalDate,
-    string ResultDate,
-    int DaysAdded,
-    string ResultDayOfWeek);
+public sealed record AddDaysResponse(
+    [property: JsonPropertyName("original")] string Original,
+    [property: JsonPropertyName("result")] string Result,
+    [property: JsonPropertyName("daysAdded")] int DaysAdded,
+    [property: JsonPropertyName("dayOfWeek")] string DayOfWeek);
 
-public record IsWeekendResponse(
-    string Date,
-    string DayOfWeek,
-    bool IsWeekend);
+public sealed record IsWeekendResponse(
+    [property: JsonPropertyName("date")] string Date,
+    [property: JsonPropertyName("dayOfWeek")] string DayOfWeek,
+    [property: JsonPropertyName("isWeekend")] bool IsWeekend);
 
-public record GetWeekNumberResponse(
-    string Date,
-    int WeekNumber,
-    int Year);
+public sealed record GetWeekNumberResponse(
+    [property: JsonPropertyName("date")] string Date,
+    [property: JsonPropertyName("weekNumber")] int WeekNumber,
+    [property: JsonPropertyName("year")] int Year);
 ```
 
 ## Running the Server
@@ -262,7 +282,7 @@ curl -X POST http://localhost:5000/mcp \
     "params": {
       "name": "get_current_datetime",
       "arguments": {
-        "TimezoneName": "Europe/Oslo"
+        "timezoneName": "Europe/Oslo"
       }
     },
     "id": 1
@@ -277,7 +297,7 @@ curl -X POST http://localhost:5000/mcp \
     "content": [
       {
         "type": "text",
-        "text": "{\"Timestamp\":\"2025-12-20T13:45:30+01:00\",\"Date\":\"2025-12-20\",\"Time\":\"13:45:30\",\"Timezone\":\"Europe/Oslo\",\"DayOfWeek\":\"Friday\",\"WeekNumber\":51,\"Year\":2025,\"Month\":12,\"Day\":20}"
+        "text": "{\"datetime\":\"2025-12-20T13:45:30+01:00\",\"date\":\"2025-12-20\",\"time\":\"13:45:30\",\"timezone\":\"Europe/Oslo\",\"dayOfWeek\":\"Friday\",\"weekNumber\":51,\"year\":2025,\"month\":12,\"day\":20}"
       }
     ]
   },
@@ -297,8 +317,8 @@ curl -X POST http://localhost:5000/mcp \
     "params": {
       "name": "add_days",
       "arguments": {
-        "Date": "2025-12-20",
-        "Days": 7
+        "date": "2025-12-20",
+        "days": 7
       }
     },
     "id": 2
@@ -313,7 +333,7 @@ curl -X POST http://localhost:5000/mcp \
     "content": [
       {
         "type": "text",
-        "text": "{\"OriginalDate\":\"2025-12-20\",\"ResultDate\":\"2025-12-27\",\"DaysAdded\":7,\"ResultDayOfWeek\":\"Friday\"}"
+        "text": "{\"original\":\"2025-12-20\",\"result\":\"2025-12-27\",\"daysAdded\":7,\"dayOfWeek\":\"Friday\"}"
       }
     ]
   },
@@ -333,7 +353,7 @@ curl -X POST http://localhost:5000/mcp \
     "params": {
       "name": "is_weekend",
       "arguments": {
-        "Date": "2025-12-21"
+        "date": "2025-12-21"
       }
     },
     "id": 3
@@ -348,7 +368,7 @@ curl -X POST http://localhost:5000/mcp \
     "content": [
       {
         "type": "text",
-        "text": "{\"Date\":\"2025-12-21\",\"DayOfWeek\":\"Sunday\",\"IsWeekend\":true}"
+        "text": "{\"date\":\"2025-12-21\",\"dayOfWeek\":\"Sunday\",\"isWeekend\":true}"
       }
     ]
   },
@@ -358,7 +378,87 @@ curl -X POST http://localhost:5000/mcp \
 
 ## Key Concepts
 
-### 1. Timezone Handling
+### 1. TypedJsonRpc<T>
+
+Type-safe parameter handling with automatic deserialization:
+
+```csharp
+public JsonRpcMessage AddDays(TypedJsonRpc<AddDaysRequest> message)
+{
+    var request = message.GetParams();  // Returns AddDaysRequest
+    // request.Date and request.Days are strongly typed!
+}
+```
+
+**Benefits:**
+- ✅ Compile-time type safety
+- ✅ Automatic JSON deserialization
+- ✅ IntelliSense support
+- ✅ Cleaner code
+
+### 2. Description Attributes
+
+Use `[Description]` on record properties for documentation:
+
+```csharp
+public sealed record AddDaysRequest(
+    [property: Description("Starting date in YYYY-MM-DD format")] 
+    string? Date,
+    [property: Description("Number of days to add")] 
+    int Days = 0);
+```
+
+**Generates InputSchema automatically!**
+
+### 3. JsonPropertyName
+
+Control JSON serialization names:
+
+```csharp
+public sealed record CurrentDateTimeResponse(
+    [property: JsonPropertyName("datetime")] string DateTime,
+    [property: JsonPropertyName("timezone")] string TimeZone);
+```
+
+**JSON output:**
+```json
+{
+  "datetime": "2025-12-20T13:45:30+01:00",
+  "timezone": "Europe/Oslo"
+}
+```
+
+### 4. Auto-Generated Tool Names
+
+Method names automatically convert to snake_case:
+
+```csharp
+[McpTool]  // No explicit name!
+public JsonRpcMessage GetCurrentDatetime(...) { }
+// Auto-generates: "get_current_datetime"
+
+[McpTool]
+public JsonRpcMessage AddDays(...) { }
+// Auto-generates: "add_days"
+```
+
+### 5. Sealed Records
+
+Use `sealed record` for immutable data models:
+
+```csharp
+public sealed record AddDaysRequest(
+    string? Date,
+    int Days = 0);  // Default value
+```
+
+**Benefits:**
+- ✅ Immutable
+- ✅ Value semantics
+- ✅ Built-in equality
+- ✅ Sealed for performance
+
+### 6. Timezone Handling
 
 ```csharp
 TimeZoneInfo tz = TimeZoneInfo.FindSystemTimeZoneById("Europe/Oslo");
@@ -372,13 +472,13 @@ var now = TimeZoneInfo.ConvertTime(DateTime.Now, tz);
 - `Asia/Tokyo` - Japan
 - `Australia/Sydney` - Australia
 
-### 2. ISO 8601 Format
+### 7. ISO 8601 Format
 
 ```csharp
 DateTime.UtcNow.ToString("o")  // "2025-12-20T13:45:30.1234567Z"
 ```
 
-### 3. ISO Week Numbers
+### 8. ISO Week Numbers
 
 ```csharp
 System.Globalization.ISOWeek.GetWeekOfYear(date)
@@ -388,14 +488,6 @@ ISO 8601 week numbers:
 - Week starts on Monday
 - Week 1 contains January 4th
 - Returns 1-53
-
-### 4. Date Arithmetic
-
-```csharp
-var future = baseDate.AddDays(7);    // +7 days
-var past = baseDate.AddDays(-7);     // -7 days
-var nextMonth = baseDate.AddMonths(1);  // +1 month
-```
 
 ## Using with GitHub Copilot
 
@@ -446,6 +538,10 @@ public JsonRpcMessage FormatDate(TypedJsonRpc<FormatDateRequest> request)
         custom = date.ToString(args.Format ?? "yyyy-MM-dd")
     });
 }
+
+public sealed record FormatDateRequest(
+    [property: Description("Date to format")] string Date,
+    [property: Description("Custom format string")] string? Format = null);
 ```
 
 ### 2. Business Days Calculator
@@ -474,6 +570,10 @@ public JsonRpcMessage AddBusinessDays(TypedJsonRpc<BusinessDaysRequest> request)
         dayOfWeek = date.ToString("dddd")
     });
 }
+
+public sealed record BusinessDaysRequest(
+    [property: Description("Starting date")] string Date,
+    [property: Description("Business days to add")] int Days);
 ```
 
 ### 3. Time Until/Since
@@ -497,6 +597,9 @@ public JsonRpcMessage TimeUntil(TypedJsonRpc<TimeUntilRequest> request)
         isPast = timeSpan < TimeSpan.Zero
     });
 }
+
+public sealed record TimeUntilRequest(
+    [property: Description("Target date")] string Date);
 ```
 
 ## Integration Tests
@@ -516,7 +619,7 @@ public async Task GetCurrentDateTime_WithTimezone_ReturnsFormattedDate()
         @params = new
         {
             name = "get_current_datetime",
-            arguments = new { TimezoneName = "UTC" }
+            arguments = new { timezoneName = "UTC" }
         },
         id = 1
     };
@@ -533,7 +636,7 @@ public async Task GetCurrentDateTime_WithTimezone_ReturnsFormattedDate()
         .GetProperty("text")
         .GetString();
     
-    Assert.Contains("Timestamp", content);
+    Assert.Contains("datetime", content);
     Assert.Contains("UTC", content);
 }
 
@@ -548,7 +651,7 @@ public async Task IsWeekend_Sunday_ReturnsTrue()
         @params = new
         {
             name = "is_weekend",
-            arguments = new { Date = "2025-12-21" }  // Sunday
+            arguments = new { date = "2025-12-21" }  // Sunday
         },
         id = 2
     };
@@ -558,11 +661,12 @@ public async Task IsWeekend_Sunday_ReturnsTrue()
     var result = await response.Content.ReadFromJsonAsync<JsonDocument>();
     
     // Assert
-    var content = JSON.parse(result.RootElement
-        .GetProperty("result")
-        .GetProperty("content")[0]
-        .GetProperty("text")
-        .GetString());
+    var content = JsonSerializer.Deserialize<IsWeekendResponse>(
+        result.RootElement
+            .GetProperty("result")
+            .GetProperty("content")[0]
+            .GetProperty("text")
+            .GetString()!);
     
     Assert.True(content.IsWeekend);
 }
