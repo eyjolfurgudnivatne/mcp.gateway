@@ -35,7 +35,7 @@ jobs:
         run: |
           cd gh-pages
           sed -i "s/version: .*/version: ${{ steps.version.outputs.VERSION }}/" _config.yml
-          echo "Updated _config.yml with version: ${{ steps.version.outputs.VERSION }}">
+          echo "Updated _config.yml with version: ${{ steps.version.outputs.VERSION }}"
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
