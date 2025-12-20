@@ -133,7 +133,7 @@ Configure HTTP endpoint:
 ## Next Steps
 
 <div class="next-steps">
-  <a href="{{ site.baseurl }}/getting-started/" class="next-step-card">
+  <a href="{{ site.baseurl }}/getting-started/index/" class="next-step-card">
     <div class="card-icon">📚</div>
     <div class="card-title">Getting Started</div>
     <div class="card-description">Learn the basics and create your first MCP server</div>
