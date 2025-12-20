@@ -6,11 +6,13 @@ baseurl: "/mcp.gateway"
 url: "https://eyjolfurgudnivatne.github.io"
 
 # Build settings
-theme: jekyll-theme-cayman
 markdown: kramdown
 kramdown:
   input: GFM
   syntax_highlighter: rouge
+
+# Use remote theme instead of local theme (fixes dependency issue)
+remote_theme: pages-themes/cayman@v0.2.0
 
 # Collections
 collections:
@@ -62,3 +64,4 @@ plugins:
   - jekyll-feed
   - jekyll-seo-tag
   - jekyll-sitemap
+  - jekyll-remote-theme

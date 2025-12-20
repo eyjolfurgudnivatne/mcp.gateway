@@ -29,11 +29,15 @@ jobs:
 
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
-      - name: Install Jekyll
+      - name: Install Jekyll and dependencies
         run: |
           gem install bundler jekyll
+          gem install jekyll-remote-theme
+          gem install jekyll-feed
+          gem install jekyll-seo-tag
+          gem install jekyll-sitemap
 
       - name: Build with Jekyll
         run: |
