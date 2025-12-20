@@ -1,0 +1,28 @@
+<header class="site-header">
+  <div class="container">
+    <div class="header-content">
+      <a href="{{ site.baseurl }}/" class="site-logo">
+        <span class="logo-icon">🚀</span>
+        <span class="logo-text">{{ site.title }}</span>
+      </a>
+      
+      <nav class="site-nav">
+        <button class="nav-toggle" aria-label="Toggle navigation">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        
+        <ul class="nav-menu">
+          {% for item in site.navigation %}
+          <li class="nav-item">
+            <a href="{{ item.url | prepend: site.baseurl }}" class="nav-link">
+              {{ item.title }}
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      </nav>
+    </div>
+  </div>
+</header>

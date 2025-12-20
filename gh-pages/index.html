@@ -1,0 +1,290 @@
+---
+layout: default
+title: MCP Gateway - Production-Ready MCP Server for .NET 10
+---
+
+<div class="hero">
+  <h1>🚀 MCP Gateway</h1>
+  <p class="lead">Production-ready Model Context Protocol (MCP) Gateway for .NET 10</p>
+  <p>Build MCP servers that work with GitHub Copilot, Claude Desktop, and other AI assistants</p>
+  
+  <div class="cta-buttons">
+    <a href="{{ site.baseurl }}/getting-started/" class="btn btn-primary">Get Started</a>
+    <a href="https://github.com/eyjolfurgudnivatne/mcp.gateway" class="btn btn-secondary">View on GitHub</a>
+  </div>
+</div>
+
+<div class="features">
+  <div class="feature">
+    <h2>⚡ Quick to Get Started</h2>
+    <p>Create your first MCP server in minutes with our simple API and comprehensive examples.</p>
+    <a href="{{ site.baseurl }}/getting-started/installation/">Install now →</a>
+  </div>
+
+  <div class="feature">
+    <h2>📊 Production Ready</h2>
+    <p>Built-in lifecycle hooks, metrics, authorization, and monitoring for production deployments.</p>
+    <a href="{{ site.baseurl }}/features/lifecycle-hooks/">Learn more →</a>
+  </div>
+
+  <div class="feature">
+    <h2>🔌 Multiple Transports</h2>
+    <p>Support for HTTP, WebSocket, SSE, and stdio transports. Works with all MCP clients.</p>
+    <a href="{{ site.baseurl }}/features/transports/">Explore transports →</a>
+  </div>
+</div>
+
+<div class="highlights">
+  <h2>✨ Key Features</h2>
+  
+  <div class="highlight">
+    <h3>🎯 MCP 2025-11-25 Compliant</h3>
+    <p>100% compliant with the latest MCP specification. Streamable HTTP, SSE notifications, session management.</p>
+  </div>
+
+  <div class="highlight">
+    <h3>📦 Resource Subscriptions</h3>
+    <p>Optional MCP feature for targeted notifications. Subscribe to specific resources, reduce bandwidth.</p>
+  </div>
+
+  <div class="highlight">
+    <h3>📊 Lifecycle Hooks</h3>
+    <p>Monitor tool invocations with built-in metrics, logging, and authorization support.</p>
+  </div>
+
+  <div class="highlight">
+    <h3>🔐 Authorization</h3>
+    <p>Role-based access control via lifecycle hooks. Declarative security with attributes.</p>
+  </div>
+
+  <div class="highlight">
+    <h3>🧪 273 Tests</h3>
+    <p>Comprehensive test coverage. All transports tested (HTTP, WebSocket, SSE, stdio).</p>
+  </div>
+
+  <div class="highlight">
+    <h3>📚 Rich Documentation</h3>
+    <p>2000+ lines of documentation, examples, and guides. Everything you need to get started.</p>
+  </div>
+</div>
+
+<div class="quick-example">
+  <h2>Quick Example</h2>
+  
+  <pre><code class="language-csharp">using Mcp.Gateway.Tools;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Register MCP Gateway
+builder.AddToolsService();
+
+var app = builder.Build();
+
+// Enable WebSockets
+app.UseWebSockets();
+
+// MCP 2025-11-25 Streamable HTTP
+app.UseProtocolVersionValidation();
+app.MapStreamableHttpEndpoint("/mcp");
+
+app.Run();
+
+// Define your first tool
+public class MyTools
+{
+    [McpTool("greet")]
+    public JsonRpcMessage Greet(TypedJsonRpc&lt;GreetParams&gt; request)
+    {
+        return ToolResponse.Success(
+            request.Id,
+            new { message = $"Hello, {request.Params.Name}!" });
+    }
+}
+
+public record GreetParams(string Name);</code></pre>
+
+  <p>That's it! Your MCP server is ready to use with GitHub Copilot, Claude Desktop, and other AI assistants.</p>
+  
+  <a href="{{ site.baseurl }}/getting-started/quick-start/" class="btn">Full Quick Start Guide →</a>
+</div>
+
+<div class="stats">
+  <div class="stat">
+    <h3>273</h3>
+    <p>Passing Tests</p>
+  </div>
+  <div class="stat">
+    <h3>100%</h3>
+    <p>MCP Compliant</p>
+  </div>
+  <div class="stat">
+    <h3>v1.8.0</h3>
+    <p>Latest Release</p>
+  </div>
+  <div class="stat">
+    <h3>2000+</h3>
+    <p>Lines of Docs</p>
+  </div>
+</div>
+
+<div class="cta-section">
+  <h2>Ready to build your MCP server?</h2>
+  <p>Get started in minutes with our comprehensive guide</p>
+  <a href="{{ site.baseurl }}/getting-started/" class="btn btn-primary btn-large">Get Started →</a>
+</div>
+
+<style>
+  .hero {
+    text-align: center;
+    padding: 4rem 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    margin-bottom: 3rem;
+  }
+
+  .hero h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: white;
+  }
+
+  .hero .lead {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .cta-buttons {
+    margin-top: 2rem;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    margin: 0.5rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s;
+  }
+
+  .btn-primary {
+    background: white;
+    color: #667eea;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: white;
+    border: 2px solid white;
+  }
+
+  .btn-secondary:hover {
+    background: white;
+    color: #667eea;
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+  }
+
+  .feature {
+    padding: 2rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.3s;
+  }
+
+  .feature:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-4px);
+  }
+
+  .feature h2 {
+    margin-top: 0;
+  }
+
+  .highlights {
+    margin-bottom: 3rem;
+  }
+
+  .highlights h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .highlight {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: #f7fafc;
+    border-left: 4px solid #667eea;
+    border-radius: 4px;
+  }
+
+  .highlight h3 {
+    margin-top: 0;
+  }
+
+  .quick-example {
+    background: #2d3748;
+    color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    margin-bottom: 3rem;
+  }
+
+  .quick-example h2 {
+    color: white;
+  }
+
+  .quick-example pre {
+    background: #1a202c;
+    padding: 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+
+  .quick-example code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+    text-align: center;
+  }
+
+  .stat h3 {
+    font-size: 2.5rem;
+    margin: 0;
+    color: #667eea;
+  }
+
+  .stat p {
+    margin: 0.5rem 0 0 0;
+    color: #718096;
+  }
+
+  .cta-section {
+    text-align: center;
+    padding: 3rem;
+    background: #f7fafc;
+    border-radius: 8px;
+  }
+
+  .btn-large {
+    font-size: 1.2rem;
+    padding: 1rem 2rem;
+  }
+</style>
