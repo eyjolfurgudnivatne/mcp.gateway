@@ -303,9 +303,10 @@ public async Task<JsonRpcMessage> FetchData(JsonRpcMessage request)
 
 ### How do I add logging?
 
-Use dependency injection:
+Use dependency injection to inject `ILogger<T>`:
 
 ```csharp
+// Option 1: Constructor injection (class must be registered in DI)
 public class MyTools
 {
     private readonly ILogger<MyTools> _logger;
@@ -322,7 +323,27 @@ public class MyTools
         // ...
     }
 }
+
+// Register in DI:
+builder.Services.AddScoped<MyTools>();
+
+// Option 2: Method parameter injection (no registration needed)
+public class MyTools
+{
+    [McpTool("my_tool")]
+    public JsonRpcMessage MyTool(
+        JsonRpcMessage request, 
+        ILogger<MyTools> logger)  // ← Automatically injected!
+    {
+        logger.LogInformation("Tool invoked");
+        // ...
+    }
+}
 ```
+
+**Parameter resolution order:**
+1. `JsonRpcMessage` - The request (always first parameter)
+2. Additional parameters - Resolved from DI container
 
 ## Troubleshooting
 
