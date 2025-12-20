@@ -76,31 +76,6 @@
       <article class="content">
         {{ content }}
       </article>
-      
-      <!-- Page Navigation -->
-      {% if page.prev or page.next %}
-      <nav class="page-nav">
-        {% if page.prev %}
-        <a href="{{ page.prev.url | prepend: site.baseurl }}" class="page-nav-prev">
-          <i data-feather="arrow-left"></i>
-          <div>
-            <span class="label">Previous</span>
-            <span class="title">{{ page.prev.title }}</span>
-          </div>
-        </a>
-        {% endif %}
-        
-        {% if page.next %}
-        <a href="{{ page.next.url | prepend: site.baseurl }}" class="page-nav-next">
-          <div>
-            <span class="label">Next</span>
-            <span class="title">{{ page.next.title }}</span>
-          </div>
-          <i data-feather="arrow-right"></i>
-        </a>
-        {% endif %}
-      </nav>
-      {% endif %}
     </div>
   </main>
   
