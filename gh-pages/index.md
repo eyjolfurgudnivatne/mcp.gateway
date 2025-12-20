@@ -38,9 +38,10 @@ public class MyTools
     [McpTool("greet")]
     public JsonRpcMessage Greet(TypedJsonRpc<GreetParams> request)
     {
+        var name = request.GetParams().Name;
         return ToolResponse.Success(
             request.Id,
-            new { message = $"Hello, {request.Params.Name}!" });
+            new { message = $"Hello, {name}!" });
     }
 }
 
