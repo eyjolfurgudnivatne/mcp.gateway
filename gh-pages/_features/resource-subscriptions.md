@@ -118,11 +118,12 @@ curl -X POST http://localhost:5000/mcp \
 
 ### Sending Notifications
 
-Inject `INotificationSender` and notify subscribed sessions:
+Inject `INotificationSender` to send notifications to subscribed sessions:
 
 ```csharp
 using Mcp.Gateway.Tools.Notifications;
 
+// Option 1: Constructor injection (class must be registered in DI)
 public class MyResources
 {
     private readonly INotificationSender _notificationSender;
@@ -145,7 +146,33 @@ public class MyResources
         return ToolResponse.Success(request.Id, new { updated = true });
     }
 }
+
+// Register in DI:
+builder.Services.AddScoped<MyResources>();
+
+// Option 2: Method parameter injection (no registration needed)
+public class MyResources
+{
+    [McpTool("update_user_data")]
+    public async Task<JsonRpcMessage> UpdateUserData(
+        JsonRpcMessage request,
+        INotificationSender notificationSender)  // ← Automatically injected!
+    {
+        // Update the resource
+        await File.WriteAllTextAsync("data/users.json", updatedContent);
+        
+        // Notify subscribed sessions (automatic filtering!)
+        await notificationSender.SendNotificationAsync(
+            NotificationMessage.ResourcesUpdated("file://data/users.json"));
+        
+        return ToolResponse.Success(request.Id, new { updated = true });
+    }
+}
 ```
+
+**Parameter resolution order:**
+1. `JsonRpcMessage` - The request (always first parameter)
+2. Additional parameters - Resolved from DI container
 
 ### Defining Resources
 
