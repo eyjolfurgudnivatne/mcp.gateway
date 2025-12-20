@@ -5,8 +5,10 @@ description: Quick reference guide for AI assistants building MCP servers
 breadcrumbs:
   - title: Home
     url: /
+  - title: Getting Started
+    url: /getting-started/ai-quickstart/
   - title: AI Quickstart
-    url: /ai-quickstart/
+    url: /getting-started/ai-quickstart/
 toc: true
 ---
 
