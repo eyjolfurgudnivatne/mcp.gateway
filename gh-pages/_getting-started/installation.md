@@ -19,7 +19,7 @@ Get started with MCP Gateway in minutes.
 ## Prerequisites
 
 - **.NET 10 SDK** - [Download here](https://dotnet.microsoft.com/download/dotnet/10.0)
-- **Visual Studio 2022** / **VS Code** / **Rider**
+- **Code editor** - Visual Studio 2025, Visual Studio 2022 v17.13+, VS Code, or Rider
 - **Basic C# knowledge**
 
 ## Install via NuGet

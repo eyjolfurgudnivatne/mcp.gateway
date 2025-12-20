@@ -30,7 +30,7 @@ By following this guide, you'll learn how to:
 
 Before you begin, make sure you have:
 - **.NET 10 SDK** - [Download here](https://dotnet.microsoft.com/download/dotnet/10.0)
-- **Code editor** - Visual Studio 2022, VS Code, or Rider
+- **Code editor** - Visual Studio 2025, Visual Studio 2022 v17.13+, VS Code, or Rider
 - **Basic C# knowledge** - Familiarity with C# syntax
 - **Command line** - Basic terminal/PowerShell knowledge
 
