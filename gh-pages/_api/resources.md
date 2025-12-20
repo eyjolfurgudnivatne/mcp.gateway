@@ -262,7 +262,11 @@ Marks a method as an MCP resource.
 
 ## Sending Notifications
 
-When a resource changes, notify subscribed clients:
+When a resource changes, notify subscribed clients using dependency injection:
+
+### Option 1: Constructor Injection
+
+Requires class registration in DI:
 
 ```csharp
 using Mcp.Gateway.Tools.Notifications;
@@ -292,7 +296,50 @@ public class FileResources
         return ToolResponse.Success(request.Id, new { updated = true });
     }
 }
+
+// Register in DI:
+builder.Services.AddScoped<FileResources>();
 ```
+
+### Option 2: Method Parameter Injection
+
+No class registration needed - parameters resolved from DI:
+
+```csharp
+using Mcp.Gateway.Tools.Notifications;
+
+public class FileResources
+{
+    [McpTool("update_users")]
+    public async Task<JsonRpcMessage> UpdateUsers(
+        TypedJsonRpc<UpdateUsersArgs> request,
+        INotificationSender notificationSender)  // ← Automatically injected!
+    {
+        var args = request.GetParams()!;
+        
+        // Update the file
+        await File.WriteAllTextAsync("data/users.json", args.Data);
+        
+        // Notify subscribed sessions (v1.8.0)
+        await notificationSender.SendNotificationAsync(
+            NotificationMessage.ResourcesUpdated("file://data/users.json"));
+        
+        return ToolResponse.Success(request.Id, new { updated = true });
+    }
+}
+
+// No registration needed - class auto-discovered!
+```
+
+**Parameter resolution order:**
+1. `JsonRpcMessage` or `TypedJsonRpc<T>` - The request (must be first parameter)
+2. Additional parameters - Resolved from DI container (in order)
+
+**Benefits of method parameter injection:**
+- ✅ No class registration needed
+- ✅ Simpler for resources with few dependencies
+- ✅ Clear what each method needs
+- ✅ Easier testing (mock parameters directly)
 
 ## URI Schemes
 
@@ -489,6 +536,6 @@ public async Task ResourcesRead_ValidUri_ReturnsContent()
 
 ## See Also
 
-- [Resource Subscriptions](/features/resource-subscriptions/) - Complete subscription guide
-- [Tools API](/api/tools/) - Tool invocation reference
-- [Examples: Resource Server](/examples/resource/) - Complete example
+- [Resource Subscriptions](/mcp.gateway/features/resource-subscriptions/) - Complete subscription guide
+- [Tools API](/mcp.gateway/api/tools/) - Tool invocation reference
+- [Resource Example](/mcp.gateway/examples/resource/) - Complete resource server example
