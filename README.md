@@ -637,6 +637,18 @@ See `Examples/ResourceMcpServer/README.md` for complete subscription workflow an
 
 ## 📚 Learn more
 
+### 📖 Documentation
+
+**Complete documentation available at:** https://eyjolfurgudnivatne.github.io/mcp.gateway/
+
+- **🤖 [AI Assistant Quickstart](https://eyjolfurgudnivatne.github.io/mcp.gateway/getting-started/ai-quickstart/)** - Quick reference for AI assistants (GitHub Copilot, Claude, ChatGPT)
+- **[Getting Started](https://eyjolfurgudnivatne.github.io/mcp.gateway/getting-started/index/)** - Installation and first tool
+- **[API Reference](https://eyjolfurgudnivatne.github.io/mcp.gateway/api/tools/)** - Complete API documentation
+- **[Examples](https://eyjolfurgudnivatne.github.io/mcp.gateway/examples/calculator/)** - Working examples with explanations
+- **[Features](https://eyjolfurgudnivatne.github.io/mcp.gateway/features/lifecycle-hooks/)** - Advanced features guide
+
+### 📂 In this repository
+
 - **Library README:** `Mcp.Gateway.Tools/README.md`  
   Details for the tools API (attributes, JsonRpc models, etc.)
 - **Documentation:**

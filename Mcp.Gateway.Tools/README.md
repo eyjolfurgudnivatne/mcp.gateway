@@ -20,6 +20,17 @@ See the root `README.md` for a high‑level overview and client integration.
 
 ---
 
+## 📖 Documentation
+
+**Complete documentation:** https://eyjolfurgudnivatne.github.io/mcp.gateway/
+
+- **🤖 [AI Assistant Quickstart](https://eyjolfurgudnivatne.github.io/mcp.gateway/getting-started/ai-quickstart/)** - Quick reference for AI assistants
+- **[Getting Started](https://eyjolfurgudnivatne.github.io/mcp.gateway/getting-started/index/)** - Installation and first tool
+- **[API Reference](https://eyjolfurgudnivatne.github.io/mcp.gateway/api/tools/)** - Complete API documentation
+- **[Examples](https://eyjolfurgudnivatne.github.io/mcp.gateway/examples/calculator/)** - Working examples
+
+---
+
 ## 🔧 Register tool infrastructure
 
 In your `Program.cs` (v1.7.0 with MCP 2025-11-25 support):
