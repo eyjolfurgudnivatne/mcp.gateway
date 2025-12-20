@@ -6,6 +6,7 @@ breadcrumbs:
   - title: Home
     url: /
   - title: API Reference
+    url: /api/lifecycle-hooks/
   - title: Lifecycle Hooks API
     url: /api/lifecycle-hooks/
 toc: true
