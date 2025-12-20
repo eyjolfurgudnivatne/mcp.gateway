@@ -389,39 +389,6 @@ public JsonRpcMessage Greet(TypedJsonRpc<GreetParams> request)
 }
 ```
 
-### 4. Add Dependency Injection
-
-```csharp
-public class GreetingTools
-{
-    private readonly ILogger<GreetingTools> _logger;
-    private readonly IGreetingService _greetingService;
-    
-    public GreetingTools(
-        ILogger<GreetingTools> logger,
-        IGreetingService greetingService)
-    {
-        _logger = logger;
-        _greetingService = greetingService;
-    }
-    
-    [McpTool("greet")]
-    public async Task<JsonRpcMessage> Greet(TypedJsonRpc<GreetParams> request)
-    {
-        var args = request.GetParams()!;
-        
-        _logger.LogInformation("Greeting user: {Name}", args.Name);
-        
-        var greeting = await _greetingService.GetGreetingAsync(args.Name);
-        
-        return ToolResponse.Success(request.Id, new { message = greeting });
-    }
-}
-
-// Register service in Program.cs
-builder.Services.AddSingleton<IGreetingService, GreetingService>();
-```
-
 ## Troubleshooting
 
 ### Tool Not Found
