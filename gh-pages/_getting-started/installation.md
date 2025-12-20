@@ -221,9 +221,15 @@ dotnet restore
 
 Now that you have MCP Gateway installed:
 
-1. [Create your first tool](/getting-started/first-tool/) - Learn tool development
-2. [Explore features](/features/) - Lifecycle hooks, notifications, subscriptions
-3. [Browse examples](/examples/) - Calculator, DateTime, Metrics servers
+1. **[Create your first tool](/mcp.gateway/getting-started/first-tool/)** - Learn tool development
+2. **[Lifecycle Hooks](/mcp.gateway/features/lifecycle-hooks/)** - Monitor tool invocations
+3. **[Calculator Example](/mcp.gateway/examples/calculator/)** - Complete working server
+
+## See Also
+
+- [Getting Started Overview](/mcp.gateway/getting-started/index/) - Overview and quick start
+- [Your First Tool](/mcp.gateway/getting-started/first-tool/) - Build a complete tool step-by-step
+- Examples - [Calculator](/mcp.gateway/examples/calculator/), [DateTime](/mcp.gateway/examples/datetime/), [Metrics](/mcp.gateway/examples/metrics/)
 
 ## IDE Extensions
 
@@ -250,9 +256,3 @@ Built-in MCP support (coming soon!)
 | RAM | 2 GB | 4 GB |
 | Disk | 500 MB | 1 GB |
 | OS | Windows 10, Linux, macOS | Latest |
-
-## See Also
-
-- [Quick Start Guide](/getting-started/) - Overview and first steps
-- [Your First Tool](/getting-started/first-tool/) - Build a complete tool
-- [Examples](/examples/) - Complete server examples
