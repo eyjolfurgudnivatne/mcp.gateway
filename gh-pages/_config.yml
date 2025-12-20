@@ -1,0 +1,69 @@
+# MCP Gateway Documentation Site Configuration
+
+title: MCP Gateway
+description: Production-ready Model Context Protocol (MCP) Gateway for .NET 10
+baseurl: "/mcp.gateway"
+url: "https://eyjolfurgudnivatne.github.io"
+version: 1.8.0
+
+# Build settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Use remote theme instead of local theme (fixes dependency issue)
+remote_theme: pages-themes/cayman@v0.2.0
+
+# Collections - Define all documentation sections
+collections:
+  features:
+    output: true
+    permalink: /features/:name/
+  getting-started:
+    output: true
+    permalink: /getting-started/:name/
+  api:
+    output: true
+    permalink: /api/:name/
+  examples:
+    output: true
+    permalink: /examples/:name/
+
+# Navigation
+navigation:
+  - title: Home
+    url: /
+  - title: Getting Started
+    url: /getting-started/
+  - title: Features
+    url: /features/
+  - title: API Reference
+    url: /api/
+  - title: Examples
+    url: /examples/
+  - title: GitHub
+    url: https://github.com/eyjolfurgudnivatne/mcp.gateway
+
+# Defaults - Use MCP layout by default
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: mcp-default
+      toc: true
+
+# Exclude from build
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-remote-theme

@@ -5,22 +5,11 @@ using Mcp.Gateway.Tools;
 
 public class DateTimeTools
 {
-    [McpTool("get_current_datetime",
-        Title = "Get current date and time",
-        Description = "Get current date and time in specified timezone (default: local).",
-        InputSchema = @"{
-            ""type"":""object"",
-            ""properties"":{
-                ""timezoneName"":{
-                    ""type"":""string"",
-                    ""description"":""Timezone name (e.g., 'Europe/Oslo', 'UTC')"",
-                    ""default"":""UTC""
-                }
-            }
-        }")]
-    public JsonRpcMessage GetCurrentDateTime(JsonRpcMessage message)
+    [McpTool(Title = "Get current date and time",
+             Description = "Get current date and time in specified timezone (default: local).")]
+    public JsonRpcMessage GetCurrentDatetime(TypedJsonRpc<CurrentDateTimeRequest> message)
     {
-        var request = message.GetParams<CurrentDateTimeRequest>();
+        var request = message.GetParams();
         TimeZoneInfo tz;
 
         try
@@ -54,12 +43,8 @@ public class DateTimeTools
     }
 
     [McpTool("get_iso8601_timestamp",
-        Title = "Get current timestamp in ISO 8601 format",
-        Description = "Get current timestamp in ISO 8601 format (UTC).",
-        InputSchema = @"{
-            ""type"":""object"",
-            ""properties"":{}
-        }")]
+             Title = "Get current timestamp in ISO 8601 format",
+             Description = "Get current timestamp in ISO 8601 format (UTC).")]
     public JsonRpcMessage GetIso8601Timestamp(JsonRpcMessage message)
     {
         return ToolResponse.Success(
@@ -70,25 +55,11 @@ public class DateTimeTools
         );
     }
 
-    [McpTool(
-        Title = "Add or subtract days from a date",
-        Description = "Add or subtract days from a date.",
-        InputSchema = @"{
-            ""type"":""object"",
-            ""properties"":{
-                ""date"":{
-                    ""type"":""string"",
-                    ""description"":""Starting date in YYYY-MM-DD format (defaults to today)""
-                },
-                ""days"":{
-                    ""type"":""integer"",
-                    ""description"":""Number of days to add (positive) or subtract (negative)""
-                }
-            }
-        }")]
-    public JsonRpcMessage AddDays(JsonRpcMessage message)
+    [McpTool(Title = "Add or subtract days from a date",
+             Description = "Add or subtract days from a date.")]
+    public JsonRpcMessage AddDays(TypedJsonRpc<AddDaysRequest> message)
     {
-        var request = message.GetParams<AddDaysRequest>();
+        var request = message.GetParams();
 
         DateTime baseDate = DateTime.Now;
         if (!string.IsNullOrWhiteSpace(request?.Date))
@@ -109,21 +80,11 @@ public class DateTimeTools
         );
     }
 
-    [McpTool(
-            Title = "Check if a date is a weekend",
-            Description = "Check if a date is a weekend (Saturday or Sunday).",
-            InputSchema = @"{
-            ""type"":""object"",
-            ""properties"":{
-                ""date"":{
-                    ""type"":""string"",
-                    ""description"":""Date in YYYY-MM-DD format (defaults to today)""
-                }
-            }
-        }")]
-    public JsonRpcMessage IsWeekend(JsonRpcMessage message)
+    [McpTool(Title = "Check if a date is a weekend",
+             Description = "Check if a date is a weekend (Saturday or Sunday).")]
+    public JsonRpcMessage IsWeekend(TypedJsonRpc<IsWeekendRequest> message)
     {
-        var request = message.GetParams<IsWeekendRequest>();
+        var request = message.GetParams();
 
         DateTime baseDate = DateTime.Now;
         if (!string.IsNullOrWhiteSpace(request?.Date))
@@ -142,21 +103,11 @@ public class DateTimeTools
             );
     }
 
-    [McpTool(
-            Title = "Get week number for a date",
-            Description = "Get ISO 8601 week number for a date.",
-            InputSchema = @"{
-            ""type"":""object"",
-            ""properties"":{
-                ""date"":{
-                    ""type"":""string"",
-                    ""description"":""Starting date in YYYY-MM-DD format (defaults to today)""
-                }
-            }
-        }")]
-    public JsonRpcMessage GetWeeknumber(JsonRpcMessage message)
+    [McpTool(Title = "Get week number for a date",
+             Description = "Get ISO 8601 week number for a date.")]
+    public JsonRpcMessage GetWeeknumber(TypedJsonRpc<GetWeeknumberRequest> message)
     {
-        var request = message.GetParams<GetWeeknumberRequest>();
+        var request = message.GetParams();
 
         DateTime baseDate = DateTime.Now;
         if (!string.IsNullOrWhiteSpace(request?.Date))

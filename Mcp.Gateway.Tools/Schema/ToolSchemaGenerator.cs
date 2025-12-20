@@ -87,7 +87,7 @@ internal static class ToolSchemaGenerator
         if (underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset))
             return ("string", "date-time");
         if (underlying.IsEnum)
-            return ("string", null); // enum verdier håndteres senere hvis du vil
+            return ("string", null);
 
         if (underlying == typeof(bool))
             return ("boolean", null);
