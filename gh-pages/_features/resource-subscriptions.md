@@ -342,6 +342,6 @@ eventSource.addEventListener('error', async (error) => {
 
 ## See Also
 
-- [Notifications](/features/notifications/) - Real-time server notifications
-- [Resources API](/api/resources/) - Complete Resources API reference
-- [Examples: Resource Server](/examples/resource/) - Complete example with subscriptions
+- [Notifications](/mcp.gateway/features/notifications/) - Real-time server notifications
+- [Resources API](/mcp.gateway/api/resources/) - Complete Resources API reference
+- [Resource Example](/mcp.gateway/examples/resource/) - Complete example with subscriptions
