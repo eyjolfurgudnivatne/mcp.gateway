@@ -2,7 +2,7 @@ name: Deploy GitHub Pages
 
 on:
   push:
-    branches: [docs/github-pages]
+    branches: [main, docs/github-pages]  # Add main branch temporarily
   workflow_dispatch:
 
 permissions:
