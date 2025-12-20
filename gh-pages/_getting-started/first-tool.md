@@ -257,10 +257,29 @@ var name = args.Name;  // Safe!
 
 ```csharp
 [McpTool("GreetUser")]      // BAD - PascalCase
-[McpTool("greet.user")]     // BAD - dots not allowed
 [McpTool("greet user")]     // BAD - spaces not allowed
 [McpTool("greet_user")]     // GOOD! ✅
+[McpTool("greet-user")]     // GOOD! ✅ (hyphens allowed)
+[McpTool("greet.user")]     // GOOD! ✅ (dots allowed since v1.4.0)
 ```
+
+**Valid pattern (MCP 2025-11-25):** `^[a-zA-Z0-9_.-]{1,128}$`
+
+**Allowed characters:**
+- ✅ Lowercase letters: `a-z`
+- ✅ Uppercase letters: `A-Z`
+- ✅ Numbers: `0-9`
+- ✅ Underscores: `_`
+- ✅ Hyphens: `-`
+- ✅ Dots: `.` (since v1.4.0 for namespacing)
+
+**Examples:**
+- ✅ `greet_user` - Underscore (traditional)
+- ✅ `greet-user` - Hyphen
+- ✅ `greet.user` - Dot (namespacing)
+- ✅ `admin.tools.list` - Multi-level namespace
+- ❌ `greet user` - Spaces NOT allowed
+- ❌ `greet@user` - Special characters NOT allowed
 
 ### ❌ Mistake 3: Not Matching Request ID
 
