@@ -109,6 +109,30 @@ app.MapStreamableHttpEndpoint("/mcp");
 app.Run();
 ```
 
+**Important for GitHub Copilot:** GitHub Copilot (as of Dec 2025) expects protocol version `2025-06-18`. Set the environment variable to ensure compatibility:
+
+```powershell
+# PowerShell
+$env:MCP_PROTOCOL_VERSION = "2025-06-18"
+dotnet run
+```
+
+Or add to `launchSettings.json`:
+
+```json
+{
+  "profiles": {
+    "stdio": {
+      "commandName": "Project",
+      "commandLineArgs": "--stdio",
+      "environmentVariables": {
+        "MCP_PROTOCOL_VERSION": "2025-06-18"
+      }
+    }
+  }
+}
+```
+
 ## Step 5: Test Your Tool
 
 ### Test with curl
@@ -157,6 +181,8 @@ curl -X POST http://localhost:5000/mcp \
 
 ### Test with GitHub Copilot
 
+**Important:** GitHub Copilot (as of Dec 2025) expects protocol version `2025-06-18`. Make sure to set `MCP_PROTOCOL_VERSION` environment variable before running (see Step 4).
+
 Create `.mcp.json` (in your home directory or workspace):
 
 ```json
@@ -170,7 +196,10 @@ Create `.mcp.json` (in your home directory or workspace):
         "C:\\path\\to\\GreetingServer",
         "--",
         "--stdio"
-      ]
+      ],
+      "env": {
+        "MCP_PROTOCOL_VERSION": "2025-06-18"
+      }
     }
   }
 }
@@ -475,12 +504,12 @@ public record GreetParams(string Name);
 
 Now that you've built your first tool:
 
-1. [Explore Examples](/examples/) - Calculator, DateTime, Metrics
-2. [Learn Features](/features/) - Lifecycle hooks, subscriptions, auth
-3. [Read API Docs](/api/tools/) - Complete Tools API reference
+1. **[Calculator Example](/mcp.gateway/examples/calculator/)** - More complex tool example
+2. **[Lifecycle Hooks](/mcp.gateway/features/lifecycle-hooks/)** - Monitor tool invocations
+3. **[Tools API](/mcp.gateway/api/tools/)** - Complete API reference
 
 ## See Also
 
-- [Installation Guide](/getting-started/installation/) - Setup instructions
-- [Calculator Example](/examples/calculator/) - More complex tool example
-- [Tools API](/api/tools/) - Complete API reference
+- [Getting Started Overview](/mcp.gateway/getting-started/index/) - Overview and quick start
+- [Installation Guide](/mcp.gateway/getting-started/installation/) - Setup instructions
+- [Calculator Example](/mcp.gateway/examples/calculator/) - More complex tool example
