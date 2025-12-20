@@ -217,6 +217,57 @@ dotnet nuget locals all --clear
 dotnet restore
 ```
 
+## Protocol Version Compatibility
+
+MCP Gateway **reports protocol version 2025-11-25** by default, but some clients don't support this yet.
+
+### Why This Matters
+
+**GitHub Copilot** (as of Dec 2025) expects `2025-06-18` and will fail to connect if server reports `2025-11-25`.
+
+### Solution: Environment Variable
+
+Set `MCP_PROTOCOL_VERSION` to advertise an older version:
+
+**PowerShell:**
+```powershell
+$env:MCP_PROTOCOL_VERSION = "2025-06-18"
+dotnet run
+```
+
+**Bash:**
+```bash
+export MCP_PROTOCOL_VERSION="2025-06-18"
+dotnet run
+```
+
+**launchSettings.json:**
+```json
+{
+  "profiles": {
+    "stdio": {
+      "commandName": "Project",
+      "commandLineArgs": "--stdio",
+      "environmentVariables": {
+        "MCP_PROTOCOL_VERSION": "2025-06-18"
+      }
+    }
+  }
+}
+```
+
+**Important:** This only changes what version is **reported** in the `initialize` response. The server still **accepts** all versions: `2025-11-25`, `2025-06-18`, `2025-03-26`.
+
+### Supported Versions
+
+| Version | Status | Clients |
+|---------|--------|---------|
+| `2025-11-25` | Latest (default) | Future MCP clients |
+| `2025-06-18` | Stable | GitHub Copilot, Claude Desktop |
+| `2025-03-26` | Legacy | Older MCP clients |
+
+**Tip:** Use `2025-06-18` for maximum compatibility with current MCP clients.
+
 ## Next Steps
 
 Now that you have MCP Gateway installed:
