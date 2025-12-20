@@ -42,7 +42,7 @@ public class CalculatorTools
         var args = request.GetParams()
             ?? throw new ToolInvalidParamsException(
                 "Parameters 'number1' and 'number2' are required and must be numbers.");
-
+        
         return ToolResponse.Success(
             request.Id,
             new MultiplyResponse(args.Number1 * args.Number2));
