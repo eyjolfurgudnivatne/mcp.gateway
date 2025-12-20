@@ -105,20 +105,34 @@ Get a specific prompt with provided arguments.
 {
   "jsonrpc": "2.0",
   "result": {
+    "name": "code_review",
     "description": "Code review prompt",
     "messages": [
       {
         "role": "user",
-        "content": {
-          "type": "text",
-          "text": "Please review this C# code: public class Example { }"
-        }
+        "content": "Please review this C# code: public class Example { }"
       }
-    ]
+    ],
+    "arguments": {
+      "code": {
+        "type": "string",
+        "description": "The code to review"
+      },
+      "language": {
+        "type": "string",
+        "description": "Programming language"
+      }
+    }
   },
   "id": 2
 }
 ```
+
+**Response fields:**
+- `name` (string) - Prompt name
+- `description` (string) - Prompt description
+- `messages` (array) - Prompt messages with `role` and `content`
+- `arguments` (object) - Argument schema (JSON Schema format)
 
 ## Defining Prompts
 
@@ -132,13 +146,17 @@ public class MyPrompts
     [McpPrompt("greeting")]
     public JsonRpcMessage Greeting(JsonRpcMessage request)
     {
-        return PromptResponse.Success(
+        return ToolResponse.Success(
             request.Id,
-            "A simple greeting prompt",
-            new[]
-            {
-                new PromptMessage("user", "Hello! How can I help you today?")
-            });
+            new PromptResponse(
+                Name: "greeting",
+                Description: "A simple greeting prompt",
+                Messages: new[]
+                {
+                    new PromptMessage(PromptRole.User, "Hello! How can I help you today?")
+                },
+                Arguments: new { }
+            ));
     }
 }
 ```
@@ -154,13 +172,29 @@ public JsonRpcMessage CodeReview(TypedJsonRpc<CodeReviewArgs> request)
     
     var promptText = $"Please review this {args.Language} code:\n\n{args.Code}";
     
-    return PromptResponse.Success(
+    return ToolResponse.Success(
         request.Id,
-        "Code review prompt",
-        new[]
-        {
-            new PromptMessage("user", promptText)
-        });
+        new PromptResponse(
+            Name: "code_review",
+            Description: "Code review prompt",
+            Messages: new[]
+            {
+                new PromptMessage(PromptRole.User, promptText)
+            },
+            Arguments: new
+            {
+                code = new
+                {
+                    type = "string",
+                    description = "The code to review"
+                },
+                language = new
+                {
+                    type = "string",
+                    description = "Programming language (e.g., csharp, javascript)"
+                }
+            }
+        ));
 }
 
 public record CodeReviewArgs(string Code, string? Language = "text");
@@ -174,16 +208,32 @@ public JsonRpcMessage InterviewPrep(TypedJsonRpc<InterviewArgs> request)
 {
     var args = request.GetParams()!;
     
-    return PromptResponse.Success(
+    return ToolResponse.Success(
         request.Id,
-        "Technical interview preparation",
-        new[]
-        {
-            new PromptMessage("system", 
-                "You are an experienced technical interviewer."),
-            new PromptMessage("user", 
-                $"Help me prepare for a {args.Role} interview at {args.Company}.")
-        });
+        new PromptResponse(
+            Name: "interview_prep",
+            Description: "Technical interview preparation",
+            Messages: new[]
+            {
+                new PromptMessage(PromptRole.System, 
+                    "You are an experienced technical interviewer."),
+                new PromptMessage(PromptRole.User, 
+                    $"Help me prepare for a {args.Role} interview at {args.Company}.")
+            },
+            Arguments: new
+            {
+                role = new
+                {
+                    type = "string",
+                    description = "Job role (e.g., 'Senior Developer', 'DevOps Engineer')"
+                },
+                company = new
+                {
+                    type = "string",
+                    description = "Company name"
+                }
+            }
+        ));
 }
 
 public record InterviewArgs(string Role, string Company);
@@ -197,35 +247,89 @@ Marks a method as an MCP prompt.
 
 ```csharp
 [McpPrompt(
-    string name,                    // Required: Prompt name
-    string? Description = null)]    // Optional: Description
+    string? name = null,            // Optional: Prompt name (auto-generated if null)
+    string? Description = null,     // Optional: Description
+    string? Icon = null)]           // Optional: Icon URL (v1.6.5+)
+```
+
+**Attribute properties:**
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | string | No | Prompt identifier (auto-generated from method name if not provided) |
+| `Description` | string | No | Prompt description for AI |
+| `Icon` | string | No | Icon URL (v1.6.5+) |
+
+**Example with icon:**
+```csharp
+[McpPrompt("code_review",
+    Description = "Review code for best practices",
+    Icon = "https://example.com/icons/code-review.png")]
 ```
 
 ## Prompt Responses
 
+### PromptResponse Structure
+
+All prompts must return a `PromptResponse` with these fields:
+
+```csharp
+public sealed record PromptResponse(
+    string Name,                              // Prompt name
+    string Description,                       // Prompt description
+    IReadOnlyList<PromptMessage> Messages,   // Prompt messages
+    object Arguments);                        // Argument schema
+```
+
+### PromptMessage Structure
+
+Messages use `PromptRole` enum:
+
+```csharp
+public sealed record PromptMessage(
+    PromptRole Role,    // System, User, Assistant, or Tool
+    string Content);    // Message content
+
+public enum PromptRole
+{
+    System,
+    User,
+    Assistant,
+    Tool
+}
+```
+
 ### Simple Prompt
 
 ```csharp
-return PromptResponse.Success(
+return ToolResponse.Success(
     request.Id,
-    "Description",
-    new[]
-    {
-        new PromptMessage("user", "Prompt text")
-    });
+    new PromptResponse(
+        Name: "greeting",
+        Description: "A greeting prompt",
+        Messages: new[]
+        {
+            new PromptMessage(PromptRole.User, "Hello!")
+        },
+        Arguments: new { }
+    ));
 ```
 
 ### System + User Messages
 
 ```csharp
-return PromptResponse.Success(
+return ToolResponse.Success(
     request.Id,
-    "Chat prompt",
-    new[]
-    {
-        new PromptMessage("system", "You are a helpful assistant."),
-        new PromptMessage("user", "How do I...")
-    });
+    new PromptResponse(
+        Name: "chat_helper",
+        Description: "Chat prompt",
+        Messages: new[]
+        {
+            new PromptMessage(PromptRole.System, "You are a helpful assistant."),
+            new PromptMessage(PromptRole.User, "How do I...")
+        },
+        Arguments: new { }
+    ));
 ```
 
 ## Use Cases
@@ -249,9 +353,24 @@ Code:
 {args.Code}
 ```";
     
-    return PromptResponse.Success(request.Id, "Code review", 
-        new[] { new PromptMessage("user", prompt) });
+    return ToolResponse.Success(
+        request.Id,
+        new PromptResponse(
+            Name: "code_review",
+            Description: "Code review prompt",
+            Messages: new[]
+            {
+                new PromptMessage(PromptRole.User, prompt)
+            },
+            Arguments: new
+            {
+                code = new { type = "string", description = "The code to review" },
+                language = new { type = "string", description = "Programming language" }
+            }
+        ));
 }
+
+public record CodeReviewArgs(string Code, string Language);
 ```
 
 ### 2. SQL Query Builder
@@ -272,14 +391,25 @@ Please provide:
 2. Explanation of the query
 3. Any potential performance considerations";
     
-    return PromptResponse.Success(request.Id, "SQL builder",
-        new[] { new PromptMessage("user", prompt) });
+    return ToolResponse.Success(
+        request.Id,
+        new PromptResponse(
+            Name: "sql_builder",
+            Description: "SQL query builder",
+            Messages: new[]
+            {
+                new PromptMessage(PromptRole.User, prompt)
+            },
+            Arguments: new
+            {
+                table = new { type = "string", description = "Database table name" },
+                operation = new { type = "string", description = "SQL operation (SELECT, INSERT, UPDATE, DELETE)" },
+                conditions = new { type = "array", description = "Query conditions" }
+            }
+        ));
 }
 
-public record SqlArgs(
-    string Table, 
-    string Operation, 
-    string[] Conditions);
+public record SqlArgs(string Table, string Operation, string[] Conditions);
 ```
 
 ### 3. Documentation Generator
@@ -290,16 +420,23 @@ public JsonRpcMessage DocGenerator(TypedJsonRpc<DocArgs> request)
 {
     var args = request.GetParams()!;
     
-    return PromptResponse.Success(
+    return ToolResponse.Success(
         request.Id,
-        "Documentation generator",
-        new[]
-        {
-            new PromptMessage("system", 
-                "You are a technical writer creating clear documentation."),
-            new PromptMessage("user", 
-                $"Create documentation for:\n\n{args.Code}")
-        });
+        new PromptResponse(
+            Name: "doc_generator",
+            Description: "Documentation generator",
+            Messages: new[]
+            {
+                new PromptMessage(PromptRole.System, 
+                    "You are a technical writer creating clear documentation."),
+                new PromptMessage(PromptRole.User, 
+                    $"Create documentation for:\n\n{args.Code}")
+            },
+            Arguments: new
+            {
+                code = new { type = "string", description = "Code to document" }
+            }
+        ));
 }
 
 public record DocArgs(string Code);
@@ -415,6 +552,6 @@ public async Task PromptsGet_ValidPrompt_ReturnsMessages()
 
 ## See Also
 
-- [Tools API](/api/tools/) - Tool invocation reference
-- [Resources API](/api/resources/) - Resource access reference
-- [Examples](/examples/) - Complete server examples
+- [Tools API](/mcp.gateway/api/tools/) - Tool invocation reference
+- [Resources API](/mcp.gateway/api/resources/) - Resource access reference
+- [Prompt Example](/mcp.gateway/examples/prompt/) - Complete prompt server example (Coming Soon)
