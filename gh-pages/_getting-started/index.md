@@ -6,7 +6,7 @@ breadcrumbs:
   - title: Home
     url: /
   - title: Getting Started
-    url: /getting-started/
+    url: /getting-started/index/
 toc: true
 ---
 
