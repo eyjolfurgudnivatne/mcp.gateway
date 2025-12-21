@@ -1,0 +1,32 @@
+# Docker ignore file for Jekyll documentation build
+# Excludes unnecessary files from Docker context
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Jekyll build artifacts
+_site/
+.jekyll-cache/
+.jekyll-metadata
+
+# Dependencies
+vendor/
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+
+# Documentation
+README.md
+PREVIEW.md
