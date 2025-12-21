@@ -553,13 +553,49 @@ using System.Text.Json.Serialization;
 
 ### Tool Naming Convention
 
-- **Pattern:** `^[a-zA-Z0-9_-]{1,128}$`
-- **Use:** Underscores (`_`) or hyphens (`-`)
-- **Avoid:** Dots (`.`) - breaks GitHub Copilot
+**MCP Specification Guidelines** (per [MCP 2025-11-25](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool-names)):
+
+- **Allowed characters:**
+  - Letters: `A-Z`, `a-z`
+  - Numbers: `0-9`
+  - Underscore: `_`
+  - Hyphen: `-`
+  - Dot: `.`
+
+- **Length:** 1-128 characters
+- **Case:** Case-sensitive
+- **Not allowed:** Spaces, commas, other special characters
+
+**Examples (from specification):**
 
 ```csharp
-✅ GOOD: "add_numbers", "get-time", "fetch_data"
-❌ BAD:  "add.numbers", "get.time"
+✅ VALID (per MCP specification):
+"getUser"             // camelCase
+"DATA_EXPORT_v2"      // UPPER_SNAKE_CASE with version
+"admin.tools.list"    // Namespace-style with dots
+"add_numbers"         // snake_case
+"get-weather"         // kebab-case
+
+❌ INVALID:
+"get user"            // Contains space
+"fetch,data"          // Contains comma
+"tool@service"        // Contains special character (@)
+""                    // Too short (min 1 character)
+"x" * 129             // Too long (max 128 characters)
+```
+
+**Recommended Patterns:**
+
+While dots (`.`) are allowed by the MCP specification, we recommend using underscores (`_`) or hyphens (`-`) for better compatibility across different tooling and text editors:
+
+```csharp
+// Recommended: Clear and widely compatible
+[McpTool("add_numbers")]      // snake_case (recommended)
+[McpTool("get-weather")]       // kebab-case (recommended)
+
+// Also valid: Namespace-style (useful for organization)
+[McpTool("math.add")]          // Namespace with dots (valid per spec)
+[McpTool("string.concat")]     // Group related tools
 ```
 
 ### Response Helpers
