@@ -1,0 +1,19 @@
+# Docker Compose for local Jekyll documentation preview
+# Usage: docker-compose up
+# Access: http://localhost:4000/mcp.gateway/
+
+version: '3.8'
+
+services:
+  jekyll:
+    image: jekyll/jekyll:4.2.2
+    container_name: mcp-gateway-docs
+    command: jekyll serve --watch --force_polling --livereload
+    ports:
+      - "4000:4000"
+      - "35729:35729"  # LiveReload
+    volumes:
+      - .:/srv/jekyll
+      - ./vendor/bundle:/usr/local/bundle
+    environment:
+      - JEKYLL_ENV=development
