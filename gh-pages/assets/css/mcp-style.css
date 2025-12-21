@@ -226,8 +226,8 @@ body {
   top: var(--spacing-md);
   left: var(--spacing-md);
   z-index: 101;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
+  background: var(--accent-color);
+  border: 1px solid var(--accent-color);
   width: 44px;
   height: 44px;
   border-radius: 8px;
@@ -235,6 +235,17 @@ body {
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  color: #ffffff;
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.mobile-menu-toggle:hover {
+  background: var(--accent-hover);
+  transform: scale(1.05);
+}
+
+.mobile-menu-toggle:active {
+  transform: scale(0.95);
 }
 
 /* Main Content */
