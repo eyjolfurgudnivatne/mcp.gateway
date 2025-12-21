@@ -6,14 +6,19 @@ version: '3.8'
 
 services:
   jekyll:
-    image: jekyll/jekyll:4.2.2
+    image: ruby:3.3-alpine
     container_name: mcp-gateway-docs
-    command: jekyll serve --watch --force_polling --livereload
+    command: >
+      sh -c "
+      gem install jekyll bundler &&
+      bundle install &&
+      bundle exec jekyll serve --host 0.0.0.0 --watch --force_polling --livereload
+      "
     ports:
       - "4000:4000"
       - "35729:35729"  # LiveReload
     volumes:
       - .:/srv/jekyll
-      - ./vendor/bundle:/usr/local/bundle
+    working_dir: /srv/jekyll
     environment:
       - JEKYLL_ENV=development
