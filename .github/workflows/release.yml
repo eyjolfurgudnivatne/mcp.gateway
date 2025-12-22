@@ -43,7 +43,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore /p:Version=${{ steps.version.outputs.version }}
       
       - name: Run tests
-        run: dotnet test --configuration Release --no-build --verbosity normal --filter "FullyQualifiedName!~OllamaIntegrationTests"
+        run: dotnet test --configuration Release --no-build --verbosity normal --filter "FullyQualifiedName!~OllamaIntegrationTests&FullyQualifiedName!~MEAIIntegrationTests"
       
       - name: Pack NuGet package
         run: |

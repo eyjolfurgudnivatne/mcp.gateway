@@ -140,8 +140,7 @@ Invoke a specific tool with parameters.
         "type": "text",
         "text": "{\"result\":8}"
       }
-    ],
-    "isError": false
+    ]
   },
   "id": 2
 }
@@ -149,7 +148,6 @@ Invoke a specific tool with parameters.
 
 **Response fields:**
 - `content` (array) - Tool output
-- `isError` (boolean) - Always `false` for success
 
 ### Response (Error)
 
