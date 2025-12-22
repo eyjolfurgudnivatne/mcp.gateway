@@ -1,0 +1,31 @@
+@Test_HostAddress = http://localhost:5237
+@OllamaIntegration_HostAddress = http://localhost:62080
+
+
+### Test 1: Call tool directly (tests MEAIIntegration local tools - NOT remote!)
+POST {{Test_HostAddress}}/rpc
+Accept: application/json
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "tell_ollama",
+    "arguments": {
+      "format": "hex"
+    }
+  },
+  "id": 2
+}
+
+### Test 3: Verify OllamaIntegration is running (direct call, bypasses MEAIIntegration)
+POST {{OllamaIntegration_HostAddress}}/rpc
+Accept: application/json
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "method": "tools/list",
+  "id": 2
+}
