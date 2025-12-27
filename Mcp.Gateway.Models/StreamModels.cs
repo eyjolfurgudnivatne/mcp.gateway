@@ -1,4 +1,4 @@
-﻿namespace Mcp.Gateway.Tools;
+namespace Mcp.Gateway.Tools;
 
 using System;
 using System.Text.Json;

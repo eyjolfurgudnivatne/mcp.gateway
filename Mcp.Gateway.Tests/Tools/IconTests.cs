@@ -1,7 +1,6 @@
 namespace Mcp.Gateway.Tests.Tools;
 
 using Mcp.Gateway.Tools;
-using Mcp.Gateway.Tools.Icons;  // NEW: For McpIconDefinition
 using System.Text.Json;
 using Xunit;
 

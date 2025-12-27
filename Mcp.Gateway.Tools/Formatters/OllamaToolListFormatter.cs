@@ -29,7 +29,7 @@ public class OllamaToolListFormatter : IToolListFormatter
     {
         var formattedTools = tools.Select(t =>
         {
-            var schema = JsonSerializer.Deserialize<JsonElement>(t.InputSchema);
+            var schema = JsonSerializer.Deserialize<JsonElement>(t.InputSchema!);
             
             // Extract properties and required fields from MCP InputSchema
             var properties = schema.TryGetProperty("properties", out var props)
@@ -38,7 +38,7 @@ public class OllamaToolListFormatter : IToolListFormatter
             
             var required = schema.TryGetProperty("required", out var req)
                 ? req.EnumerateArray().Select(x => x.GetString()).ToArray()
-                : Array.Empty<string>();
+                : [];
             
             var typeValue = schema.TryGetProperty("type", out var typeElement)
                 ? typeElement.GetString()

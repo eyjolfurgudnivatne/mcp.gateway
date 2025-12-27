@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 
 /// <summary>
-/// ToolService partial class - Function Definitions (Tools & Prompts) (v1.5.0)
+/// ToolService partial class - Function Definitions (Tools and Prompts) (v1.5.0)
 /// </summary>
 public partial class ToolService
 {

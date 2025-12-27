@@ -17,7 +17,7 @@ public class McpToolListFormatter : IToolListFormatter
             object? schema = null;
             try
             {
-                schema = JsonSerializer.Deserialize<object>(t.InputSchema, JsonOptions.Default);
+                schema = JsonSerializer.Deserialize<object>(t.InputSchema!, JsonOptions.Default);
             }
             catch
             {

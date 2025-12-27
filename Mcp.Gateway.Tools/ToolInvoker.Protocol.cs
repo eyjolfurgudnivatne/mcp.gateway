@@ -414,7 +414,7 @@ public partial class ToolInvoker
                     object? schema = null;
                     try
                     {
-                        schema = JsonSerializer.Deserialize<object>(t.InputSchema, JsonOptions.Default);
+                        schema = JsonSerializer.Deserialize<object>(t.InputSchema!, JsonOptions.Default);
                     }
                     catch
                     {

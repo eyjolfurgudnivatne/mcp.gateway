@@ -1,4 +1,4 @@
-namespace Mcp.Gateway.Tools.Icons;
+namespace Mcp.Gateway.Tools;
 
 using System.Text.Json.Serialization;
 

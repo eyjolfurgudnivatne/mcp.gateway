@@ -35,7 +35,15 @@
 	</ItemGroup>
 	
 	<ItemGroup>
+		<ProjectReference Include="..\Mcp.Gateway.Models\Mcp.Gateway.Models.csproj" />
+	</ItemGroup>
+	
+	<ItemGroup>
 		<None Include="README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <Folder Include="Icons\" />
 	</ItemGroup>
 
 </Project>

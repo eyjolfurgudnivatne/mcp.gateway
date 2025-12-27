@@ -1,5 +1,7 @@
 namespace Mcp.Gateway.Tools;
 
+using System;
+
 /// <summary>
 /// Invalid JSON was received by the server.
 /// An error occurred on the server while parsing the JSON text.

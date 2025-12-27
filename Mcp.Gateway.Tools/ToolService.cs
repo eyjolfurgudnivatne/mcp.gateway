@@ -10,7 +10,7 @@ using System.Collections.Concurrent;
 /// Partial class files:
 /// - ToolService.cs (this file) - Core infrastructure
 /// - ToolService.Scanning.cs - Function scanning and registration
-/// - ToolService.Functions.cs - Function definitions (Tools & Prompts)
+/// - ToolService.Functions.cs - Function definitions (Tools and Prompts)
 /// - ToolService.Invocation.cs - Function invocation with DI
 /// - ToolService.Resources.cs - Resource-specific functionality
 /// </remarks>
