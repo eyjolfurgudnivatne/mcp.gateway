@@ -428,7 +428,7 @@ public partial class ToolInvoker
                         ["description"] = t.Description,
                         ["inputSchema"] = schema!
                     };
-
+                    
                     // Add icons if present (MCP 2025-11-25)
                     if (!string.IsNullOrEmpty(t.Icon))
                     {

@@ -1,4 +1,4 @@
-namespace MEAIIntegrationTests.Fixture;
+namespace ClientTestMcpServerTests.Fixture;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -8,7 +8,7 @@ using System.Net.Http;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
 
-public class MEAIIntegrationFixture : IAsyncLifetime
+public class ClientTestMcpServerFixture : IAsyncLifetime
 {
     public WebApplicationFactory<Program> Factory { get; private set; } = null!;
     public HttpClient HttpClient { get; private set; } = null!;
