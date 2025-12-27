@@ -188,11 +188,43 @@ public class McpClient : IMcpClient
         {
             await foreach (var message in _transport.ReceiveLoopAsync(ct))
             {
+                // Console.WriteLine($"Received message: ID={message.Id} ({message.Id?.GetType().Name}), Method={message.Method}, IsResponse={message.IsResponse}");
+                
                 if (message.IsResponse || message.IsErrorResponse)
                 {
-                    if (message.Id != null && _pendingRequests.TryGetValue(message.Id, out var tcs))
+                    if (message.Id != null)
                     {
-                        tcs.TrySetResult(message);
+                        // Try exact match first
+                        if (_pendingRequests.TryGetValue(message.Id, out var tcs))
+                        {
+                            tcs.TrySetResult(message);
+                        }
+                        // Fallback: Try converting to int/long/string if types mismatch
+                        else
+                        {
+                            // Handle int/long mismatch (e.g. request was int, response is long)
+                            object? matchingKey = null;
+                            
+                            if (message.Id is long l && l <= int.MaxValue && l >= int.MinValue)
+                            {
+                                var i = (int)l;
+                                if (_pendingRequests.ContainsKey(i)) matchingKey = i;
+                            }
+                            else if (message.Id is int i)
+                            {
+                                var l2 = (long)i;
+                                if (_pendingRequests.ContainsKey(l2)) matchingKey = l2;
+                            }
+
+                            if (matchingKey != null && _pendingRequests.TryGetValue(matchingKey, out tcs))
+                            {
+                                tcs.TrySetResult(message);
+                            }
+                            else
+                            {
+                                // Console.WriteLine($"Could not find pending request for ID={message.Id}");
+                            }
+                        }
                     }
                 }
                 else if (message.IsNotification)

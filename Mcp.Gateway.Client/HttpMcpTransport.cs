@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
@@ -56,9 +57,27 @@ public class HttpMcpTransport : IMcpTransport
             var responseMessage = await response.Content.ReadFromJsonAsync<JsonRpcMessage>(JsonOptions.Default, ct);
             if (responseMessage != null)
             {
-                await _incomingMessages.Writer.WriteAsync(responseMessage, ct);
+                // Fix ID if it's a JsonElement (System.Text.Json deserializes object properties as JsonElement)
+                var fixedMsg = NormalizeMessageId(responseMessage);
+                await _incomingMessages.Writer.WriteAsync(fixedMsg, ct);
             }
         }
+    }
+
+    private static JsonRpcMessage NormalizeMessageId(JsonRpcMessage message)
+    {
+        if (message.Id is JsonElement idElem)
+        {
+            object? fixedId = idElem.ValueKind switch
+            {
+                JsonValueKind.String => idElem.GetString(),
+                JsonValueKind.Number => idElem.TryGetInt32(out var i) ? i : idElem.GetInt64(),
+                JsonValueKind.Null => null,
+                _ => idElem.ToString()
+            };
+            return message with { Id = fixedId };
+        }
+        return message;
     }
 
     public IAsyncEnumerable<JsonRpcMessage> ReceiveLoopAsync(CancellationToken ct = default)
