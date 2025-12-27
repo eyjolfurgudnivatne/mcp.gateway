@@ -22,8 +22,8 @@ public class McpClient : IMcpClient
     private int _nextId = 1;
     private bool _isInitialized = false;
 
-    public object? ServerCapabilities { get; private set; }
-    public object? ServerInfo { get; private set; }
+    public ServerCapabilities? ServerCapabilities { get; private set; }
+    public ImplementationInfo? ServerInfo { get; private set; }
 
     public event EventHandler<NotificationMessage>? NotificationReceived;
 
@@ -61,17 +61,17 @@ public class McpClient : IMcpClient
         var result = response.GetResult<JsonElement>();
         if (result.TryGetProperty("capabilities", out var caps))
         {
-            ServerCapabilities = caps.Deserialize<object>(JsonOptions.Default);
+            ServerCapabilities = caps.Deserialize<ServerCapabilities>(JsonOptions.Default);
         }
         if (result.TryGetProperty("serverInfo", out var info))
         {
-            ServerInfo = info.Deserialize<object>(JsonOptions.Default);
+            ServerInfo = info.Deserialize<ImplementationInfo>(JsonOptions.Default);
         }
 
         // Send initialized notification
         var initializedNotify = JsonRpcMessage.CreateNotification("notifications/initialized");
         await _transport.SendAsync(initializedNotify, ct);
-
+        
         _isInitialized = true;
     }
 

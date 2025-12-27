@@ -18,12 +18,12 @@ public interface IMcpClient : IAsyncDisposable
     /// <summary>
     /// Gets the server capabilities received during initialization.
     /// </summary>
-    object? ServerCapabilities { get; }
+    ServerCapabilities? ServerCapabilities { get; }
 
     /// <summary>
     /// Gets the server info received during initialization.
     /// </summary>
-    object? ServerInfo { get; }
+    ImplementationInfo? ServerInfo { get; }
 
     // Tools
     Task<JsonRpcMessage> ListToolsAsync(string? cursor = null, CancellationToken ct = default);
