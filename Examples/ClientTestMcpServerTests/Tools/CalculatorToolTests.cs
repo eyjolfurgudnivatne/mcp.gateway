@@ -19,10 +19,10 @@ public class CalculatorToolTests(ClientTestMcpServerFixture fixture)
         Assert.NotNull(client);
 
         // 3. Koble til (utfører handshake)
-        await client.ConnectAsync(fixture.CancellationToken);
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
 
         // 4. Kall et verktøy
-        var result = await client.CallToolAsync<AddNumbersResponse>("add_numbers", new AddNumbersRequest(5, 10), fixture.CancellationToken);
+        var result = await client.CallToolAsync<AddNumbersResponse>("add_numbers", new AddNumbersRequest(5, 10), TestContext.Current.CancellationToken);
         Assert.NotNull(result);
     }
 
@@ -38,10 +38,10 @@ public class CalculatorToolTests(ClientTestMcpServerFixture fixture)
         Assert.NotNull(client);
 
         // 3. Koble til (utfører handshake)
-        await client.ConnectAsync(fixture.CancellationToken);
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
 
         // 4. List Tools
-        var tools = await client.ListToolsAsync(ct: fixture.CancellationToken);
+        var tools = await client.ListToolsAsync(ct: TestContext.Current.CancellationToken);
         Assert.NotNull(tools);
     }
 
@@ -65,10 +65,10 @@ public class CalculatorToolTests(ClientTestMcpServerFixture fixture)
         };
 
         // 4. Koble til (utfører handshake)
-        await client.ConnectAsync(fixture.CancellationToken);
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
 
         // 5. Kall et verktøy
-        var result = await client.CallToolAsync<AddNumbersResponse>("add_numbers_notification", new AddNumbersRequest(5, 10), fixture.CancellationToken);
+        var result = await client.CallToolAsync<AddNumbersResponse>("add_numbers_notification", new AddNumbersRequest(5, 10), TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(2, notifications.Count);
     }
@@ -92,11 +92,21 @@ public class CalculatorToolTests(ClientTestMcpServerFixture fixture)
         };
 
         // 4. Koble til (utfører handshake)
-        await client.ConnectAsync(fixture.CancellationToken);
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
 
         // 5. Kall et verktøy
-        var result = await client.CallToolAsync<AddNumbersResponse>("add_numbers_notification", new AddNumbersRequest(5, 10), fixture.CancellationToken);
+        var result = await client.CallToolAsync<AddNumbersResponse>("add_numbers_notification", new AddNumbersRequest(5, 10), TestContext.Current.CancellationToken);
         Assert.NotNull(result);
+        
+        // Wait a bit for notifications to arrive via SSE
+        // SSE notifications are async and might arrive slightly after the tool response
+        var timeout = TimeSpan.FromSeconds(2);
+        var start = DateTime.UtcNow;
+        while (notifications.Count < 2 && DateTime.UtcNow - start < timeout)
+        {
+            await Task.Delay(100, TestContext.Current.CancellationToken);
+        }
+        
         Assert.Equal(2, notifications.Count);
     }
 }
