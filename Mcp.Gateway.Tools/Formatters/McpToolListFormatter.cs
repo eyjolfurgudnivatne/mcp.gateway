@@ -22,7 +22,8 @@ public class McpToolListFormatter : IToolListFormatter
             catch
             {
                 // Fallback to empty object schema if deserialization fails
-                schema = new { type = "object", properties = new { } };
+                // https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool-with-no-parameters:
+                schema = new { type = "object", additionalProperties = false };
             }
 
             return new
