@@ -310,51 +310,31 @@ public partial class ToolInvoker
         bool isPrompts = _toolService.GetAllFunctionDefinitions(ToolService.FunctionTypeEnum.Prompt).Any();
         bool hasResources = _toolService.GetAllResourceDefinitions().Any();
 
+        // https://modelcontextprotocol.io/specification/2025-11-25/schema#servercapabilities
         Dictionary<string, object> capabilities = [];
 
         if (isTools)
         {
-            capabilities["tools"] = new { };
+            capabilities["tools"] = _notificationSender is not null ? new { listChanged = true } : new { };
         }
         if (isPrompts)
         {
-            capabilities["prompts"] = new { };
+            capabilities["prompts"] = _notificationSender is not null ? new { listChanged = true } : new { };
         }
         if (hasResources)
         {
-            capabilities["resources"] = new { };
-        }
-
-        // Add notification capabilities (v1.6.0+)
-        // Note: Notifications require WebSocket transport
-        if (_notificationSender is not null)
-        {
-            var notifications = new Dictionary<string, object>();
-            
-            if (isTools)
-                notifications["tools"] = new { };
-            
-            if (isPrompts)
-                notifications["prompts"] = new { };
-            
-            if (hasResources)
-                notifications["resources"] = new { };
-
-            if (notifications.Count > 0)
-                capabilities["notifications"] = notifications;
+            capabilities["resources"] = _notificationSender is not null ? new { listChanged = true, subscribe = true } : new { };
         }
         
         // Make protocol version configurable for compatibility with older clients
         var protocolVersion = Environment.GetEnvironmentVariable("MCP_PROTOCOL_VERSION") ?? "2025-11-25";
 
+        var serverInfo = _implementationInfoOptions.Value;
+
         return ToolResponse.Success(request.Id, new
         {
-            protocolVersion = protocolVersion, // Configurable protocol version
-            serverInfo = new
-            {
-                name = "mcp-gateway",
-                version = "2.0.0"
-            },
+            protocolVersion, // Configurable protocol version
+            serverInfo,
             capabilities
         });
     }

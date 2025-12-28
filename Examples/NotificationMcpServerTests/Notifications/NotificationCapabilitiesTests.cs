@@ -37,20 +37,17 @@ public class NotificationCapabilitiesTests(NotificationMcpServerFixture fixture)
         Assert.True(result.TryGetProperty("capabilities", out var capabilities));
 
         // Should have tools capability
-        Assert.True(capabilities.TryGetProperty("tools", out _));
+        Assert.True(capabilities.TryGetProperty("tools", out var tools));
 
         // Should have notifications capability (v1.6.0+)
-        Assert.True(capabilities.TryGetProperty("notifications", out var notifications));
-
-        // Notifications should include tools (at minimum)
-        Assert.True(notifications.TryGetProperty("tools", out _));
+        Assert.True(tools.TryGetProperty("listChanged", out _));
         
         // Note: NotificationMcpServer only has tools registered.
         // Therefore, prompts and resources notifications should NOT be present.
-        Assert.False(notifications.TryGetProperty("prompts", out _), 
-            "prompts notification should NOT be present when no prompts are registered");
-        Assert.False(notifications.TryGetProperty("resources", out _), 
-            "resources notification should NOT be present when no resources are registered");
+        Assert.False(capabilities.TryGetProperty("prompts", out _),
+            "prompts capabilities should NOT be present when no prompts are registered");
+        Assert.False(capabilities.TryGetProperty("resources", out _),
+            "resources capabilities should NOT be present when no resources are registered");
     }
 
     [Fact]
@@ -162,13 +159,20 @@ public class NotificationCapabilitiesTests(NotificationMcpServerFixture fixture)
 
         // Assert
         var capabilities = response.GetProperty("result").GetProperty("capabilities");
-        var notifications = capabilities.GetProperty("notifications");
 
         // Count notification types
         int notificationCount = 0;
-        if (notifications.TryGetProperty("tools", out _)) notificationCount++;
-        if (notifications.TryGetProperty("prompts", out _)) notificationCount++;
-        if (notifications.TryGetProperty("resources", out _)) notificationCount++;
+        if (capabilities.TryGetProperty("tools", out var tools))
+            if (tools.TryGetProperty("listChanged", out _))
+                notificationCount++;
+
+        if (capabilities.TryGetProperty("prompts", out var prompts))
+            if (prompts.TryGetProperty("listChanged", out _))
+                notificationCount++;
+
+        if (capabilities.TryGetProperty("resources", out var resources))
+            if (resources.TryGetProperty("listChanged", out _))
+                notificationCount++;
 
         // Should only have 1 notification type (tools)
         Assert.Equal(1, notificationCount);
