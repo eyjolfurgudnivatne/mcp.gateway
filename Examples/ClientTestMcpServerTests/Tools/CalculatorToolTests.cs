@@ -11,7 +11,7 @@ public class CalculatorToolTests(ClientTestMcpServerFixture fixture)
     public async Task AddNumbers_ReturnsSum()
     {
         // 1. Opprett transport (her HTTP)
-        await using var transport = new HttpMcpTransport(fixture.HttpClient, "/rpc");
+        await using var transport = new HttpMcpTransport(fixture.HttpClient);
         Assert.NotNull(transport);
 
         // 2. Opprett klient
@@ -19,10 +19,10 @@ public class CalculatorToolTests(ClientTestMcpServerFixture fixture)
         Assert.NotNull(client);
 
         // 3. Koble til (utfører handshake)
-        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        await client.ConnectAsync(fixture.CancellationToken);
 
         // 4. Kall et verktøy
-        var result = await client.CallToolAsync<AddNumbersResponse>("add_numbers", new AddNumbersRequest(5, 10), TestContext.Current.CancellationToken);
+        var result = await client.CallToolAsync<AddNumbersResponse>("add_numbers", new AddNumbersRequest(5, 10), fixture.CancellationToken);
         Assert.NotNull(result);
     }
 
@@ -30,7 +30,7 @@ public class CalculatorToolTests(ClientTestMcpServerFixture fixture)
     public async Task AddNumbers_Inspect_Lifecycle()
     {
         // 1. Opprett transport (her HTTP)
-        await using var transport = new HttpMcpTransport(fixture.HttpClient, "/rpc");
+        await using var transport = new HttpMcpTransport(fixture.HttpClient);
         Assert.NotNull(transport);
 
         // 2. Opprett klient
@@ -38,12 +38,65 @@ public class CalculatorToolTests(ClientTestMcpServerFixture fixture)
         Assert.NotNull(client);
 
         // 3. Koble til (utfører handshake)
-        await client.ConnectAsync(TestContext.Current.CancellationToken);
+        await client.ConnectAsync(fixture.CancellationToken);
 
         // 4. List Tools
-        var tools = await client.ListToolsAsync(ct: TestContext.Current.CancellationToken);
+        var tools = await client.ListToolsAsync(ct: fixture.CancellationToken);
+        Assert.NotNull(tools);
+    }
 
-        var result = await client.CallToolAsync<AddNumbersResponse>("add_numbers", new AddNumbersRequest(5, 10), TestContext.Current.CancellationToken);
+    [Fact]
+    public async Task AddNumbers_Websocket_ReturnsSum()
+    {
+        // 1. Opprett transport (her WebSocket)
+        var socket = await fixture.CreateWebSocketClientAsync("/ws");
+        await using var transport = new WebSocketMcpTransport(socket);
+        Assert.NotNull(transport);
+
+        // 2. Opprett klient
+        await using var client = new McpClient(transport);
+        Assert.NotNull(client);
+
+        // 3. Lytt på notifications (før connect)
+        List<string> notifications = [];
+        client.NotificationReceived += (sender, e) =>
+        {
+            notifications.Add(e.Method + " - ");
+        };
+
+        // 4. Koble til (utfører handshake)
+        await client.ConnectAsync(fixture.CancellationToken);
+
+        // 5. Kall et verktøy
+        var result = await client.CallToolAsync<AddNumbersResponse>("add_numbers_notification", new AddNumbersRequest(5, 10), fixture.CancellationToken);
         Assert.NotNull(result);
+        Assert.Equal(2, notifications.Count);
+    }
+
+    [Fact]
+    public async Task AddNumbers_Notification_ReturnsSum()
+    {
+        // 1. Opprett transport (her HTTP)
+        await using var transport = new HttpMcpTransport(fixture.HttpClient, enableSse: true);
+        Assert.NotNull(transport);
+
+        // 2. Opprett klient
+        await using var client = new McpClient(transport);
+        Assert.NotNull(client);
+
+        // 3. Lytt på notifications (før connect)
+        List<string> notifications = [];
+        client.NotificationReceived += (sender, e) =>
+        {
+            notifications.Add(e.Method + " - ");
+        };
+
+        // 4. Koble til (utfører handshake)
+        await client.ConnectAsync(fixture.CancellationToken);
+
+        // 5. Kall et verktøy
+        var result = await client.CallToolAsync<AddNumbersResponse>("add_numbers_notification", new AddNumbersRequest(5, 10), fixture.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Equal(2, notifications.Count);
     }
 }

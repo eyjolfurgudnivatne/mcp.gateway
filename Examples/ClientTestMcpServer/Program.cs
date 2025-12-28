@@ -37,10 +37,6 @@ app.UseWebSockets();
 // MCP 2025-11-25 Streamable HTTP
 app.UseProtocolVersionValidation();  // Protocol version validation
 app.MapStreamableHttpEndpoint("/mcp");  // Unified endpoint (POST + GET + DELETE)
-
-// Legacy endpoints (still work, deprecated)
-app.MapHttpRpcEndpoint("/rpc");  // HTTP POST only
 app.MapWsRpcEndpoint("/ws");     // WebSocket
-app.MapSseRpcEndpoint("/sse");   // SSE only
 
 app.Run();
