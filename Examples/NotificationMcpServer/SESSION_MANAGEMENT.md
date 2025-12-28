@@ -45,7 +45,7 @@ Content-Type: application/json
   "result": {
     "protocolVersion": "2025-11-25",
     "serverInfo": { "name": "mcp-gateway", "version": "1.7.0" },
-    "capabilities": { "tools": {}, "notifications": { "tools": {} } }
+    "capabilities": { "tools": { "listChanged": true }}
   }
 }
 ```
