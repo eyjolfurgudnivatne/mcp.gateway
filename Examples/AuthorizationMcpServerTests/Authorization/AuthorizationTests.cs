@@ -27,12 +27,12 @@ public class AuthorizationTests(AuthorizationMcpServerFixture fixture)
         };
 
         // Act
-        var response = await fixture.HttpClient.PostAsJsonAsync("/rpc", request);
+        var response = await fixture.HttpClient.PostAsJsonAsync("/rpc", request, fixture.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         
-        var content = await response.Content.ReadAsStringAsync();
+        var content = await response.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc = JsonDocument.Parse(content);
         var error = jsonDoc.RootElement.GetProperty("error");
         
@@ -63,12 +63,12 @@ public class AuthorizationTests(AuthorizationMcpServerFixture fixture)
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "invalid-token");
 
         // Act
-        var response = await fixture.HttpClient.SendAsync(httpRequest);
+        var response = await fixture.HttpClient.SendAsync(httpRequest, fixture.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        
-        var content = await response.Content.ReadAsStringAsync();
+
+        var content = await response.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc = JsonDocument.Parse(content);
         var error = jsonDoc.RootElement.GetProperty("error");
         
@@ -99,12 +99,12 @@ public class AuthorizationTests(AuthorizationMcpServerFixture fixture)
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "admin-token-123");
 
         // Act
-        var response = await fixture.HttpClient.SendAsync(httpRequest);
+        var response = await fixture.HttpClient.SendAsync(httpRequest, fixture.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
-        
-        var content = await response.Content.ReadAsStringAsync();
+
+        var content = await response.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc = JsonDocument.Parse(content);
         
         Assert.True(jsonDoc.RootElement.TryGetProperty("result", out var result));
@@ -141,12 +141,12 @@ public class AuthorizationTests(AuthorizationMcpServerFixture fixture)
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "user-token-456");
 
         // Act
-        var response = await fixture.HttpClient.SendAsync(httpRequest);
+        var response = await fixture.HttpClient.SendAsync(httpRequest, fixture.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode(); // HTTP 200 (JSON-RPC error inside)
-        
-        var content = await response.Content.ReadAsStringAsync();
+
+        var content = await response.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc = JsonDocument.Parse(content);
         
         // Should have JSON-RPC error for insufficient permissions
@@ -190,12 +190,12 @@ public class AuthorizationTests(AuthorizationMcpServerFixture fixture)
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "manager-token-789");
 
         // Act
-        var response = await fixture.HttpClient.SendAsync(httpRequest);
+        var response = await fixture.HttpClient.SendAsync(httpRequest, fixture.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
-        
-        var content = await response.Content.ReadAsStringAsync();
+
+        var content = await response.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc = JsonDocument.Parse(content);
         
         Assert.True(jsonDoc.RootElement.TryGetProperty("result", out _));
@@ -218,7 +218,7 @@ public class AuthorizationTests(AuthorizationMcpServerFixture fixture)
         };
 
         // Act (NO Authorization header)
-        var response = await fixture.HttpClient.PostAsJsonAsync("/rpc", request);
+        var response = await fixture.HttpClient.PostAsJsonAsync("/rpc", request, fixture.CancellationToken);
 
         // Assert - Should fail at middleware level (401)
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -247,27 +247,27 @@ public class AuthorizationTests(AuthorizationMcpServerFixture fixture)
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", "public-token-000");
 
         // Act
-        var response = await fixture.HttpClient.SendAsync(httpRequest);
+        var response = await fixture.HttpClient.SendAsync(httpRequest, fixture.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
-        
-        var content = await response.Content.ReadAsStringAsync();
+
+        var content = await response.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc = JsonDocument.Parse(content);
         
-        Assert.True(jsonDoc.RootElement.TryGetProperty("result", out var result));
+        Assert.True(jsonDoc.RootElement.TryGetProperty("result", out _));
     }
 
     [Fact]
     public async Task HealthCheck_NoAuthRequired()
     {
         // Act
-        var response = await fixture.HttpClient.GetAsync("/health");
+        var response = await fixture.HttpClient.GetAsync("/health", fixture.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
-        
-        var content = await response.Content.ReadAsStringAsync();
+
+        var content = await response.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc = JsonDocument.Parse(content);
         
         Assert.Equal("healthy", jsonDoc.RootElement.GetProperty("status").GetString());

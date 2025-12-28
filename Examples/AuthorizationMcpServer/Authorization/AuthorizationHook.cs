@@ -152,7 +152,7 @@ public class AuthorizationHook : IToolLifecycleHook
                         var toolAttr = method.GetCustomAttribute<McpToolAttribute>();
                         if (toolAttr != null)
                         {
-                            var toolName = toolAttr.Name;
+                            var toolName = toolAttr.Name ?? "";
                             _toolMethods[toolName] = method;
                             _logger.LogDebug("Found tool method: {ToolName} in {Type}.{Method}", 
                                 toolName, type.Name, method.Name);

@@ -33,10 +33,10 @@ public class TellMEAIOllama
         var tellRequest = message.GetParams();
         string format = tellRequest?.Format?.ToString() ?? "guid";
 
-        var systemPrompt = "You are Ollama, an AI assistant integrated with MCP Gateway tools. " +
-                   "You can call tools to help answer user questions. " +
-                   "When a user asks a question that requires a tool, decide which tool to call (NOT tell_ollama) and provide the necessary parameters. " +
-                   "After calling a tool, use its result to formulate your response to the user.";
+        //var systemPrompt = "You are Ollama, an AI assistant integrated with MCP Gateway tools. " +
+        //           "You can call tools to help answer user questions. " +
+        //           "When a user asks a question that requires a tool, decide which tool to call (NOT tell_ollama) and provide the necessary parameters. " +
+        //           "After calling a tool, use its result to formulate your response to the user.";
 
         var userInput = $"Can you give me a random secret {format} string?";
 

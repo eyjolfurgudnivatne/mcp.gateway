@@ -19,7 +19,7 @@ public class ClientTestMcpServerFixture : IAsyncLifetime
         var server = Factory.Server;
         var client = server.CreateWebSocketClient();
         var uri = new Uri($"ws://localhost{path}");
-        var socket = await client.ConnectAsync(uri, CancellationToken.None);
+        var socket = await client.ConnectAsync(uri, TestContext.Current.CancellationToken);
         return socket;
     }
 
