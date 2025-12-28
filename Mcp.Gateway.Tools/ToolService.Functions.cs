@@ -53,14 +53,16 @@ public partial class ToolService
                     capabilities = attr?.Capabilities ?? ToolCapabilities.Standard;
                     var icon = attr?.Icon;  // NEW: Extract icon (v1.6.5)
                     var outputSchema = attr?.OutputSchema;  // NEW: Extract outputSchema (v1.6.5)
-                    
+                                        
                     // Generate or use provided input schema
                     string? inputSchema = null;
                     if (string.IsNullOrWhiteSpace(attrInputSchema))
                     {
                         // If TypedJsonRpc<T> and no InputSchema → try schema generator
                         var generated = ToolSchemaGenerator.TryGenerateForTool(method, functionDetails);
-                        inputSchema = generated ?? @"{""type"":""object"",""properties"":{}}";
+
+                        // https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool-with-no-parameters:
+                        inputSchema = generated ?? @"{""type"":""object"",""additionalProperties"":false}";
                     }
                     else
                     {
