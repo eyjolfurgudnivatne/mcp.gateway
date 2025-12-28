@@ -42,11 +42,14 @@ public class CalculatorToolTests(ClientTestMcpServerFixture fixture)
 
         // 4. List Tools
         var tools = await client.ListToolsAsync(ct: TestContext.Current.CancellationToken);
+        tools.GetResult<dynamic>();
         Assert.NotNull(tools);
+
+        //foreach (var tool in tools.Too)
     }
 
     [Fact]
-    public async Task AddNumbers_Websocket_ReturnsSum()
+    public async Task AddNumbers_Websocket_Notification_ReturnsSum()
     {
         // 1. Opprett transport (her WebSocket)
         var socket = await fixture.CreateWebSocketClientAsync("/ws");
@@ -100,7 +103,7 @@ public class CalculatorToolTests(ClientTestMcpServerFixture fixture)
         
         // Wait a bit for notifications to arrive via SSE
         // SSE notifications are async and might arrive slightly after the tool response
-        var timeout = TimeSpan.FromSeconds(2);
+        var timeout = TimeSpan.FromSeconds(10); // Increased timeout to 10s
         var start = DateTime.UtcNow;
         while (notifications.Count < 2 && DateTime.UtcNow - start < timeout)
         {

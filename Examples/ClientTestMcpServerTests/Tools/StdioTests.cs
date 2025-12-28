@@ -1,5 +1,7 @@
 namespace ClientTestMcpServerTests.Tools;
 
+using ClientTestMcpServer.Models;
+using ClientTestMcpServerTests.Fixture;
 using Mcp.Gateway.Client;
 using Mcp.Gateway.Tools;
 using System.IO;
@@ -8,7 +10,8 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit;
 
-public class StdioTests
+[Collection("ServerCollection")]
+public class StdioTests(ClientTestMcpServerFixture fixture)
 {
     [Fact]
     public async Task StdioTransport_ReceiveLoop_ReadsMessages()
@@ -67,5 +70,27 @@ public class StdioTests
         Assert.NotNull(line);
         Assert.Contains("jsonrpc", line);
         Assert.Contains("test", line);
+    }
+
+    [Fact]
+    public async Task AddNumbers_ReturnsSum()
+    {
+        // 1. Opprett transport (her stdio)
+        await using var transport = new StdioMcpTransport(
+            fixture.ServerProcess!.StandardOutput.BaseStream,
+            fixture.ServerProcess!.StandardInput.BaseStream
+        );
+        Assert.NotNull(transport);
+
+        // 2. Opprett klient
+        await using var client = new McpClient(transport);
+        Assert.NotNull(client);
+
+        // 3. Koble til (utfører handshake)
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+
+        // 4. Kall et verktøy
+        var result = await client.CallToolAsync<AddNumbersResponse>("add_numbers", new AddNumbersRequest(5, 10), TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
     }
 }
