@@ -44,7 +44,6 @@ public partial class ToolService(IServiceProvider serviceProvider)
     /// </summary>
     internal record FunctionDetailArgumentType(
         bool IsToolConnector, 
-        bool IsStreamMessage, 
         bool IsJsonElementMessage, 
         bool IsTypedJsonRpc, 
         Type ParameterType);

@@ -181,13 +181,12 @@ public partial class ToolService
             firstParam.GetGenericTypeDefinition() == typeof(TypedJsonRpc<>);
 
         // --- Sjekk inputtype stream ---
-        bool isInputStreamMessage = firstParam == typeof(StreamMessage);
         bool isInputToolConnector = firstParam == typeof(ToolConnector);
 
         // Validate input parameter types
-        if (!isJsonElementMessage && !isTypedJson && !isInputStreamMessage && !isInputToolConnector)
+        if (!isJsonElementMessage && !isTypedJson && !isInputToolConnector)
             throw new ArgumentException(
-                $"Function delegate for '{name}' must take JsonRpcMessage, TypedJsonRpc<T>, StreamMessage or ToolConnector as first parameter.");
+                $"Function delegate for '{name}' must take JsonRpcMessage, TypedJsonRpc<T> or ToolConnector as first parameter.");
 
         // Prompt-specific validation
         if (functionType == FunctionTypeEnum.Prompt && !isJsonElementMessage && !isTypedJson)
@@ -198,20 +197,6 @@ public partial class ToolService
         if (functionType == FunctionTypeEnum.Resource && !isJsonElementMessage && !isTypedJson)
             throw new ArgumentException(
                 $"Resource delegate for '{name}' must take JsonRpcMessage or TypedJsonRpc<T> as first parameter.");
-
-        // TODO: Erstattes av ToolConnector. dersom det er en stream, må det være minst en parameter til (for WebSocket)
-        if (isInputStreamMessage && parameters.Length < 2)
-            throw new ArgumentException(
-                $"Function delegate for '{name}' must take at least two parameters when using StreamMessage.");
-
-        // TODO: Erstattes av ToolConnector. ved input stream melding må neste parameter være WebSocket
-        if (isInputStreamMessage)
-        {
-            var secondParam = parameters[1].ParameterType;
-            if (secondParam != typeof(WebSocket))
-                throw new ArgumentException(
-                    $"Function delegate for '{name}' must take WebSocket as second parameter when using StreamMessage.");
-        }
 
         // --- Sjekk returtype JsonRpc ---
         bool isJsonRpcResponse = returnType == typeof(JsonRpcMessage) ||
@@ -258,7 +243,6 @@ public partial class ToolService
 
         var argumentType = new FunctionDetailArgumentType(
             IsToolConnector: isInputToolConnector,
-            IsStreamMessage: isInputStreamMessage,
             IsJsonElementMessage: isJsonElementMessage,
             IsTypedJsonRpc: isTypedJson,
             ParameterType: firstParam
