@@ -62,7 +62,8 @@ List all resources available on the server.
         "uri": "file://data/users.json",
         "name": "User Data",
         "description": "User records in JSON format",
-        "mimeType": "application/json"
+        "mimeType": "application/json",
+        "icons": [{"src": "icon.png", "mimeType": "image/png", "theme": "light"}]
       }
     ],
     "nextCursor": "optional-cursor"
@@ -186,6 +187,10 @@ public class FileResources
         Name = "User Data",
         Description = "User records in JSON format",
         MimeType = "application/json")]
+    [McpIcon("icon.png")]
+    [McpIcon("icon2.png", "image/png", Sizes = new[] { "16x16", "32x32", "48x48", "any" })]
+    [McpIcon("icon-light.png", "image/png", McpIconTheme.Light)]
+    [McpIcon("icon-dark.png", "image/png", McpIconTheme.Dark)]
     public JsonRpcMessage GetUsers(JsonRpcMessage request)
     {
         var data = File.ReadAllText("data/users.json");
