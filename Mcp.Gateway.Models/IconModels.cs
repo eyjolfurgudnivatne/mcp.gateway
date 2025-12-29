@@ -16,7 +16,17 @@ using System.Text.Json.Serialization;
 /// and dark indicates the icon is designed to be used with a dark background.
 /// If not provided, the client should assume the icon can be used with any theme.</param>
 public sealed record McpIconDefinition(
-    [property: JsonPropertyName("src")] string Src,
-    [property: JsonPropertyName("mimeType")] string? MimeType = null,
-    [property: JsonPropertyName("sizes")] string[]? Sizes = null,
-    [property: JsonPropertyName("theme")] string? Theme = null);
+    [property: JsonPropertyName("src")]
+    string Src,
+
+    [property: JsonPropertyName("mimeType")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    string? MimeType = null,
+
+    [property: JsonPropertyName("sizes")]
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    string[]? Sizes = null,
+
+    [property: JsonPropertyName("theme")]
+    [property : JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    string? Theme = null);
