@@ -26,17 +26,19 @@ public interface IMcpClient : IAsyncDisposable
     ImplementationInfo? ServerInfo { get; }
 
     // Tools
-    Task<JsonRpcMessage> ListToolsAsync(string? cursor = null, CancellationToken ct = default);
+    Task<ListToolsResult?> ListToolsAsync(string? cursor = null, CancellationToken ct = default);
     Task<TResult?> CallToolAsync<TResult>(string toolName, object arguments, CancellationToken ct = default);
     
     // Resources
-    Task<JsonRpcMessage> ListResourcesAsync(string? cursor = null, CancellationToken ct = default);
+    Task<ListResourcesResult?> ListResourcesAsync(string? cursor = null, CancellationToken ct = default);
     Task<ResourceContent> ReadResourceAsync(string uri, CancellationToken ct = default);
     Task SubscribeResourceAsync(string uri, CancellationToken ct = default);
 
     // Prompts
-    Task<JsonRpcMessage> ListPromptsAsync(string? cursor = null, CancellationToken ct = default);
-    Task<JsonRpcMessage> GetPromptAsync(string name, object arguments, CancellationToken ct = default);
+    Task<ListPromptsResult?> ListPromptsAsync(string? cursor = null, CancellationToken ct = default);
+    Task<PromptResponse?> GetPromptAsync(string name, object arguments, CancellationToken ct = default);
+    Task<PromptResponse?> GetPromptAsync(PromptRequest request, CancellationToken ct = default);
+    Task<PromptResponse?> GetPromptAsync<TArguments>(PromptRequest<TArguments> request, CancellationToken ct = default);
 
     // Notifications
     event EventHandler<NotificationMessage> NotificationReceived;

@@ -12,9 +12,9 @@ using System.Threading.Tasks;
 /// Default implementation of IMcpClient.
 /// Handles JSON-RPC message correlation, initialization, and tool/resource/prompt invocations.
 /// </summary>
-public class McpClient : IMcpClient
+public class McpClient(IMcpTransport transport) : IMcpClient
 {
-    private readonly IMcpTransport _transport;
+    private readonly IMcpTransport _transport = transport ?? throw new ArgumentNullException(nameof(transport));
     private readonly ConcurrentDictionary<object, TaskCompletionSource<JsonRpcMessage>> _pendingRequests = new();
     private readonly Channel<JsonRpcMessage> _incomingMessages = Channel.CreateUnbounded<JsonRpcMessage>();
     private Task? _receiveLoopTask;
@@ -26,11 +26,6 @@ public class McpClient : IMcpClient
     public ImplementationInfo? ServerInfo { get; private set; }
 
     public event EventHandler<NotificationMessage>? NotificationReceived;
-
-    public McpClient(IMcpTransport transport)
-    {
-        _transport = transport ?? throw new ArgumentNullException(nameof(transport));
-    }
 
     public async Task ConnectAsync(CancellationToken ct = default)
     {
@@ -75,11 +70,14 @@ public class McpClient : IMcpClient
         _isInitialized = true;
     }
 
-    public async Task<JsonRpcMessage> ListToolsAsync(string? cursor = null, CancellationToken ct = default)
+    public async Task<ListToolsResult?> ListToolsAsync(string? cursor = null, CancellationToken ct = default)
     {
         EnsureInitialized();
         var paramsObj = cursor != null ? new { cursor } : (object)new { };
-        return await SendRequestAsync(JsonRpcMessage.CreateRequest("tools/list", GetNextId(), paramsObj), ct);
+        var result = await SendRequestAsync(JsonRpcMessage.CreateRequest("tools/list", GetNextId(), paramsObj), ct);
+        if (result is null || !result.IsSuccessResponse)
+            return null;
+        return result.GetResult<ListToolsResult>();
     }
 
     public async Task<TResult?> CallToolAsync<TResult>(string toolName, object arguments, CancellationToken ct = default)
@@ -102,11 +100,14 @@ public class McpClient : IMcpClient
         return response.GetToolsCallResult<TResult>();
     }
 
-    public async Task<JsonRpcMessage> ListResourcesAsync(string? cursor = null, CancellationToken ct = default)
+    public async Task<ListResourcesResult?> ListResourcesAsync(string? cursor = null, CancellationToken ct = default)
     {
         EnsureInitialized();
         var paramsObj = cursor != null ? new { cursor } : (object)new { };
-        return await SendRequestAsync(JsonRpcMessage.CreateRequest("resources/list", GetNextId(), paramsObj), ct);
+        var result = await SendRequestAsync(JsonRpcMessage.CreateRequest("resources/list", GetNextId(), paramsObj), ct);
+        if (result is null || !result.IsSuccessResponse)
+            return null;
+        return result.GetResult<ListResourcesResult>();
     }
 
     public async Task<ResourceContent> ReadResourceAsync(string uri, CancellationToken ct = default)
@@ -143,14 +144,18 @@ public class McpClient : IMcpClient
         }
     }
 
-    public async Task<JsonRpcMessage> ListPromptsAsync(string? cursor = null, CancellationToken ct = default)
+    public async Task<ListPromptsResult?> ListPromptsAsync(string? cursor = null, CancellationToken ct = default)
     {
         EnsureInitialized();
         var paramsObj = cursor != null ? new { cursor } : (object)new { };
-        return await SendRequestAsync(JsonRpcMessage.CreateRequest("prompts/list", GetNextId(), paramsObj), ct);
+
+        var result = await SendRequestAsync(JsonRpcMessage.CreateRequest("prompts/list", GetNextId(), paramsObj), ct);
+        if (result is null || !result.IsSuccessResponse)
+            return null;
+        return result.GetResult<ListPromptsResult>();
     }
 
-    public async Task<JsonRpcMessage> GetPromptAsync(string name, object arguments, CancellationToken ct = default)
+    public async Task<PromptResponse?> GetPromptAsync(string name, object arguments, CancellationToken ct = default)
     {
         EnsureInitialized();
         var request = JsonRpcMessage.CreateRequest("prompts/get", GetNextId(), new
@@ -158,7 +163,33 @@ public class McpClient : IMcpClient
             name,
             arguments
         });
-        return await SendRequestAsync(request, ct);
+
+        var result = await SendRequestAsync(request, ct);
+        if (result is null || !result.IsSuccessResponse)
+            return null;
+        return result.GetResult<PromptResponse>();
+    }
+
+    public async Task<PromptResponse?> GetPromptAsync(PromptRequest promptRequest, CancellationToken ct = default)
+    {
+        EnsureInitialized();
+        var request = JsonRpcMessage.CreateRequest("prompts/get", GetNextId(), promptRequest);
+
+        var result = await SendRequestAsync(request, ct);
+        if (result is null || !result.IsSuccessResponse)
+            return null;
+        return result.GetResult<PromptResponse>();
+    }
+
+    public async Task<PromptResponse?> GetPromptAsync<TArguments>(PromptRequest<TArguments> promptRequest, CancellationToken ct = default)
+    {
+        EnsureInitialized();
+        var request = JsonRpcMessage.CreateRequest("prompts/get", GetNextId(), promptRequest);
+
+        var result = await SendRequestAsync(request, ct);
+        if (result is null || !result.IsSuccessResponse)
+            return null;
+        return result.GetResult<PromptResponse>();
     }
 
     private async Task<JsonRpcMessage> SendRequestAsync(JsonRpcMessage request, CancellationToken ct)
