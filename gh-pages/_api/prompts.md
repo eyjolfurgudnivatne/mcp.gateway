@@ -105,34 +105,24 @@ Get a specific prompt with provided arguments.
 {
   "jsonrpc": "2.0",
   "result": {
-    "name": "code_review",
     "description": "Code review prompt",
     "messages": [
       {
         "role": "user",
-        "content": "Please review this C# code: public class Example { }"
+        "content": {
+            "type": "text",
+            "text": "Please review this csharp code: public class Example { }"
+        }
       }
-    ],
-    "arguments": {
-      "code": {
-        "type": "string",
-        "description": "The code to review"
-      },
-      "language": {
-        "type": "string",
-        "description": "Programming language"
-      }
-    }
+    ]
   },
   "id": 2
 }
 ```
 
 **Response fields:**
-- `name` (string) - Prompt name
 - `description` (string) - Prompt description
 - `messages` (array) - Prompt messages with `role` and `content`
-- `arguments` (object) - Argument schema (JSON Schema format)
 
 ## Defining Prompts
 
@@ -148,15 +138,17 @@ public class MyPrompts
     {
         return ToolResponse.Success(
             request.Id,
-            new PromptResponse(
-                Name: "greeting",
-                Description: "A simple greeting prompt",
-                Messages: new[]
-                {
-                    new PromptMessage(PromptRole.User, "Hello! How can I help you today?")
-                },
-                Arguments: new { }
-            ));
+            new PromptResponse
+            {
+                Description = "A simple greeting prompt",
+                Messages = [
+                    new PromptMessage(
+                        PromptRole.User, 
+                        new TextContent {
+                            Text = "Hello! How can I help you today?"
+                        })
+                ]
+            });
     }
 }
 ```
@@ -174,27 +166,17 @@ public JsonRpcMessage CodeReview(TypedJsonRpc<CodeReviewArgs> request)
     
     return ToolResponse.Success(
         request.Id,
-        new PromptResponse(
-            Name: "code_review",
-            Description: "Code review prompt",
-            Messages: new[]
-            {
-                new PromptMessage(PromptRole.User, promptText)
-            },
-            Arguments: new
-            {
-                code = new
-                {
-                    type = "string",
-                    description = "The code to review"
-                },
-                language = new
-                {
-                    type = "string",
-                    description = "Programming language (e.g., csharp, javascript)"
-                }
-            }
-        ));
+        new PromptResponse
+        {
+            Description = "Code review prompt",
+            Messagesc = [
+                new PromptMessage(
+                    PromptRole.User, 
+                    new TextContent {
+                        Text = promptText
+                    })
+            ]
+        });
 }
 
 public record CodeReviewArgs(string Code, string? Language = "text");
@@ -210,33 +192,35 @@ public JsonRpcMessage InterviewPrep(TypedJsonRpc<InterviewArgs> request)
     
     return ToolResponse.Success(
         request.Id,
-        new PromptResponse(
-            Name: "interview_prep",
-            Description: "Technical interview preparation",
-            Messages: new[]
-            {
-                new PromptMessage(PromptRole.System, 
-                    "You are an experienced technical interviewer."),
-                new PromptMessage(PromptRole.User, 
-                    $"Help me prepare for a {args.Role} interview at {args.Company}.")
-            },
-            Arguments: new
-            {
-                role = new
-                {
-                    type = "string",
-                    description = "Job role (e.g., 'Senior Developer', 'DevOps Engineer')"
-                },
-                company = new
-                {
-                    type = "string",
-                    description = "Company name"
-                }
-            }
-        ));
+        new PromptResponse
+        {
+            Description = "Technical interview preparation",
+            Messages = [
+                new(
+                    PromptRole.System,
+                    new TextContent {
+                        Text = "You are an experienced technical interviewer."
+                    }),
+                new (
+                    PromptRole.User,
+                    new TextContent {
+                        Text = $"Help me prepare for a {args.Role} interview at {args.Company}."
+                    })
+            ]
+        });
 }
 
 public record InterviewArgs(string Role, string Company);
+```
+
+### Content blocks
+
+```csharp
+new TextContent {...}
+new ImageContent {...}
+new AudioContent {...}
+new ResourceLink {...}
+new EmbeddedResource {...}
 ```
 
 ## Prompt Attributes
@@ -249,7 +233,7 @@ Marks a method as an MCP prompt.
 [McpPrompt(
     string? name = null,            // Optional: Prompt name (auto-generated if null)
     string? Description = null,     // Optional: Description
-    string? Icon = null)]           // Optional: Icon URL (v1.6.5+)
+    string? Icon = null)]           // Optional: Icon URL (v1.6.5+) (use attributes instead. See below)
 ```
 
 **Attribute properties:**
@@ -267,6 +251,16 @@ Marks a method as an MCP prompt.
     Icon = "https://example.com/icons/code-review.png")]
 ```
 
+**Icons with attributes:**
+
+```csharp
+[McpPrompt(...)]
+[McpIcon("icon.png")]
+[McpIcon("icon2.png", "image/png", Sizes = new[] { "16x16", "32x32", "48x48", "any" })]
+[McpIcon("icon-light.png", "image/png", McpIconTheme.Light)]
+[McpIcon("icon-dark.png", "image/png", McpIconTheme.Dark)]
+```
+
 ## Prompt Responses
 
 ### PromptResponse Structure
@@ -274,11 +268,23 @@ Marks a method as an MCP prompt.
 All prompts must return a `PromptResponse` with these fields:
 
 ```csharp
-public sealed record PromptResponse(
-    string Name,                              // Prompt name
-    string Description,                       // Prompt description
-    IReadOnlyList<PromptMessage> Messages,   // Prompt messages
-    object Arguments);                        // Argument schema
+public class PromptResponse
+{
+    /// <summary>
+    /// An optional description for the prompt.
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// Messages returned.
+    /// </summary>
+    public List<PromptMessage> Messages { get; set; } = [];
+
+    /// <summary>
+    /// The _meta property/parameter is reserved by MCP to allow clients and servers to attach additional metadata to their interactions.
+    /// </summary>
+    public Dictionary<string, object>? Meta { get; set; }
+}
 ```
 
 ### PromptMessage Structure
@@ -287,8 +293,8 @@ Messages use `PromptRole` enum:
 
 ```csharp
 public sealed record PromptMessage(
-    PromptRole Role,    // System, User, Assistant, or Tool
-    string Content);    // Message content
+    PromptRole Role,            // System, User, Assistant, or Tool
+    IContentBlock Content);     // Message content
 
 public enum PromptRole
 {
@@ -297,6 +303,14 @@ public enum PromptRole
     Assistant,
     Tool
 }
+
+// Content blocks:
+
+new TextContent {...}
+new ImageContent {...}
+new AudioContent {...}
+new ResourceLink {...}
+new EmbeddedResource {...}
 ```
 
 ### Simple Prompt
@@ -304,15 +318,18 @@ public enum PromptRole
 ```csharp
 return ToolResponse.Success(
     request.Id,
-    new PromptResponse(
-        Name: "greeting",
-        Description: "A greeting prompt",
-        Messages: new[]
-        {
-            new PromptMessage(PromptRole.User, "Hello!")
-        },
-        Arguments: new { }
-    ));
+    new PromptResponse
+    {
+        Description = "A greeting prompt",
+        Messages = [
+            new PromptMessage(
+                PromptRole.User, 
+                new TextContent
+                {
+                    Text = "Hello!"
+                })
+        ]
+    });
 ```
 
 ### System + User Messages
@@ -320,16 +337,14 @@ return ToolResponse.Success(
 ```csharp
 return ToolResponse.Success(
     request.Id,
-    new PromptResponse(
-        Name: "chat_helper",
-        Description: "Chat prompt",
-        Messages: new[]
-        {
-            new PromptMessage(PromptRole.System, "You are a helpful assistant."),
-            new PromptMessage(PromptRole.User, "How do I...")
-        },
-        Arguments: new { }
-    ));
+    new PromptResponse
+    {
+        Description = "Chat prompt",
+        Messages = [
+            new PromptMessage(PromptRole.System, new TextContent { Text = "You are a helpful assistant." }),
+            new PromptMessage(PromptRole.User, new TextContent { Text = "How do I..." })
+        ]
+    });
 ```
 
 ## Use Cases
@@ -355,19 +370,13 @@ Code:
     
     return ToolResponse.Success(
         request.Id,
-        new PromptResponse(
-            Name: "code_review",
-            Description: "Code review prompt",
-            Messages: new[]
-            {
-                new PromptMessage(PromptRole.User, prompt)
-            },
-            Arguments: new
-            {
-                code = new { type = "string", description = "The code to review" },
-                language = new { type = "string", description = "Programming language" }
-            }
-        ));
+        new PromptResponse
+        {
+            Description = "Code review prompt",
+            Messages = [
+                new PromptMessage(PromptRole.User, new TextContent { Text = prompt })
+            ]
+        });
 }
 
 public record CodeReviewArgs(string Code, string Language);
@@ -393,20 +402,13 @@ Please provide:
     
     return ToolResponse.Success(
         request.Id,
-        new PromptResponse(
-            Name: "sql_builder",
-            Description: "SQL query builder",
-            Messages: new[]
-            {
-                new PromptMessage(PromptRole.User, prompt)
-            },
-            Arguments: new
-            {
-                table = new { type = "string", description = "Database table name" },
-                operation = new { type = "string", description = "SQL operation (SELECT, INSERT, UPDATE, DELETE)" },
-                conditions = new { type = "array", description = "Query conditions" }
-            }
-        ));
+        new PromptResponse
+        {
+            Description = "SQL query builder",
+            Messages = [
+                new PromptMessage(PromptRole.User, new TextContent { Text = prompt })
+            ]
+        });
 }
 
 public record SqlArgs(string Table, string Operation, string[] Conditions);
@@ -422,21 +424,23 @@ public JsonRpcMessage DocGenerator(TypedJsonRpc<DocArgs> request)
     
     return ToolResponse.Success(
         request.Id,
-        new PromptResponse(
-            Name: "doc_generator",
-            Description: "Documentation generator",
-            Messages: new[]
-            {
-                new PromptMessage(PromptRole.System, 
-                    "You are a technical writer creating clear documentation."),
-                new PromptMessage(PromptRole.User, 
-                    $"Create documentation for:\n\n{args.Code}")
-            },
-            Arguments: new
-            {
-                code = new { type = "string", description = "Code to document" }
-            }
-        ));
+        new PromptResponse
+        {
+            Description = "Documentation generator",
+            Messages = [
+                new PromptMessage(
+                    PromptRole.System, 
+                    new TextContent { 
+                        Text = "You are a technical writer creating clear documentation."
+                    }),
+
+                new PromptMessage(
+                    PromptRole.User, 
+                    new TextContent { 
+                        Text = $"Create documentation for:\n\n{args.Code}"
+                    })
+            ]
+        });
 }
 
 public record DocArgs(string Code);
@@ -466,13 +470,24 @@ if (string.IsNullOrWhiteSpace(args.Code))
 ### 3. Use System Messages
 
 ```csharp
-return PromptResponse.Success(
+return ToolResponse.Success(
     request.Id,
-    description,
-    new[]
+    new PromptResponse
     {
-        new PromptMessage("system", "You are an expert..."),
-        new PromptMessage("user", userPrompt)
+        Description = description,
+        Messages = [
+            new PromptMessage(
+                PromptRole.System, 
+                new TextContent { 
+                    Text = "You are an expert..."
+                }),
+
+            new PromptMessage(
+                PromptRole.User, 
+                new TextContent { 
+                    Text = userPrompt
+                })
+        ]
     });
 ```
 
@@ -494,61 +509,6 @@ var sections = new[]
 var prompt = string.Join("\n", sections);
 ```
 
-## Testing
-
-### Unit Test
-
-```csharp
-[Fact]
-public async Task CodeReview_ValidCode_ReturnsPrompt()
-{
-    // Arrange
-    var prompts = new MyPrompts();
-    var request = new TypedJsonRpc<CodeReviewArgs>
-    {
-        Id = "1",
-        Params = new CodeReviewArgs("class Test { }", "csharp")
-    };
-    
-    // Act
-    var response = prompts.CodeReview(request);
-    
-    // Assert
-    Assert.NotNull(response.Result);
-}
-```
-
-### Integration Test
-
-```csharp
-[Fact]
-public async Task PromptsGet_ValidPrompt_ReturnsMessages()
-{
-    // Arrange
-    using var server = new McpGatewayFixture();
-    var client = server.CreateClient();
-    
-    var request = new
-    {
-        jsonrpc = "2.0",
-        method = "prompts/get",
-        @params = new
-        {
-            name = "code_review",
-            arguments = new { Code = "test", Language = "csharp" }
-        },
-        id = 1
-    };
-    
-    // Act
-    var response = await client.PostAsJsonAsync("/mcp", request);
-    var result = await response.Content.ReadFromJsonAsync<JsonDocument>();
-    
-    // Assert
-    Assert.True(result.RootElement.TryGetProperty("result", out var resultProp));
-    Assert.True(resultProp.TryGetProperty("messages", out _));
-}
-```
 
 ## See Also
 
