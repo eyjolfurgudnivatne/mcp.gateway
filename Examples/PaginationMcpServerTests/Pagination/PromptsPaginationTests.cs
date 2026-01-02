@@ -33,10 +33,10 @@ public class PromptsPaginationTests(PaginationMcpServerFixture fixture)
         var prompts = promptsElement.EnumerateArray().ToList();
         Assert.Equal(10, prompts.Count);
 
-        // Verify structure (prompts have 'arguments' array, not 'inputSchema')
+        // Verify structure (prompts have 'name')
         var firstPrompt = prompts.First();
-        Assert.True(firstPrompt.TryGetProperty("arguments", out var arguments));
-        Assert.Equal(JsonValueKind.Array, arguments.ValueKind);
+        Assert.True(firstPrompt.TryGetProperty("name", out var name));
+        Assert.Equal(JsonValueKind.String, name.ValueKind);
 
         // Should have nextCursor
         Assert.True(result.TryGetProperty("nextCursor", out var nextCursor));
@@ -52,7 +52,7 @@ public class PromptsPaginationTests(PaginationMcpServerFixture fixture)
             jsonrpc = "2.0",
             method = "prompts/list",
             id = "test-1",
-            @params = new { pageSize = 10 }
+            @params = new { pageSize = 25 }
         };
 
         var response1 = await fixture.HttpClient.PostAsJsonAsync("/rpc", request1, fixture.CancellationToken);
@@ -66,7 +66,7 @@ public class PromptsPaginationTests(PaginationMcpServerFixture fixture)
             jsonrpc = "2.0",
             method = "prompts/list",
             id = "test-2",
-            @params = new { cursor, pageSize = 10 }
+            @params = new { cursor, pageSize = 25 }
         };
 
         var httpResponse = await fixture.HttpClient.PostAsJsonAsync("/rpc", request2, fixture.CancellationToken);
@@ -80,9 +80,9 @@ public class PromptsPaginationTests(PaginationMcpServerFixture fixture)
         Assert.True(result.TryGetProperty("prompts", out var promptsElement));
 
         var prompts = promptsElement.EnumerateArray().ToList();
-        Assert.Equal(10, prompts.Count); // Second page
+        Assert.Equal(25, prompts.Count); // Second page
 
-        // Should NOT have nextCursor (last page with 20 total prompts)
+        // Should NOT have nextCursor (last page with 50 total prompts)
         Assert.False(result.TryGetProperty("nextCursor", out _));
     }
 }

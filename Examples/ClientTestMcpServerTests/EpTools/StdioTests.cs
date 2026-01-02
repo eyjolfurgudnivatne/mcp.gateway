@@ -1,4 +1,4 @@
-namespace ClientTestMcpServerTests.Tools;
+namespace ClientTestMcpServerTests.EpTools;
 
 using ClientTestMcpServer.Models;
 using ClientTestMcpServerTests.Fixture;

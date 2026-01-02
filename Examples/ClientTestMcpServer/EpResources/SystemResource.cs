@@ -1,25 +1,19 @@
+namespace ClientTestMcpServer.EpResources;
+
 using Mcp.Gateway.Tools;
 using System.Diagnostics;
 using System.Text.Json;
 
-namespace ResourceMcpServer.Resources;
-
-/// <summary>
-/// Example system resource that returns system status and metrics
-/// </summary>
 public class SystemResource
 {
     [McpResource("system://status",
         Name = "System Status",
         Description = "Current system health metrics and status",
         MimeType = "application/json")]
-    [McpIcon("icon.png", "image/png", Sizes = new[] { "16x16", "32x32", "48x48", "any" })]
-    [McpIcon("icon-light.png", "image/png", McpIconTheme.Light)]
-    [McpIcon("icon-dark.png", "image/png", McpIconTheme.Dark)]
     public JsonRpcMessage SystemStatus(JsonRpcMessage request)
     {
         var process = Process.GetCurrentProcess();
-        
+
         var status = new
         {
             uptime = Environment.TickCount64,

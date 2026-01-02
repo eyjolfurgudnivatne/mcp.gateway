@@ -1,9 +1,8 @@
-namespace ClientTestMcpServerTests.Tools;
+namespace ClientTestMcpServerTests.EpTools;
 
 using ClientTestMcpServer.Models;
 using ClientTestMcpServerTests.Fixture;
 using Mcp.Gateway.Client;
-using Mcp.Gateway.Tools;
 
 [Collection("ServerCollection")]
 public class CalculatorToolTests(ClientTestMcpServerFixture fixture)
@@ -44,12 +43,8 @@ public class CalculatorToolTests(ClientTestMcpServerFixture fixture)
         // 4. List Tools
         var tools = await client.ListToolsAsync(ct: TestContext.Current.CancellationToken);
         Assert.NotNull(tools);
-        Assert.True(tools.IsSuccessResponse);
 
-        var toolsResult = tools.GetResult<ListToolsResult>();
-        Assert.NotNull(toolsResult);
-
-        foreach (var tool in toolsResult.Tools)
+        foreach (var tool in tools.Tools)
         {
             Assert.NotNull(tool);
         }

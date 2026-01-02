@@ -1,4 +1,4 @@
-namespace ClientTestMcpServer.Tools;
+namespace ClientTestMcpServer.EpTools;
 
 using ClientTestMcpServer.Models;
 using Mcp.Gateway.Tools;
