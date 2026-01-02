@@ -98,7 +98,7 @@ public class ToolItem
     /// </summary>
     [JsonPropertyName("annotations")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public ToolAnnotations? Annotations { get; set; }
+    public ToolAnnotation? Annotations { get; set; }
 
     /// <summary>
     /// Execution-related properties for this tool.
@@ -115,7 +115,7 @@ public class ToolItem
 /// behavior (including descriptive properties like title).
 /// Clients should never make tool use decisions based on ToolAnnotations received from untrusted servers.
 /// </summary>
-public class ToolAnnotations
+public class ToolAnnotation
 {
     /// <summary>
     /// If true, the tool may perform destructive updates to its environment.
