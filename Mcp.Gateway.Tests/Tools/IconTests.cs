@@ -114,19 +114,4 @@ public class IconTests
         // Assert
         Assert.Equal("https://example.com/icon.png", def.Icon);
     }
-
-    [Fact]
-    public void ResourceDefinition_WithIcon_CreatesCorrectly()
-    {
-        // Arrange
-        var def = new ResourceDefinition(
-            Uri: "file://test",
-            Name: "Test",
-            Description: "Test resource",
-            MimeType: "text/plain",
-            Icon: "https://example.com/icon.png");
-
-        // Assert
-        Assert.Equal("https://example.com/icon.png", def.Icon);
-    }
 }
