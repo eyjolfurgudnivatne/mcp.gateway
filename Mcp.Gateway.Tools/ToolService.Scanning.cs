@@ -111,9 +111,7 @@ public partial class ToolService
                         {
                             functionDelegate = Delegate.CreateDelegate(
                                 System.Linq.Expressions.Expression.GetDelegateType(
-                                    method.GetParameters().Select(p => p.ParameterType)
-                                        .Concat(new[] { method.ReturnType })
-                                        .ToArray()),
+                                    [.. method.GetParameters().Select(p => p.ParameterType), method.ReturnType]),
                                 method);
                         }
                         else
@@ -124,9 +122,7 @@ public partial class ToolService
                                 
                             functionDelegate = Delegate.CreateDelegate(
                                 System.Linq.Expressions.Expression.GetDelegateType(
-                                    method.GetParameters().Select(p => p.ParameterType)
-                                        .Concat(new[] { method.ReturnType })
-                                        .ToArray()),
+                                    [.. method.GetParameters().Select(p => p.ParameterType), method.ReturnType]),
                                 instance,
                                 method);
                         }

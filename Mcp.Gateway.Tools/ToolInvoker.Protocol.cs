@@ -76,13 +76,17 @@ public partial class ToolInvoker
                 return HandleInitialize(message);
             }
             
-            if (message.Method == "tools/list" ||
-                message.Method == "prompts/list")
+            if (message.Method == "tools/list")
             {
                 // Use transport-aware filtering
                 return HandleFunctionsList(message, transport);
             }
-            
+
+            if (message.Method == "prompts/list")
+            {
+                return HandlePromptsList(message);
+            }
+
             // Formatted tool lists (functions/list/{format})
             if (message.Method?.StartsWith("tools/list/") == true ||
                 message.Method?.StartsWith("prompts/list/") == true)
@@ -187,7 +191,6 @@ public partial class ToolInvoker
             
             // Suggest similar tool names (v1.8.0)
             var allTools = _toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Tool)
-                .Concat(_toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Prompt))
                 .Select(t => t.Name)
                 .ToList();
             
@@ -223,7 +226,6 @@ public partial class ToolInvoker
                 if (!string.IsNullOrEmpty(toolName))
                 {
                     var toolDef = _toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Tool)
-                        .Concat(_toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Prompt))
                         .FirstOrDefault(t => t.Name.Equals(toolName, StringComparison.OrdinalIgnoreCase));
                     
                     if (toolDef is not null && !string.IsNullOrEmpty(toolDef.InputSchema))
@@ -307,7 +309,7 @@ public partial class ToolInvoker
     private JsonRpcMessage HandleInitialize(JsonRpcMessage request)
     {
         bool isTools = _toolService.GetAllFunctionDefinitions(ToolService.FunctionTypeEnum.Tool).Any();
-        bool isPrompts = _toolService.GetAllFunctionDefinitions(ToolService.FunctionTypeEnum.Prompt).Any();
+        bool isPrompts = _toolService.GetAllPromptsDefinitions().Any();
         bool hasResources = _toolService.GetAllResourceDefinitions().Any();
 
         // https://modelcontextprotocol.io/specification/2025-11-25/schema#servercapabilities
@@ -507,6 +509,62 @@ public partial class ToolInvoker
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in tools/list");
+            return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = ex.Message });
+        }
+    }
+
+
+    /// <summary>
+    /// Handles MCP prompt/list request.
+    /// </summary>
+    /// <param name="request">The JSON-RPC request</param>
+    private JsonRpcMessage HandlePromptsList(JsonRpcMessage request)
+    {
+        try
+        {
+            // Extract pagination parameters (v1.6.0+)
+            string? cursor = null;
+            int pageSize = Pagination.CursorHelper.DefaultPageSize;
+
+            if (request.Params is not null)
+            {
+                var @params = request.GetParams();
+
+                // Extract cursor (optional)
+                if (@params.TryGetProperty("cursor", out var cursorProp) &&
+                    cursorProp.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    cursor = cursorProp.GetString();
+                }
+
+                // Extract pageSize (optional, default 100)
+                if (@params.TryGetProperty("pageSize", out var pageSizeProp) &&
+                    pageSizeProp.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    pageSize = pageSizeProp.GetInt32();
+                }
+            }
+
+            // Get paginated functions for this transport
+            var allPrompts = _toolService.GetAllPromptsDefinitions();
+            var paginatedResult = Pagination.CursorHelper.Paginate(allPrompts, cursor, pageSize);
+
+
+            // Prompts: serialize with arguments (array)
+            var promptsList = paginatedResult.Items.ToList();
+
+            // Build response with pagination
+            var response = new ListPromptsResult
+            {
+                Prompts = promptsList,
+                NextCursor = paginatedResult.NextCursor
+            };
+
+            return ToolResponse.Success(request.Id, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in prompts/list");
             return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = ex.Message });
         }
     }

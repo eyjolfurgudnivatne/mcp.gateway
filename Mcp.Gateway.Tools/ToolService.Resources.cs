@@ -23,12 +23,12 @@ public partial class ToolService
             return false;
         
         // Scheme must be at least 1 character
-        var scheme = uri.Substring(0, schemeIndex);
+        var scheme = uri[..schemeIndex];
         if (scheme.Length == 0)
             return false;
         
         // Path must exist after ://
-        var path = uri.Substring(schemeIndex + 3);
+        var path = uri[(schemeIndex + 3)..];
         if (path.Length == 0)
             return false;
         
@@ -46,7 +46,7 @@ public partial class ToolService
         if (schemeIndex < 0)
             return uri; // Fallback
         
-        var path = uri.Substring(schemeIndex + 3);
+        var path = uri[(schemeIndex + 3)..];
         var segments = path.Split('/', '\\');
         var lastSegment = segments.LastOrDefault(s => !string.IsNullOrEmpty(s)) ?? path;
         
@@ -58,7 +58,7 @@ public partial class ToolService
         // Simple title case (just capitalize first letter)
         if (nameWithoutExt.Length > 0)
         {
-            return char.ToUpper(nameWithoutExt[0]) + nameWithoutExt.Substring(1);
+            return char.ToUpper(nameWithoutExt[0]) + nameWithoutExt[1..];
         }
         
         return uri; // Fallback
@@ -83,27 +83,40 @@ public partial class ToolService
                 // Get attribute from delegate method
                 var method = functionDetails.FunctionDelegate.Method;
                 var attr = method.GetCustomAttribute<McpResourceAttribute>();
-                
+                var iconsAttr = method.GetCustomAttributes<McpIconAttribute>();
+
                 if (attr == null)
                 {
                     System.Diagnostics.Debug.WriteLine(
                         $"WARNING: Resource '{uri}' found but McpResourceAttribute is missing");
                     return null;
                 }
-                
+
+                // get icons from delegate method
+                List<McpIconDefinition> icons = [];
+                foreach (var iconA in iconsAttr)
+                    icons.Add(new(
+                        iconA.Src,
+                        iconA.MimeType,
+                        iconA.Sizes,
+                        iconA.Theme?.ToString().ToLower()));
+
+                if (!string.IsNullOrEmpty(attr.Icon))
+                    icons.Add(new(attr.Icon, null, null, null));
+
                 // Use attribute values or derive from URI
                 var name = attr.Name ?? DeriveNameFromUri(uri);
                 var description = attr.Description;
                 var mimeType = attr.MimeType;
-                var icon = attr.Icon;  // NEW: Extract icon (v1.6.5)
-                
-                return new ResourceDefinition(
-                    Uri: uri,
-                    Name: name,
-                    Description: description,
-                    MimeType: mimeType,
-                    Icon: icon  // NEW: Include icon (v1.6.5)
-                );
+
+                return new ResourceDefinition
+                {
+                    Uri = uri,
+                    Name = name,
+                    Description = description,
+                    MimeType = mimeType,
+                    Icons = icons.Count == 0 ? null : icons
+                };
             })
             .Where(x => x != null)!; // Filter out nulls from missing attributes
     }
@@ -125,20 +138,17 @@ public partial class ToolService
         }
         
         var method = functionDetails.FunctionDelegate.Method;
-        var attr = method.GetCustomAttribute<McpResourceAttribute>();
-        
-        if (attr == null)
+        var attr = method.GetCustomAttribute<McpResourceAttribute>()
+            ?? throw new ToolInternalErrorException($"Resource '{uri}' missing McpResourceAttribute");
+
+        return new ResourceDefinition
         {
-            throw new ToolInternalErrorException($"Resource '{uri}' missing McpResourceAttribute");
-        }
-        
-        return new ResourceDefinition(
-            Uri: uri,
-            Name: attr.Name ?? DeriveNameFromUri(uri),
-            Description: attr.Description,
-            MimeType: attr.MimeType,
-            Icon: attr.Icon  // NEW: Include icon (v1.6.5)
-        );
+            Uri = uri,
+            Name = attr.Name ?? DeriveNameFromUri(uri),
+            Description = attr.Description,
+            MimeType = attr.MimeType,
+            Icons = [new McpIconDefinition(attr.Icon ?? "", null, null, null)]
+        };
     }
 
     /// <summary>

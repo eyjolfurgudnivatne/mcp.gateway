@@ -50,43 +50,17 @@ public partial class ToolInvoker
             
             var resourcesList = paginatedResult.Items.Select(r =>
             {
-                var resourceObj = new Dictionary<string, object>
-                {
-                    ["uri"] = r.Uri,
-                    ["name"] = r.Name,
-                    ["description"] = r.Description ?? "",
-                    ["mimeType"] = r.MimeType ?? "text/plain"
-                };
-
-                // Add icons if present (MCP 2025-11-25)
-                if (!string.IsNullOrEmpty(r.Icon))
-                {
-                    resourceObj["icons"] = new[]
-                    {
-                        new
-                        {
-                            src = r.Icon,
-                            mimeType = (string?)null,
-                            sizes = (string[]?)null
-                        }
-                    };
-                }
-
-                return resourceObj;
+                r.MimeType ??= "text/plain";
+                return r;
             }).ToList();
 
             // Build response with pagination
-            var response = new Dictionary<string, object>
+            ListResourcesResult response = new()
             {
-                ["resources"] = resourcesList
+                Resources = resourcesList,
+                NextCursor = paginatedResult.NextCursor
             };
-
-            // Add nextCursor if more results available
-            if (paginatedResult.NextCursor is not null)
-            {
-                response["nextCursor"] = paginatedResult.NextCursor;
-            }
-
+            
             return ToolResponse.Success(request.Id, response);
         }
         catch (Exception ex)
@@ -266,10 +240,9 @@ public partial class ToolInvoker
                     new { detail = "Subscription service not available" });
             }
 
-            var subscriptionRegistry = _serviceProvider.GetService(typeof(ResourceSubscriptionRegistry)) 
-                as ResourceSubscriptionRegistry;
-            
-            if (subscriptionRegistry is null)
+
+            if (_serviceProvider.GetService(typeof(ResourceSubscriptionRegistry))
+                is not ResourceSubscriptionRegistry subscriptionRegistry)
             {
                 _logger.LogError("ResourceSubscriptionRegistry not found in DI container");
                 return ToolResponse.Error(
@@ -281,10 +254,10 @@ public partial class ToolInvoker
 
             // Subscribe session to resource
             var wasAdded = subscriptionRegistry.Subscribe(sessionId, uri);
-            
-            _logger.LogInformation(
-                "Session '{SessionId}' subscribed to resource '{Uri}' (new={WasAdded})",
-                sessionId, uri, wasAdded);
+
+            //_logger.LogInformation(
+            //    "Session '{SessionId}' subscribed to resource '{Uri}' (new={WasAdded})",
+            //    sessionId, uri, wasAdded);
 
             return ToolResponse.Success(request.Id, new { subscribed = true, uri });
         }
@@ -354,10 +327,9 @@ public partial class ToolInvoker
                     new { detail = "Subscription service not available" });
             }
 
-            var subscriptionRegistry = _serviceProvider.GetService(typeof(ResourceSubscriptionRegistry)) 
-                as ResourceSubscriptionRegistry;
-            
-            if (subscriptionRegistry is null)
+
+            if (_serviceProvider.GetService(typeof(ResourceSubscriptionRegistry))
+                is not ResourceSubscriptionRegistry subscriptionRegistry)
             {
                 _logger.LogError("ResourceSubscriptionRegistry not found in DI container");
                 return ToolResponse.Error(
@@ -370,9 +342,9 @@ public partial class ToolInvoker
             // Unsubscribe session from resource
             var wasRemoved = subscriptionRegistry.Unsubscribe(sessionId, uri);
             
-            _logger.LogInformation(
-                "Session '{SessionId}' unsubscribed from resource '{Uri}' (removed={WasRemoved})",
-                sessionId, uri, wasRemoved);
+            //_logger.LogInformation(
+            //    "Session '{SessionId}' unsubscribed from resource '{Uri}' (removed={WasRemoved})",
+            //    sessionId, uri, wasRemoved);
 
             return ToolResponse.Success(request.Id, new { unsubscribed = true, uri });
         }

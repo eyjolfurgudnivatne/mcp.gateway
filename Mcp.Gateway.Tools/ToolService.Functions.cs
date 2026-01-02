@@ -83,47 +83,6 @@ public partial class ToolService
                     );
                 }
 
-                // Prompt
-                if (functionDetails.FunctionType == FunctionTypeEnum.Prompt)
-                {
-                    var attr = method.GetCustomAttribute<McpPromptAttribute>();
-                    description = attr?.Description ?? "No description available";
-                    var icon = attr?.Icon;  // NEW: Extract icon (v1.6.5)
-                    
-                    // For prompts, we need to extract Arguments from PromptResponse
-                    // We do this by calling the prompt method with a dummy request
-                    try
-                    {
-                        var dummyRequest = JsonRpcMessage.CreateRequest("prompts/get", "dummy", new { name = functionName });
-                        var response = (JsonRpcMessage)functionDetails.FunctionDelegate.DynamicInvoke(dummyRequest)!;
-                        
-                        // Parse PromptResponse from result
-                        if (response.Result is not null)
-                        {
-                            var promptResponse = response.GetResult<PromptResponse>();
-                            if (promptResponse?.Arguments is not null)
-                            {
-                                // Parse Arguments object into PromptArgument array
-                                arguments = ParsePromptArguments(promptResponse.Arguments);
-                            }
-                        }
-                    }
-                    catch
-                    {
-                        // If parsing fails, return empty arguments
-                        arguments = Array.Empty<PromptArgument>();
-                    }
-                    
-                    return new FunctionDefinition(
-                        Name: functionName,
-                        Description: description!,
-                        InputSchema: null,  // Prompts don't have inputSchema
-                        Arguments: arguments ?? Array.Empty<PromptArgument>(),
-                        Capabilities: capabilities,
-                        Icon: icon  // NEW: Include icon (v1.6.5)
-                    );
-                }
-
                 // Fallback (should never happen)
                 return new FunctionDefinition(
                     Name: functionName,
@@ -135,45 +94,6 @@ public partial class ToolService
                     OutputSchema: null  // NEW
                 );
             });
-    }
-
-    /// <summary>
-    /// Parses PromptResponse.Arguments object into PromptArgument array for prompts/list
-    /// </summary>
-    private static IReadOnlyList<PromptArgument> ParsePromptArguments(object argumentsObj)
-    {
-        try
-        {
-            // Arguments is a JSON object like: { "name": { "type": "string", "description": "..." }, ... }
-            var json = JsonSerializer.Serialize(argumentsObj, JsonOptions.Default);
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-
-            var result = new List<PromptArgument>();
-
-            foreach (var property in root.EnumerateObject())
-            {
-                var argName = property.Name;
-                var argValue = property.Value;
-
-                // Extract description and determine if required
-                string description = argValue.TryGetProperty("description", out var descProp)
-                    ? descProp.GetString() ?? ""
-                    : "";
-
-                // For now, assume all arguments in the object are required
-                // (we can enhance this later if PromptResponse includes required metadata)
-                bool required = true;
-
-                result.Add(new PromptArgument(argName, description, required));
-            }
-
-            return result;
-        }
-        catch
-        {
-            return Array.Empty<PromptArgument>();
-        }
     }
 
     /// <summary>

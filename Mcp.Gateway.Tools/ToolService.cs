@@ -12,6 +12,7 @@ using System.Collections.Concurrent;
 /// - ToolService.Scanning.cs - Function scanning and registration
 /// - ToolService.Functions.cs - Function definitions (Tools and Prompts)
 /// - ToolService.Invocation.cs - Function invocation with DI
+/// - ToolService.Prompts.cs - Prompts-specific functionality
 /// - ToolService.Resources.cs - Resource-specific functionality
 /// </remarks>
 public partial class ToolService(IServiceProvider serviceProvider)
