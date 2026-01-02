@@ -1,7 +1,6 @@
 namespace Mcp.Gateway.Tools;
 
 using System;
-using System.Text.Json.Serialization;
 
 /// <summary>
 /// Marks a method as an MCP prompt.
@@ -41,7 +40,7 @@ public class McpPromptAttribute : Attribute
 
     /// <summary>
     /// JSON Schema for input parameters (optional).
-    /// If null, will be auto-generated from method parameters (future feature).
+    /// If null, will be auto-generated from method parameters.
     /// </summary>
     public string? InputSchema { get; set; }
     
@@ -53,60 +52,4 @@ public class McpPromptAttribute : Attribute
     /// "https://example.com/prompt-icon.png"
     /// </example>
     public string? Icon { get; set; }
-}
-
-public sealed record PromptResponse(
-    [property: JsonPropertyName("name")] string Name,
-    [property: JsonPropertyName("description")] string Description,
-    [property: JsonPropertyName("messages")] IReadOnlyList<PromptMessage> Messages,
-    [property: JsonPropertyName("arguments")] object Arguments);
-
-public sealed record PromptMessage
-{
-    [JsonIgnore]
-    public PromptRole Role { get; init; }
-
-    [JsonPropertyName("role")]
-    public string RoleString
-    {
-        get => ToWireRole(Role);
-        init => Role = FromWireRole(value);
-    }
-
-    [JsonPropertyName("content")]
-    public string Content { get; init; } = "";
-
-    public PromptMessage() { }
-
-    public PromptMessage(PromptRole role, string content)
-    {
-        Role = role;
-        Content = content;
-    }
-
-    private static PromptRole FromWireRole(string role) => role switch
-    {
-        "system" => PromptRole.System,
-        "user" => PromptRole.User,
-        "assistant" => PromptRole.Assistant,
-        "tool" => PromptRole.Tool,
-        _ => PromptRole.User
-    };
-
-    private static string ToWireRole(PromptRole role) => role switch
-    {
-        PromptRole.System => "system",
-        PromptRole.User => "user",
-        PromptRole.Assistant => "assistant",
-        PromptRole.Tool => "tool",
-        _ => "user"
-    };
-}
-
-public enum PromptRole
-{
-    System,
-    User,
-    Assistant,
-    Tool
 }
