@@ -813,6 +813,33 @@ public partial class ToolInvoker
         object? id,
         CancellationToken cancellationToken)
     {
+        // Handle TypedJsonRpc<T> return type (sync)
+        if (toolDetails.FunctionResultType.IsTypedJsonRpcResponse && result != null)
+        {
+            // If result is Task<TypedJsonRpc<T>>, await it first
+            if (result is Task task)
+            {
+                await task.ConfigureAwait(false);
+                // Get result from task
+                var taskResultProperty = task.GetType().GetProperty("Result");
+                result = taskResultProperty?.GetValue(task);
+            }
+
+            // Now result should be TypedJsonRpc<T>
+            // We need to extract the Inner JsonRpcMessage
+            // Since TypedJsonRpc<T> is generic, we use reflection or dynamic
+            if (result != null)
+            {
+                // Check if it has "Inner" property
+                var innerProp = result.GetType().GetProperty("Inner");
+                if (innerProp != null)
+                {
+                    var innerMessage = innerProp.GetValue(result) as JsonRpcMessage;
+                    return isNotification ? null : innerMessage;
+                }
+            }
+        }
+
         // IAsyncEnumerable<JsonRpcMessage> (streaming)
         if (result is IAsyncEnumerable<JsonRpcMessage> asyncEnumerable)
         {
