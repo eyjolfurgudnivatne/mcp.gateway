@@ -68,6 +68,46 @@ public sealed record GreetParams(
 
 **Result:** Same JSON Schema, less code! ✨
 
+## Output Schema Generation (v1.8.0+)
+
+Just like input parameters, you can now strongly type your tool's **output** and get automatic `outputSchema` generation.
+
+### Example
+
+```csharp
+[McpTool("add_numbers")]
+public TypedJsonRpc<AddResponse> Add(TypedJsonRpc<AddParams> request)
+{
+    var args = request.GetParams()!;
+    return TypedJsonRpc<AddResponse>.Success(
+        request.Id, 
+        new AddResponse(args.A + args.B));
+}
+
+public sealed record AddResponse(
+    [property: Description("The sum of the two numbers")] 
+    double Result);
+```
+
+**Generated Output Schema:**
+```json
+{
+  "type": "object",
+  "properties": {
+    "result": {
+      "type": "number",
+      "description": "The sum of the two numbers"
+    }
+  },
+  "required": ["result"]
+}
+```
+
+**Benefits:**
+- ✅ **Structured Content** - Automatically populates `structuredContent`
+- ✅ **Validation** - Clients can validate the response against the schema
+- ✅ **Documentation** - LLMs understand exactly what the tool returns
+
 ## How It Works
 
 ### 1. Type Mapping
@@ -368,11 +408,10 @@ public JsonRpcMessage UpdateResource(TypedJsonRpc<UpdateResourceParams> request)
 
 public sealed record UpdateResourceParams(
     [property: JsonPropertyName("resource_id")]
-    [property: Description("Unique resource identifier")] 
-    Guid ResourceId,
+    [property: Description("Unique resource identifier")] Guid ResourceId,
+    
     [property: JsonPropertyName("resource_name")]
-    [property: Description("Resource name")] 
-    string ResourceName);
+    [property: Description("Resource name")] string ResourceName);
 ```
 
 **Auto-generated schema:**
