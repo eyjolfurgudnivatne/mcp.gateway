@@ -1,8 +1,17 @@
+#pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Mcp.Gateway.Tools;
+#pragma warning restore IDE0130 // Namespace does not match folder structure
 
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
+/// <summary>
+/// Defines the contract for a content block that can represent various types of content, such as text, images, audio,
+/// or resource links.
+/// </summary>
+/// <remarks>Implementations of this interface are used to encapsulate different content types in a uniform way.
+/// The interface supports polymorphic serialization and deserialization using the "type" discriminator property,
+/// enabling clients to handle multiple content block types interchangeably.</remarks>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]
 [JsonDerivedType(typeof(TextContent), "text")]
 [JsonDerivedType(typeof(ImageContent), "image")]
@@ -241,6 +250,15 @@ public class EmbeddedResource : IContentBlock
     public Dictionary<string, object>? Meta { get; set; }
 }
 
+/// <summary>
+/// Represents the contents of a resource that may be provided as either text or binary data, along with associated
+/// metadata and MIME type information.
+/// </summary>
+/// <remarks>Use this class to encapsulate the data and metadata for a resource whose contents may be represented
+/// as plain text or as a base64-encoded binary blob. Only one of the Text or Blob properties should typically be set,
+/// depending on the nature of the resource. The Meta property allows for extensible metadata to be attached to the
+/// resource. The MimeType property can be used to specify the media type of the content, which may assist consumers in
+/// interpreting the data appropriately.</remarks>
 public class TextOrBlobResourceContents
 {
     /// <summary>
