@@ -23,30 +23,41 @@ public class WebSocketMcpTransport : IMcpTransport
     private Task? _receiveTask;
     private bool _disposed;
 
+    /// <inheritdoc/>
     public bool IsBidirectional => true;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WebSocketMcpTransport"/> class with the specified WebSocket server URL.
+    /// </summary>
+    /// <param name="url">The WebSocket server URL.</param>
     public WebSocketMcpTransport(string url) : this(new Uri(url)) { }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WebSocketMcpTransport"/> class with the specified <see cref="Uri"/>.
+    /// </summary>
+    /// <param name="uri">The WebSocket server URI.</param>
     public WebSocketMcpTransport(Uri uri)
     {
         _socket = new ClientWebSocket();
         _uri = uri;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="WebSocketMcpTransport"/> class with the specified <see cref="WebSocket"/>.
+    /// </summary>
+    /// <param name="socket">The connected <see cref="WebSocket"/> instance to use for transport.</param>
     public WebSocketMcpTransport(WebSocket socket)
     {
         _socket = socket ?? throw new ArgumentNullException(nameof(socket));
         _uri = null;
     }
 
+    /// <inheritdoc/>
     public async Task ConnectAsync(CancellationToken ct = default)
     {
         if (_socket.State == WebSocketState.Open)
         {
-            if (_receiveTask == null)
-            {
-                _receiveTask = ReceiveLoopInternalAsync(_disposeCts.Token);
-            }
+            _receiveTask ??= ReceiveLoopInternalAsync(_disposeCts.Token);
             return;
         }
 
@@ -61,12 +72,14 @@ public class WebSocketMcpTransport : IMcpTransport
         }
     }
 
+    /// <inheritdoc/>
     public async Task SendAsync(JsonRpcMessage message, CancellationToken ct = default)
     {
         var json = JsonSerializer.SerializeToUtf8Bytes(message, JsonOptions.Default);
         await _socket.SendAsync(json, WebSocketMessageType.Text, true, ct);
     }
 
+    /// <inheritdoc/>
     public IAsyncEnumerable<JsonRpcMessage> ReceiveLoopAsync(CancellationToken ct = default)
     {
         return _incomingMessages.Reader.ReadAllAsync(ct);
@@ -136,6 +149,7 @@ public class WebSocketMcpTransport : IMcpTransport
         return message;
     }
 
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
@@ -156,5 +170,6 @@ public class WebSocketMcpTransport : IMcpTransport
         }
         _socket.Dispose();
         _disposeCts.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

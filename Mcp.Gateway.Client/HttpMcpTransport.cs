@@ -30,8 +30,15 @@ public class HttpMcpTransport : IMcpTransport
     private CancellationTokenSource? _sseCts;
     private bool _disposed;
 
+    /// <inheritdoc/>
     public bool IsBidirectional => _enableSse;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HttpMcpTransport"/> class using a base URL.
+    /// </summary>
+    /// <param name="baseUrl">The base URL of the MCP server (e.g., "http://localhost:5000").</param>
+    /// <param name="endpoint">The HTTP endpoint for MCP RPC calls (default is "/mcp").</param>
+    /// <param name="enableSse">If true, enables server-sent events (SSE) for receiving notifications.</param>
     public HttpMcpTransport(string baseUrl, string endpoint = "/mcp", bool enableSse = false)
     {
         _httpClient = new HttpClient { BaseAddress = new Uri(baseUrl) };
@@ -40,6 +47,12 @@ public class HttpMcpTransport : IMcpTransport
         _enableSse = enableSse;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HttpMcpTransport"/> class using a base URL.
+    /// </summary>
+    /// <param name="httpClient">The HTTP client to use for making requests.</param>
+    /// <param name="endpoint">The HTTP endpoint for MCP RPC calls (default is "/mcp").</param>
+    /// <param name="enableSse">If true, enables server-sent events (SSE) for receiving notifications.</param>
     public HttpMcpTransport(HttpClient httpClient, string endpoint = "/mcp", bool enableSse = false)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
@@ -48,6 +61,7 @@ public class HttpMcpTransport : IMcpTransport
         _enableSse = enableSse;
     }
 
+    /// <inheritdoc/>
     public Task ConnectAsync(CancellationToken ct = default)
     {
         // HTTP is stateless, no connection needed initially.
@@ -55,12 +69,15 @@ public class HttpMcpTransport : IMcpTransport
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc/>
     public async Task SendAsync(JsonRpcMessage message, CancellationToken ct = default)
     {
         // Create request manually to handle headers
-        var request = new HttpRequestMessage(HttpMethod.Post, _endpoint);
-        request.Content = JsonContent.Create(message, options: JsonOptions.Default);
-        
+        var request = new HttpRequestMessage(HttpMethod.Post, _endpoint)
+        {
+            Content = JsonContent.Create(message, options: JsonOptions.Default)
+        };
+
         if (!string.IsNullOrEmpty(_sessionId))
         {
             request.Headers.Add("MCP-Session-Id", _sessionId);
@@ -253,11 +270,13 @@ public class HttpMcpTransport : IMcpTransport
         return message;
     }
 
+    /// <inheritdoc/>
     public IAsyncEnumerable<JsonRpcMessage> ReceiveLoopAsync(CancellationToken ct = default)
     {
         return _incomingMessages.Reader.ReadAllAsync(ct);
     }
 
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
@@ -283,5 +302,7 @@ public class HttpMcpTransport : IMcpTransport
         {
             _httpClient.Dispose();
         }
+
+        GC.SuppressFinalize(this);
     }
 }

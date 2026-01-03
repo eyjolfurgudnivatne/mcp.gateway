@@ -1,13 +1,51 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <ItemGroup>
-    <ProjectReference Include="..\Mcp.Gateway.Models\Mcp.Gateway.Models.csproj" />
-  </ItemGroup>
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>Mcp.Gateway.Client</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>ARKo AS - AHelse Development Team</Authors>
+    <Company>ARKo AS</Company>
+    <Product>MCP Gateway Client</Product>
+    <Description>Robust .NET client library for the Model Context Protocol (MCP). Connect to MCP servers via HTTP, SSE, WebSocket, and stdio.</Description>
+    <Copyright>Copyright (c) 2025 ARKo AS - AHelse Development Team</Copyright>
+    <PackageProjectUrl>https://github.com/eyjolfurgudnivatne/mcp.gateway</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/eyjolfurgudnivatne/mcp.gateway.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>mcp;client;model-context-protocol;json-rpc;websocket;sse;stdio;dotnet10</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>Initial release of Mcp.Gateway.Client. Supports HTTP, SSE, WebSocket, and stdio transports.</PackageReleaseNotes>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Mcp.Gateway.Models\Mcp.Gateway.Models.csproj">
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!-- Inkluder DLL-er fra refererte prosjekter (Mcp.Gateway.Models) direkte i pakken -->
+  <PropertyGroup>
+    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+
+  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
 </Project>

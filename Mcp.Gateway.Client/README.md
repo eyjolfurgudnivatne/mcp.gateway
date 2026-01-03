@@ -16,10 +16,16 @@
 
 ## 📦 Installation
 
-Add the project reference or NuGet package (coming soon):
+Install the NuGet package:
 
-```xml
-<ProjectReference Include="..\Mcp.Gateway.Client\Mcp.Gateway.Client.csproj" />
+```bash
+dotnet add package Mcp.Gateway.Client
+```
+
+Or via the Package Manager Console:
+
+```powershell
+Install-Package Mcp.Gateway.Client
 ```
 
 ## 🛠️ Usage

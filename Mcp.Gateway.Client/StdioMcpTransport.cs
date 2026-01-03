@@ -22,25 +22,39 @@ public class StdioMcpTransport : IMcpTransport
     private Task? _receiveTask;
     private bool _disposed;
 
+    /// <inheritdoc/>
     public bool IsBidirectional => true;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StdioMcpTransport"/> class using the standard input and output streams.
+    /// </summary>
     public StdioMcpTransport() : this(Console.OpenStandardInput(), Console.OpenStandardOutput()) { }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StdioMcpTransport"/> class using the specified input and output streams.
+    /// </summary>
+    /// <param name="inputStream">The input stream to read from.</param>
+    /// <param name="outputStream">The output stream to write to.</param>
     public StdioMcpTransport(Stream inputStream, Stream outputStream)
+        : this(inputStream, outputStream, false)
+    {
+    }
+
+    // Private constructor to support primary constructor style and avoid code duplication
+    private StdioMcpTransport(Stream inputStream, Stream outputStream, bool _)
     {
         _inputStream = inputStream ?? throw new ArgumentNullException(nameof(inputStream));
         _outputStream = outputStream ?? throw new ArgumentNullException(nameof(outputStream));
     }
 
+    /// <inheritdoc/>
     public Task ConnectAsync(CancellationToken ct = default)
     {
-        if (_receiveTask == null)
-        {
-            _receiveTask = ReceiveLoopInternalAsync(_disposeCts.Token);
-        }
+        _receiveTask ??= ReceiveLoopInternalAsync(_disposeCts.Token);
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc/>
     public async Task SendAsync(JsonRpcMessage message, CancellationToken ct = default)
     {
         var json = JsonSerializer.Serialize(message, JsonOptions.Default);
@@ -49,6 +63,7 @@ public class StdioMcpTransport : IMcpTransport
         await _outputStream.FlushAsync(ct);
     }
 
+    /// <inheritdoc/>
     public IAsyncEnumerable<JsonRpcMessage> ReceiveLoopAsync(CancellationToken ct = default)
     {
         return _incomingMessages.Reader.ReadAllAsync(ct);
@@ -111,6 +126,7 @@ public class StdioMcpTransport : IMcpTransport
         return message;
     }
 
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
@@ -131,5 +147,7 @@ public class StdioMcpTransport : IMcpTransport
         
         // We do not dispose the streams as they might be Console streams which should stay open
         // or managed by the caller.
+
+        GC.SuppressFinalize(this);
     }
 }

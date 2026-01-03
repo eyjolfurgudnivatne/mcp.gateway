@@ -22,11 +22,15 @@ public class McpClient(IMcpTransport transport) : IMcpClient
     private int _nextId = 1;
     private bool _isInitialized = false;
 
+    /// <inheritdoc/>
     public ServerCapabilities? ServerCapabilities { get; private set; }
+    /// <inheritdoc/>
     public ImplementationInfo? ServerInfo { get; private set; }
 
+    /// <inheritdoc/>
     public event EventHandler<NotificationMessage>? NotificationReceived;
 
+    /// <inheritdoc/>
     public async Task ConnectAsync(CancellationToken ct = default)
     {
         await _transport.ConnectAsync(ct);
@@ -70,6 +74,7 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         _isInitialized = true;
     }
 
+    /// <inheritdoc/>
     public async Task<ListToolsResult?> ListToolsAsync(string? cursor = null, CancellationToken ct = default)
     {
         EnsureInitialized();
@@ -80,6 +85,7 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         return result.GetResult<ListToolsResult>();
     }
 
+    /// <inheritdoc/>
     public async Task<TResult?> CallToolAsync<TResult>(string toolName, object arguments, CancellationToken ct = default)
     {
         EnsureInitialized();
@@ -100,6 +106,7 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         return response.GetToolsCallResult<TResult>();
     }
 
+    /// <inheritdoc/>
     public async IAsyncEnumerable<TResult> CallToolStreamAsync<TResult>(string toolName, object arguments, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
         EnsureInitialized();
@@ -109,7 +116,9 @@ public class McpClient(IMcpTransport transport) : IMcpClient
             arguments
         });
 
+#pragma warning disable CA2208 // Instantiate argument exceptions correctly
         if (request.Id == null) throw new ArgumentException("Request must have an ID", nameof(request));
+#pragma warning restore CA2208 // Instantiate argument exceptions correctly
 
         // We need a channel to stream responses
         var channel = Channel.CreateUnbounded<JsonRpcMessage>();
@@ -180,6 +189,7 @@ public class McpClient(IMcpTransport transport) : IMcpClient
 
     private readonly ConcurrentDictionary<object, Channel<JsonRpcMessage>> _activeStreams = new();
 
+    /// <inheritdoc/>
     public async Task<ListResourcesResult?> ListResourcesAsync(string? cursor = null, CancellationToken ct = default)
     {
         EnsureInitialized();
@@ -190,6 +200,7 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         return result.GetResult<ListResourcesResult>();
     }
 
+    /// <inheritdoc/>
     public async Task<ResourceContent> ReadResourceAsync(string uri, CancellationToken ct = default)
     {
         EnsureInitialized();
@@ -212,6 +223,7 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         throw new McpClientException("No content returned for resource");
     }
 
+    /// <inheritdoc/>
     public async Task SubscribeResourceAsync(string uri, CancellationToken ct = default)
     {
         EnsureInitialized();
@@ -224,6 +236,7 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         }
     }
 
+    /// <inheritdoc/>
     public async Task<ListPromptsResult?> ListPromptsAsync(string? cursor = null, CancellationToken ct = default)
     {
         EnsureInitialized();
@@ -235,6 +248,7 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         return result.GetResult<ListPromptsResult>();
     }
 
+    /// <inheritdoc/>
     public async Task<PromptResponse?> GetPromptAsync(string name, object arguments, CancellationToken ct = default)
     {
         EnsureInitialized();
@@ -250,6 +264,7 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         return result.GetResult<PromptResponse>();
     }
 
+    /// <inheritdoc/>
     public async Task<PromptResponse?> GetPromptAsync(PromptRequest promptRequest, CancellationToken ct = default)
     {
         EnsureInitialized();
@@ -261,6 +276,7 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         return result.GetResult<PromptResponse>();
     }
 
+    /// <inheritdoc/>
     public async Task<PromptResponse?> GetPromptAsync<TArguments>(PromptRequest<TArguments> promptRequest, CancellationToken ct = default)
     {
         EnsureInitialized();
@@ -390,6 +406,7 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         if (!_isInitialized) throw new InvalidOperationException("Client not initialized. Call ConnectAsync() first.");
     }
 
+    /// <inheritdoc/>
     public async ValueTask DisposeAsync()
     {
         _disposeCts.Cancel();
@@ -399,15 +416,23 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         }
         await _transport.DisposeAsync();
         _disposeCts.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
 
-public class McpClientException : Exception
+/// <summary>
+/// Exception thrown by <see cref="McpClient"/> when an error occurs during MCP operations.
+/// Contains optional JSON-RPC error details if available.
+/// </summary>
+/// <remarks>
+/// Initializes a new instance of the <see cref="McpClientException"/> class with a specified error message and optional JSON-RPC error.
+/// </remarks>
+/// <param name="message">The error message.</param>
+/// <param name="rpcError">The JSON-RPC error, if available.</param>
+public class McpClientException(string message, JsonRpcError? rpcError = null) : Exception(message)
 {
-    public JsonRpcError? RpcError { get; }
-
-    public McpClientException(string message, JsonRpcError? rpcError = null) : base(message)
-    {
-        RpcError = rpcError;
-    }
+    /// <summary>
+    /// Gets the associated JSON-RPC error, if available.
+    /// </summary>
+    public JsonRpcError? RpcError { get; } = rpcError;
 }
