@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
@@ -7,7 +7,7 @@
 		
 		<!-- NuGet Package Metadata -->
 		<PackageId>Mcp.Gateway.Tools</PackageId>
-		<Version>1.8.1</Version>
+		<Version>1.8.2</Version>
 		<Authors>ARKo AS - AHelse Development Team</Authors>
 		<Company>ARKo AS</Company>
 		<Product>MCP Gateway</Product>
@@ -19,7 +19,7 @@
 		<PackageTags>mcp;model-context-protocol;json-rpc;websocket;github-copilot;claude;ai;tools;gateway;dotnet10;pagination;notifications;lifecycle-hooks;resource-subscriptions</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageReleaseNotes>v1.8.1: Typed Returns &amp; Auto-Output Schema - Tools can now return TypedJsonRpc&lt;T&gt; for compile-time type safety, automatic outputSchema generation, and simplified structuredContent responses. Updated documentation and examples.</PackageReleaseNotes>
+		<PackageReleaseNotes>v1.8.2: Typed Returns &amp; Auto-Output Schema - Tools can now return TypedJsonRpc&lt;T&gt; for compile-time type safety, automatic outputSchema generation, and simplified structuredContent responses. Updated documentation and examples.</PackageReleaseNotes>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -33,17 +33,26 @@
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
-		<ProjectReference Include="..\Mcp.Gateway.Models\Mcp.Gateway.Models.csproj" />
+		<ProjectReference Include="..\Mcp.Gateway.Models\Mcp.Gateway.Models.csproj">
+			<PrivateAssets>all</PrivateAssets>
+		</ProjectReference>
 	</ItemGroup>
+
+	<!-- Inkluder DLL-er fra refererte prosjekter (Mcp.Gateway.Models) direkte i pakken -->
+	<PropertyGroup>
+		<TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+	</PropertyGroup>
+
+	<Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
+		<ItemGroup>
+			<BuildOutputInPackage Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+		</ItemGroup>
+	</Target>	
 	
 	<ItemGroup>
 		<None Include="README.md" Pack="true" PackagePath="\" />
-	</ItemGroup>
-	
-	<ItemGroup>
-	  <Folder Include="Icons\" />
 	</ItemGroup>
 
 </Project>
