@@ -83,20 +83,21 @@ app.Run();
 public class GreetingTools
 {
     [McpTool("greet", Description = "Greets a user by name")]
-    public JsonRpcMessage Greet(TypedJsonRpc<GreetParams> request)
+    public TypedJsonRpc<GreetResponse> Greet(TypedJsonRpc<GreetParams> request)
     {
         var args = request.GetParams()
             ?? throw new ToolInvalidParamsException("Name is required");
 
         var greeting = $"Hello, {args.Name}! Welcome to MCP Gateway!";
         
-        return ToolResponse.Success(
+        return TypedJsonRpc<GreetResponse>.Success(
             request.Id,
-            new { message = greeting });
+            new GreetResponse(greeting));
     }
 }
 
 public record GreetParams(string Name);
+public record GreetResponse(string Message);
 ```
 
 ### 3. Run Your Server
@@ -137,7 +138,10 @@ curl -X POST http://localhost:5000/mcp \
         "type": "text",
         "text": "{\"message\":\"Hello, World! Welcome to MCP Gateway!\"}"
       }
-    ]
+    ],
+    "structuredContent": {
+      "message": "Hello, World! Welcome to MCP Gateway!"
+    }
   },
   "id": 1
 }
@@ -282,12 +286,16 @@ Just add more methods with `[McpTool]` attribute:
 
 ```csharp
 [McpTool("add_numbers")]
-public JsonRpcMessage Add(TypedJsonRpc<AddParams> request)
+public TypedJsonRpc<AddResponse> Add(TypedJsonRpc<AddParams> request)
 {
     var args = request.GetParams()!;
-    return ToolResponse.Success(request.Id, 
-        new { result = args.A + args.B });
+    return TypedJsonRpc<AddResponse>.Success(
+        request.Id, 
+        new AddResponse(args.A + args.B));
 }
+
+public record AddParams(double A, double B);
+public record AddResponse(double Result);
 ```
 
 ### How do I handle async operations?
@@ -296,10 +304,12 @@ Use `async` methods:
 
 ```csharp
 [McpTool("fetch_data")]
-public async Task<JsonRpcMessage> FetchData(JsonRpcMessage request)
+public async Task<TypedJsonRpc<DataResponse>> FetchData(TypedJsonRpc<DataRequest> request)
 {
     var data = await _httpClient.GetStringAsync("...");
-    return ToolResponse.Success(request.Id, new { data });
+    return TypedJsonRpc<DataResponse>.Success(
+        request.Id, 
+        new DataResponse(data));
 }
 ```
 

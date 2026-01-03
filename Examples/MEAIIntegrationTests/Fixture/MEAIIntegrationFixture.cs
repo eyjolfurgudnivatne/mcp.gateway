@@ -40,6 +40,8 @@ public class MEAIIntegrationFixture : IAsyncLifetime
             });
 
         HttpClient = Factory.CreateClient();
+        HttpClient.DefaultRequestHeaders.Add("MCP-Protocol-Version", "2025-11-25");
+        HttpClient.Timeout = TimeSpan.FromSeconds(30);
 
         await Task.CompletedTask;
     }

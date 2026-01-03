@@ -7,7 +7,7 @@
 		
 		<!-- NuGet Package Metadata -->
 		<PackageId>Mcp.Gateway.Tools</PackageId>
-		<Version>1.8.0</Version>
+		<Version>1.8.1</Version>
 		<Authors>ARKo AS - AHelse Development Team</Authors>
 		<Company>ARKo AS</Company>
 		<Product>MCP Gateway</Product>
@@ -19,7 +19,7 @@
 		<PackageTags>mcp;model-context-protocol;json-rpc;websocket;github-copilot;claude;ai;tools;gateway;dotnet10;pagination;notifications;lifecycle-hooks;resource-subscriptions</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageReleaseNotes>v1.8.0: Quality of Life &amp; Optional MCP Features - Tool Lifecycle Hooks (monitor invocations, metrics, authorization), Resource Subscriptions (optional MCP 2025-11-25 feature, exact URI matching), Better Error Messages (tool suggestions, schema hints), Authorization Support (role-based access control example). New: IToolLifecycleHook interface, LoggingToolLifecycleHook, MetricsToolLifecycleHook, resources/subscribe, resources/unsubscribe, AuthorizationMcpServer example, MetricsMcpServer example. 100% backward compatible, 273/273 tests passing, 2000+ lines new documentation. See: https://github.com/eyjolfurgudnivatne/mcp.gateway/releases/tag/v1.8.0</PackageReleaseNotes>
+		<PackageReleaseNotes>v1.8.1: Typed Returns &amp; Auto-Output Schema - Tools can now return TypedJsonRpc&lt;T&gt; for compile-time type safety, automatic outputSchema generation, and simplified structuredContent responses. Updated documentation and examples.</PackageReleaseNotes>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -35,7 +35,15 @@
 	</ItemGroup>
 	
 	<ItemGroup>
+		<ProjectReference Include="..\Mcp.Gateway.Models\Mcp.Gateway.Models.csproj" />
+	</ItemGroup>
+	
+	<ItemGroup>
 		<None Include="README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <Folder Include="Icons\" />
 	</ItemGroup>
 
 </Project>

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Mcp.Gateway.Tools.Lifecycle;
 using System.Diagnostics;
+using Microsoft.Extensions.Options;
 
 /// <summary>
 /// Handles JSON-RPC tool invocation over multiple transports (HTTP, WebSocket, SSE, stdio).
@@ -22,6 +23,7 @@ using System.Diagnostics;
 public partial class ToolInvoker(
     ToolService _toolService, 
     ILogger<ToolInvoker> _logger,
+    IOptions<ImplementationInfo> _implementationInfoOptions,
     Notifications.INotificationSender? _notificationSender = null,
     EventIdGenerator? _eventIdGenerator = null,  // Optional EventIdGenerator for SSE event IDs (v1.7.0)
     IEnumerable<IToolLifecycleHook>? _lifecycleHooks = null,  // Optional lifecycle hooks (v1.8.0)

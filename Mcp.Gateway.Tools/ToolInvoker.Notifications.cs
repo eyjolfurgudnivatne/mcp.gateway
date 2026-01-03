@@ -58,6 +58,7 @@ public partial class ToolInvoker
     /// Sends a resources/updated notification to all subscribers
     /// </summary>
     /// <param name="uri">Optional: specific resource URI that changed</param>
+    /// <param name="cancellationToken"></param>
     public async Task NotifyResourcesUpdatedAsync(string? uri = null, CancellationToken cancellationToken = default)
     {
         if (_notificationSender is null)

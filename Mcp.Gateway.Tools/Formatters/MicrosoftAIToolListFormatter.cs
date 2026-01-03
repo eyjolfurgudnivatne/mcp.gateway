@@ -45,7 +45,7 @@ public class MicrosoftAIToolListFormatter : IToolListFormatter
     {
         var formattedTools = tools.Select(t =>
         {
-            var schema = JsonSerializer.Deserialize<JsonElement>(t.InputSchema);
+            var schema = JsonSerializer.Deserialize<JsonElement>(t.InputSchema!);
             
             // Extract properties from InputSchema
             var properties = schema.TryGetProperty("properties", out var props)

@@ -10,8 +10,9 @@ using System.Collections.Concurrent;
 /// Partial class files:
 /// - ToolService.cs (this file) - Core infrastructure
 /// - ToolService.Scanning.cs - Function scanning and registration
-/// - ToolService.Functions.cs - Function definitions (Tools & Prompts)
+/// - ToolService.Functions.cs - Function definitions (Tools and Prompts)
 /// - ToolService.Invocation.cs - Function invocation with DI
+/// - ToolService.Prompts.cs - Prompts-specific functionality
 /// - ToolService.Resources.cs - Resource-specific functionality
 /// </remarks>
 public partial class ToolService(IServiceProvider serviceProvider)
@@ -44,7 +45,6 @@ public partial class ToolService(IServiceProvider serviceProvider)
     /// </summary>
     internal record FunctionDetailArgumentType(
         bool IsToolConnector, 
-        bool IsStreamMessage, 
         bool IsJsonElementMessage, 
         bool IsTypedJsonRpc, 
         Type ParameterType);
@@ -56,7 +56,9 @@ public partial class ToolService(IServiceProvider serviceProvider)
         bool IsVoidTask, 
         bool IsGenericTask, 
         bool IsIAsyncEnumerable, 
-        bool IsJsonRpcResponse);
+        bool IsJsonRpcResponse,
+        bool IsTypedJsonRpcResponse,
+        Type ReturnType);
     
     /// <summary>
     /// Gets function details by name (or URI for resources).

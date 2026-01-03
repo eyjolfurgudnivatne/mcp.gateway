@@ -16,10 +16,16 @@ public class SimplePromptTests(PromptMcpServerFixture fixture)
         var request = JsonRpcMessage.CreateRequest(
             "prompts/get",
             Guid.NewGuid().ToString("D"),
-            new { name = "santa_report_prompt" });
+            new PromptRequest<SantaReportPromptRequest>
+            {
+                Name = "santa_report_prompt",
+                Arguments = new("Good Kid", BehaviorEnum.Good)                
+            });
+
+        var json = System.Text.Json.JsonSerializer.Serialize(request, JsonOptions.Default);
 
         // Act
-        var response = await fixture.HttpClient.PostAsJsonAsync("/rpc", request, fixture.CancellationToken);
+        var response = await fixture.HttpClient.PostAsJsonAsync("/rpc", request, JsonOptions.Default, fixture.CancellationToken);
         response.EnsureSuccessStatusCode();
 
         var content = await response.Content.ReadFromJsonAsync<JsonRpcMessage>(fixture.CancellationToken);
@@ -30,30 +36,8 @@ public class SimplePromptTests(PromptMcpServerFixture fixture)
         Assert.NotNull(result);
         Assert.NotEmpty(result.Messages);
         Assert.NotNull(result.Messages.First().Content);
-        Assert.Equal("santa_report_prompt", result.Name);
-    }
-
-    [Fact]
-    public async Task GetPrompt_SantaReport_JustPromptName_ReturnsPrompt()
-    {
-        // Arrange
-        var request = JsonRpcMessage.CreateRequest(
-            "santa_report_prompt",
-            Guid.NewGuid().ToString("D"));
-
-        // Act
-        var response = await fixture.HttpClient.PostAsJsonAsync("/rpc", request, fixture.CancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        var content = await response.Content.ReadFromJsonAsync<JsonRpcMessage>(fixture.CancellationToken);
-        Assert.NotNull(content);
-        Assert.True(content.IsSuccessResponse, $"Failed to get prompt");
-
-        var result = content.GetResult<PromptResponse>();
-        Assert.NotNull(result);
-        Assert.NotEmpty(result.Messages);
-        Assert.NotNull(result.Messages.First().Content);
-        Assert.Equal("santa_report_prompt", result.Name);
+        Assert.NotNull(result.Messages.Last().Content);
+        Assert.Equal("A prompt that reports to Santa Claus", result.Description);
     }
 
     [Fact]

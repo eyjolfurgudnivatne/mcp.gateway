@@ -80,7 +80,7 @@ app.Run();
 
 ### Pattern 1: Typed Tool (Auto-Schema) ✅ RECOMMENDED
 
-**Benefits:** Type-safe, auto-generated JSON Schema, IntelliSense
+**Benefits:** Type-safe, auto-generated JSON Schema (Input & Output), IntelliSense
 
 ```csharp
 using Mcp.Gateway.Tools;
@@ -92,14 +92,16 @@ public class MyTools
     [McpTool("add_numbers",
         Title = "Add Numbers",
         Description = "Adds two numbers and returns result")]
-    public JsonRpcMessage Add(TypedJsonRpc<AddRequest> request)
+    public TypedJsonRpc<AddResponse> Add(TypedJsonRpc<AddRequest> request)
     {
         var args = request.GetParams()
             ?? throw new ToolInvalidParamsException("Parameters required");
         
         var result = args.Number1 + args.Number2;
         
-        return ToolResponse.Success(request.Id, new { result });
+        return TypedJsonRpc<AddResponse>.Success(
+            request.Id, 
+            new AddResponse(result));
     }
 }
 
@@ -108,6 +110,9 @@ public sealed record AddRequest(
     [property: Description("First number")] double Number1,
     [property: JsonPropertyName("number2")]
     [property: Description("Second number")] double Number2);
+
+public sealed record AddResponse(
+    [property: Description("The sum")] double Result);
 ```
 
 ### Pattern 2: Manual Schema
@@ -150,57 +155,62 @@ public class MyTools
 
 ```csharp
 [McpTool("add", Description = "Add two numbers")]
-public JsonRpcMessage Add(TypedJsonRpc<MathParams> request)
+public TypedJsonRpc<MathResponse> Add(TypedJsonRpc<MathParams> request)
 {
     var args = request.GetParams()!;
-    return ToolResponse.Success(request.Id, new { result = args.A + args.B });
+    return TypedJsonRpc<MathResponse>.Success(
+        request.Id, 
+        new MathResponse(args.A + args.B));
 }
 
 [McpTool("multiply", Description = "Multiply two numbers")]
-public JsonRpcMessage Multiply(TypedJsonRpc<MathParams> request)
+public TypedJsonRpc<MathResponse> Multiply(TypedJsonRpc<MathParams> request)
 {
     var args = request.GetParams()!;
-    return ToolResponse.Success(request.Id, new { result = args.A * args.B });
+    return TypedJsonRpc<MathResponse>.Success(
+        request.Id, 
+        new MathResponse(args.A * args.B));
 }
 
 public sealed record MathParams(double A, double B);
+public sealed record MathResponse(double Result);
 ```
 
 ### 2. Date/Time
 
 ```csharp
 [McpTool("get_current_time", Description = "Get current UTC time")]
-public JsonRpcMessage GetTime(JsonRpcMessage request)
+public TypedJsonRpc<TimeResponse> GetTime(JsonRpcMessage request)
 {
-    return ToolResponse.Success(request.Id, new
-    {
-        timestamp = DateTime.UtcNow.ToString("o"),
-        date = DateTime.UtcNow.ToString("yyyy-MM-dd"),
-        time = DateTime.UtcNow.ToString("HH:mm:ss")
-    });
+    return TypedJsonRpc<TimeResponse>.Success(request.Id, new TimeResponse(
+        Timestamp: DateTime.UtcNow.ToString("o"),
+        Date: DateTime.UtcNow.ToString("yyyy-MM-dd"),
+        Time: DateTime.UtcNow.ToString("HH:mm:ss")
+    ));
 }
 
 [McpTool("add_days", Description = "Add days to a date")]
-public JsonRpcMessage AddDays(TypedJsonRpc<DateParams> request)
+public TypedJsonRpc<DateResponse> AddDays(TypedJsonRpc<DateParams> request)
 {
     var args = request.GetParams()!;
     var date = DateTime.Parse(args.Date);
     var result = date.AddDays(args.Days);
     
-    return ToolResponse.Success(request.Id, new
-    {
-        result = result.ToString("yyyy-MM-dd")
-    });
+    return TypedJsonRpc<DateResponse>.Success(request.Id, new DateResponse(
+        Result: result.ToString("yyyy-MM-dd")
+    ));
 }
 
 public sealed record DateParams(string Date, int Days);
+public sealed record TimeResponse(string Timestamp, string Date, string Time);
+public sealed record DateResponse(string Result);
 ```
 
 ### 3. File Operations
 
 ```csharp
 [McpTool("read_file", Description = "Read file contents")]
-public JsonRpcMessage ReadFile(TypedJsonRpc<FileParams> request)
+public TypedJsonRpc<FileContentResponse> ReadFile(TypedJsonRpc<FileParams> request)
 {
     var args = request.GetParams()!;
     
@@ -210,20 +220,26 @@ public JsonRpcMessage ReadFile(TypedJsonRpc<FileParams> request)
     }
     
     var content = File.ReadAllText(args.Path);
-    return ToolResponse.Success(request.Id, new { content });
+    return TypedJsonRpc<FileContentResponse>.Success(
+        request.Id, 
+        new FileContentResponse(content));
 }
 
 [McpTool("write_file", Description = "Write content to file")]
-public JsonRpcMessage WriteFile(TypedJsonRpc<WriteParams> request)
+public TypedJsonRpc<WriteResponse> WriteFile(TypedJsonRpc<WriteParams> request)
 {
     var args = request.GetParams()!;
     
     File.WriteAllText(args.Path, args.Content);
-    return ToolResponse.Success(request.Id, new { written = true });
+    return TypedJsonRpc<WriteResponse>.Success(
+        request.Id, 
+        new WriteResponse(true));
 }
 
 public sealed record FileParams(string Path);
 public sealed record WriteParams(string Path, string Content);
+public sealed record FileContentResponse(string Content);
+public sealed record WriteResponse(bool Written);
 ```
 
 ### 4. HTTP Requests
@@ -232,17 +248,20 @@ public sealed record WriteParams(string Path, string Content);
 private readonly IHttpClientFactory _httpClientFactory;
 
 [McpTool("fetch_url", Description = "Fetch content from URL")]
-public async Task<JsonRpcMessage> FetchUrl(TypedJsonRpc<UrlParams> request)
+public async Task<TypedJsonRpc<UrlResponse>> FetchUrl(TypedJsonRpc<UrlParams> request)
 {
     var args = request.GetParams()!;
     
     using var client = _httpClientFactory.CreateClient();
     var response = await client.GetStringAsync(args.Url);
     
-    return ToolResponse.Success(request.Id, new { content = response });
+    return TypedJsonRpc<UrlResponse>.Success(
+        request.Id, 
+        new UrlResponse(response));
 }
 
 public sealed record UrlParams(string Url);
+public sealed record UrlResponse(string Content);
 ```
 
 ---
@@ -711,13 +730,13 @@ dotnet run
 1. ✅ Create `Program.cs` (use minimal template above)
 2. ✅ Create `Tools/XTools.cs` (use Pattern 1: Typed Tool)
 3. ✅ Create models with `[Description]` attributes
-4. ✅ Use `TypedJsonRpc<T>` for type-safety
+4. ✅ Use `TypedJsonRpc<T>` for type-safety (Input AND Output)
 5. ✅ Throw `ToolInvalidParamsException` for errors
-6. ✅ Return `ToolResponse.Success(id, result)`
+6. ✅ Return `TypedJsonRpc<T>.Success(id, result)`
 
 **Key principles:**
 - ✅ Type-safe > manual JSON
-- ✅ Auto-schema > manual InputSchema
+- ✅ Auto-schema > manual InputSchema/OutputSchema
 - ✅ Simple records > complex classes
 - ✅ Clear error messages
 - ✅ Follow examples from `/examples/`

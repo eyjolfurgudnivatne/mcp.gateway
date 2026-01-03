@@ -1,4 +1,6 @@
+#pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Mcp.Gateway.Tools;
+#pragma warning restore IDE0130 // Namespace does not match folder structure
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -272,16 +274,3 @@ public enum ToolCapabilities
     /// </summary>
     RequiresWebSocket = 8
 }
-
-// -----------------------------------------------------------------------------
-// PromptArgument
-// Represents a single argument in a prompt's arguments array (for prompts/list)
-// -----------------------------------------------------------------------------
-/// <summary>
-/// Represents a single argument in a prompt's arguments array.
-/// Used by prompts/list to describe what parameters the prompt template expects.
-/// </summary>
-public sealed record PromptArgument(
-    [property: JsonPropertyName("name")] string Name,
-    [property: JsonPropertyName("description")] string Description,
-    [property: JsonPropertyName("required")] bool Required);

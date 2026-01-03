@@ -27,6 +27,12 @@ public partial class ToolInvoker
         using var socket = await context.WebSockets.AcceptWebSocketAsync();
         using var stopToken = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         
+        // Register for notifications (legacy support)
+        if (_notificationSender is Notifications.NotificationService notificationService)
+        {
+            notificationService.AddSubscriber(socket);
+        }
+        
         var buffer = new byte[DefaultBufferSize];
         
         try
@@ -246,6 +252,14 @@ public partial class ToolInvoker
                 {
                     // Silent - best effort
                 }
+            }
+        }
+        finally
+        {
+            // Unregister from notifications
+            if (_notificationSender is Notifications.NotificationService ns)
+            {
+                ns.RemoveSubscriber(socket);
             }
         }
     }

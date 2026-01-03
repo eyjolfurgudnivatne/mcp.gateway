@@ -81,7 +81,7 @@ public static class StreamableHttpEndpoint
                 doc = await JsonDocument.ParseAsync(context.Request.Body, cancellationToken: ct);
                 var element = doc.RootElement;
 
-                // 3. Invoke tool (returns immediate JSON response)
+                // 3. Invoke tool (returns immediate JSON response OR IAsyncEnumerable)
                 var response = await invoker.InvokeSingleAsync(element, "http", ct);
 
                 // 4. Return session ID in response header
@@ -90,8 +90,32 @@ public static class StreamableHttpEndpoint
                     context.Response.Headers["MCP-Session-Id"] = sessionId;
                 }
 
-                // 5. Return JSON response
-                await context.Response.WriteAsJsonAsync(response, ct);
+                // 5. Handle response
+                if (response is IAsyncEnumerable<JsonRpcMessage> stream)
+                {
+                    // Streaming response (multiple JSON-RPC messages)
+                    // We write them sequentially to the response body, separated by newlines (JSON Lines)
+                    // This allows the client to read them one by one.
+                    
+                    // Set content type to application/json-seq or similar? 
+                    // Standard application/json is fine if we just write whitespace separated JSONs.
+                    // But `WriteAsJsonAsync` closes the stream.
+                    
+                    // We need to write manually.
+                    context.Response.ContentType = "application/json"; // Or application/json-seq
+                    
+                    await foreach (var message in stream.WithCancellation(ct))
+                    {
+                        await JsonSerializer.SerializeAsync(context.Response.Body, message, JsonOptions.Default, ct);
+                        await context.Response.WriteAsync("\n", ct); // Newline delimiter
+                        await context.Response.Body.FlushAsync(ct);
+                    }
+                }
+                else
+                {
+                    // Standard single response
+                    await context.Response.WriteAsJsonAsync(response, ct);
+                }
             }
             catch (JsonException ex)
             {

@@ -91,7 +91,7 @@ A whimsical prompt for sending reports to Santa Claus.
 > "You are a very helpful assistant for Santa Claus."
 
 **User message template:**
-> "Send a letter to Santa Claus and tell him that {{name}} has been {{behavior}}."
+> $"Send a letter to Santa Claus and tell him that {args.Name} has behaved {args.Behavior}."
 
 **Example usage:**
 ```bash
@@ -117,29 +117,23 @@ curl -X POST http://localhost:5000/mcp \
 {
   "jsonrpc": "2.0",
   "result": {
-    "name": "santa_report_prompt",
     "description": "A prompt that reports to Santa Claus",
     "messages": [
       {
         "role": "system",
-        "content": "You are a very helpful assistant for Santa Claus."
+        "content": {
+          "type": "text",
+          "text": "You are a very helpful assistant for Santa Claus."
+        }
       },
       {
         "role": "user",
-        "content": "Send a letter to Santa Claus and tell him that Bob has been Naughty."
+        "content": {
+          "type": "text",
+          "text": "Send a letter to Santa Claus and tell him that Bob has behaved Naughty."
+        }
       }
-    ],
-    "arguments": {
-      "name": {
-        "type": "string",
-        "description": "Name of the child"
-      },
-      "behavior": {
-        "type": "string",
-        "description": "Behavior of the child (e.g., Good, Naughty)",
-        "enum": ["Good", "Naughty"]
-      }
-    }
+    ]
   },
   "id": 1
 }
@@ -154,38 +148,47 @@ using Mcp.Gateway.Tools;
 
 public class SimplePrompt
 {
-    [McpPrompt(Description = "Report to Santa Claus")]
-    public JsonRpcMessage SantaReportPrompt(JsonRpcMessage request)
+    public record SantaReportPromptRequest(
+        [property: JsonPropertyName("name")]
+        [property: DisplayName("Child's Name")] // title
+        [property: Description("Name of the child")] string Name,
+
+        [property: JsonPropertyName("behavior")]
+        [property: DisplayName("Child's Behavior")] // title
+        [property: Description("Behavior of the child (e.g., Good, Naughty)")] BehaviorEnum Behavior);
+
+    public enum BehaviorEnum
     {
+        Good,
+        Naughty
+    }
+
+    [McpPrompt(Description = "Report to Santa Claus")]
+    public JsonRpcMessage SantaReportPrompt(TypedJsonRpc<SantaReportPromptRequest> request)
+    {
+        var args = request.GetParams()
+            ?? throw new ToolInvalidParamsException(
+                "Parameters 'name' and 'behavior' are required and must be strings.");
+
         return ToolResponse.Success(
             request.Id,
-            new PromptResponse(
-                Name: "santa_report_prompt",
-                Description: "A prompt that reports to Santa Claus",
-                Messages: new[]
-                {
-                    new PromptMessage(
+            new PromptResponse
+            {
+                Description = "A prompt that reports to Santa Claus",
+                Messages = [
+                    new(
                         PromptRole.System,
-                        "You are a very helpful assistant for Santa Claus."),
-                    new PromptMessage(
+                        new TextContent {
+                            Text = "You are a very helpful assistant for Santa Claus."
+                        }),
+                    new (
                         PromptRole.User,
-                        "Send a letter to Santa Claus and tell him that {{name}} has been {{behavior}}.")
-                },
-                Arguments: new
-                {
-                    name = new
-                    {
-                        type = "string",
-                        description = "Name of the child"
-                    },
-                    behavior = new
-                    {
-                        type = "string",
-                        description = "Behavior of the child (e.g., Good, Naughty)",
-                        @enum = new[] { "Good", "Naughty" }
-                    }
-                }
-            ));
+                        new TextContent {
+                            Text = $"Send a letter to Santa Claus and tell him that {args.Name} has behaved {args.Behavior}."
+                        })
+                ]
+            }
+        );
     }
 }
 ```
@@ -201,19 +204,20 @@ public class SimplePrompt
 
 **2. PromptResponse Structure**
 ```csharp
-new PromptResponse(
-    Name: "santa_report_prompt",        // Prompt identifier
-    Description: "...",                 // Human-readable description
-    Messages: [...],                    // System and user messages
-    Arguments: {...}                    // Argument schema
-)
+new PromptResponse
+{
+    Description = "...",                 // Human-readable description
+    Messages = [...],                    // System and user messages
+}
 ```
 
 **3. System Message**
 ```csharp
 new PromptMessage(
     PromptRole.System,
-    "You are a very helpful assistant for Santa Claus.")
+    new TextContent {
+      Text = "You are a very helpful assistant for Santa Claus."
+    })
 ```
 - Sets AI behavior and context
 - Always processed first by LLMs
@@ -222,31 +226,11 @@ new PromptMessage(
 ```csharp
 new PromptMessage(
     PromptRole.User,
-    "Send a letter to Santa Claus and tell him that {{name}} has been {{behavior}}.")
+    new TextContent {
+      Text = $"Send a letter to Santa Claus and tell him that {args.Name} has behaved {args.Behavior}."
+    })
 ```
-- Template with `{{name}}` and `{{behavior}}` placeholders
-- Client replaces placeholders with actual values
-
-**5. Argument Schema**
-```csharp
-Arguments: new
-{
-    name = new
-    {
-        type = "string",
-        description = "Name of the child"
-    },
-    behavior = new
-    {
-        type = "string",
-        description = "Behavior of the child (e.g., Good, Naughty)",
-        @enum = new[] { "Good", "Naughty" }
-    }
-}
-```
-- JSON Schema format
-- Describes expected arguments
-- `@enum` restricts to specific values
+- Template with `{args.Name}` and `{args.Behavior}` placeholders
 
 ## Prompt + Tool Combination
 
@@ -351,29 +335,23 @@ curl -X POST http://localhost:5000/mcp \
 {
   "jsonrpc": "2.0",
   "result": {
-    "name": "santa_report_prompt",
     "description": "A prompt that reports to Santa Claus",
     "messages": [
       {
         "role": "system",
-        "content": "You are a very helpful assistant for Santa Claus."
+        "content": {
+          "type": "text",
+          "text": "You are a very helpful assistant for Santa Claus."
+        }
       },
       {
         "role": "user",
-        "content": "Send a letter to Santa Claus and tell him that Charlie has been Good."
+        "content": {
+          "type": "text",
+          "text": "Send a letter to Santa Claus and tell him that Charlie has behaved Good."
+        }
       }
-    ],
-    "arguments": {
-      "name": {
-        "type": "string",
-        "description": "Name of the child"
-      },
-      "behavior": {
-        "type": "string",
-        "description": "Behavior of the child (e.g., Good, Naughty)",
-        "enum": ["Good", "Naughty"]
-      }
-    }
+    ]
   },
   "id": 2
 }
@@ -452,178 +430,24 @@ cd Examples/PromptMcpServerTests
 dotnet test
 ```
 
-**Test coverage:**
-- ✅ prompts/list returns all prompts
-- ✅ prompts/get with valid arguments
-- ✅ prompts/get with invalid arguments
-- ✅ Argument schema validation
-- ✅ System and user messages structure
-- ✅ Enum values in schema
-
-## Common Prompt Patterns
-
-### 1. Code Review Prompt
-
-```csharp
-[McpPrompt("code_review")]
-public JsonRpcMessage CodeReview(JsonRpcMessage request)
-{
-    return ToolResponse.Success(
-        request.Id,
-        new PromptResponse(
-            Name: "code_review",
-            Description: "Review code for best practices",
-            Messages: new[]
-            {
-                new PromptMessage(PromptRole.System, 
-                    "You are an experienced code reviewer."),
-                new PromptMessage(PromptRole.User, 
-                    "Review this {{language}} code:\n\n{{code}}\n\nFocus on: {{focus}}")
-            },
-            Arguments: new
-            {
-                code = new { type = "string", description = "Code to review" },
-                language = new { type = "string", description = "Programming language" },
-                focus = new { type = "string", description = "Review focus area" }
-            }
-        ));
-}
-```
-
-### 2. SQL Query Builder
-
-```csharp
-[McpPrompt("sql_builder")]
-public JsonRpcMessage SqlBuilder(JsonRpcMessage request)
-{
-    return ToolResponse.Success(
-        request.Id,
-        new PromptResponse(
-            Name: "sql_builder",
-            Description: "Generate SQL queries",
-            Messages: new[]
-            {
-                new PromptMessage(PromptRole.System, 
-                    "You are a SQL expert. Generate efficient, safe queries."),
-                new PromptMessage(PromptRole.User, 
-                    "Create a {{operation}} query for table '{{table}}' with conditions: {{conditions}}")
-            },
-            Arguments: new
-            {
-                operation = new 
-                { 
-                    type = "string", 
-                    @enum = new[] { "SELECT", "INSERT", "UPDATE", "DELETE" }
-                },
-                table = new { type = "string" },
-                conditions = new { type = "string" }
-            }
-        ));
-}
-```
-
-### 3. Documentation Generator
-
-```csharp
-[McpPrompt("doc_generator")]
-public JsonRpcMessage DocGenerator(JsonRpcMessage request)
-{
-    return ToolResponse.Success(
-        request.Id,
-        new PromptResponse(
-            Name: "doc_generator",
-            Description: "Generate documentation from code",
-            Messages: new[]
-            {
-                new PromptMessage(PromptRole.System, 
-                    "You are a technical writer. Create clear, comprehensive documentation."),
-                new PromptMessage(PromptRole.User, 
-                    "Document this {{type}}:\n\n{{code}}\n\nInclude: {{sections}}")
-            },
-            Arguments: new
-            {
-                type = new 
-                { 
-                    type = "string", 
-                    @enum = new[] { "function", "class", "module", "API" }
-                },
-                code = new { type = "string" },
-                sections = new { type = "string", description = "Comma-separated sections to include" }
-            }
-        ));
-}
-```
-
 ## Best Practices
 
 ### 1. Clear System Messages
 
 ```csharp
 // ✅ GOOD - Specific role and behavior
-new PromptMessage(PromptRole.System, 
-    "You are an experienced Python developer. Focus on PEP 8 style and performance.")
+new PromptMessage(
+  PromptRole.System, 
+  new TextContent {
+    Text = "You are an experienced Python developer. Focus on PEP 8 style and performance."
+  })
 
 // ❌ BAD - Too vague
-new PromptMessage(PromptRole.System, "You are helpful.")
-```
-
-### 2. Descriptive Placeholders
-
-```csharp
-// ✅ GOOD - Clear what to insert
-"Analyze this {{error_message}} and suggest {{fix_type}} fixes."
-
-// ❌ BAD - Unclear
-"Analyze this {{text}} and do {{thing}}."
-```
-
-### 3. Argument Descriptions
-
-```csharp
-// ✅ GOOD - Clear description with example
-new
-{
-    type = "string",
-    description = "Error message from stack trace (e.g., 'NullReferenceException')"
-}
-
-// ❌ BAD - No context
-new { type = "string", description = "Error" }
-```
-
-### 4. Use Enums for Constrained Values
-
-```csharp
-// ✅ GOOD - Limited to valid values
-behavior = new
-{
-    type = "string",
-    @enum = new[] { "Good", "Naughty" }
-}
-
-// ⚠️ OK - But allows any string
-behavior = new
-{
-    type = "string",
-    description = "Either 'Good' or 'Naughty'"
-}
-```
-
-### 5. Multi-Message Structure
-
-```csharp
-// ✅ GOOD - System + User context
-Messages: new[]
-{
-    new PromptMessage(PromptRole.System, "You are a SQL expert."),
-    new PromptMessage(PromptRole.User, "Generate query for: {{request}}")
-}
-
-// ⚠️ OK - But less context
-Messages: new[]
-{
-    new PromptMessage(PromptRole.User, "Generate SQL query for: {{request}}")
-}
+new PromptMessage(
+  PromptRole.System, 
+  new TextContent {
+    Text = "You are helpful."
+  })
 ```
 
 ## Use Cases

@@ -32,12 +32,12 @@ public class ResourceSubscriptionTests(ResourceMcpServerFixture fixture)
         httpRequest.Content = JsonContent.Create(request);
 
         // Act
-        var response = await fixture.HttpClient.SendAsync(httpRequest);
+        var response = await fixture.HttpClient.SendAsync(httpRequest, fixture.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
 
-        var content = await response.Content.ReadAsStringAsync();
+        var content = await response.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc = JsonDocument.Parse(content);
 
         // Check if we got a session ID (session management enabled)
@@ -78,12 +78,12 @@ public class ResourceSubscriptionTests(ResourceMcpServerFixture fixture)
         httpRequest.Content = JsonContent.Create(request);
 
         // Act
-        var response = await fixture.HttpClient.SendAsync(httpRequest);
+        var response = await fixture.HttpClient.SendAsync(httpRequest, fixture.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode(); // HTTP 200, but JSON-RPC error inside
 
-        var content = await response.Content.ReadAsStringAsync();
+        var content = await response.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc = JsonDocument.Parse(content);
 
         Assert.True(jsonDoc.RootElement.TryGetProperty("error", out var error));
@@ -118,10 +118,10 @@ public class ResourceSubscriptionTests(ResourceMcpServerFixture fixture)
         subscribeHttpRequest.Headers.Add("MCP-Protocol-Version", "2025-11-25");
         subscribeHttpRequest.Content = JsonContent.Create(subscribeRequest);
 
-        var subscribeResponse = await fixture.HttpClient.SendAsync(subscribeHttpRequest);
+        var subscribeResponse = await fixture.HttpClient.SendAsync(subscribeHttpRequest, fixture.CancellationToken);
         subscribeResponse.EnsureSuccessStatusCode();
 
-        var subscribeContent = await subscribeResponse.Content.ReadAsStringAsync();
+        var subscribeContent = await subscribeResponse.Content.ReadAsStringAsync(fixture.CancellationToken);
         var subscribeDoc = JsonDocument.Parse(subscribeContent);
 
         // Check if session management is enabled
@@ -159,12 +159,12 @@ public class ResourceSubscriptionTests(ResourceMcpServerFixture fixture)
         unsubscribeHttpRequest.Headers.Add("MCP-Session-Id", sessionId);
         unsubscribeHttpRequest.Content = JsonContent.Create(unsubscribeRequest);
 
-        var unsubscribeResponse = await fixture.HttpClient.SendAsync(unsubscribeHttpRequest);
+        var unsubscribeResponse = await fixture.HttpClient.SendAsync(unsubscribeHttpRequest, fixture.CancellationToken);
 
         // Assert
         unsubscribeResponse.EnsureSuccessStatusCode();
 
-        var content = await unsubscribeResponse.Content.ReadAsStringAsync();
+        var content = await unsubscribeResponse.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc = JsonDocument.Parse(content);
 
         Assert.True(jsonDoc.RootElement.TryGetProperty("result", out var result));
@@ -194,12 +194,12 @@ public class ResourceSubscriptionTests(ResourceMcpServerFixture fixture)
         httpRequest.Content = JsonContent.Create(request);
 
         // Act
-        var response = await fixture.HttpClient.SendAsync(httpRequest);
+        var response = await fixture.HttpClient.SendAsync(httpRequest, fixture.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode();
 
-        var content = await response.Content.ReadAsStringAsync();
+        var content = await response.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc = JsonDocument.Parse(content);
 
         // Should still succeed even if not subscribed (or return session required error)
@@ -237,12 +237,12 @@ public class ResourceSubscriptionTests(ResourceMcpServerFixture fixture)
         httpRequest.Content = JsonContent.Create(request);
 
         // Act
-        var response = await fixture.HttpClient.SendAsync(httpRequest);
+        var response = await fixture.HttpClient.SendAsync(httpRequest, fixture.CancellationToken);
 
         // Assert
         response.EnsureSuccessStatusCode(); // HTTP 200, but JSON-RPC error inside
 
-        var content = await response.Content.ReadAsStringAsync();
+        var content = await response.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc = JsonDocument.Parse(content);
 
         Assert.True(jsonDoc.RootElement.TryGetProperty("error", out var error));
@@ -278,10 +278,10 @@ public class ResourceSubscriptionTests(ResourceMcpServerFixture fixture)
         httpRequest1.Content = JsonContent.Create(request);
 
         // Act - Subscribe first time
-        var response1 = await fixture.HttpClient.SendAsync(httpRequest1);
+        var response1 = await fixture.HttpClient.SendAsync(httpRequest1, fixture.CancellationToken);
         response1.EnsureSuccessStatusCode();
 
-        var content1 = await response1.Content.ReadAsStringAsync();
+        var content1 = await response1.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc1 = JsonDocument.Parse(content1);
 
         // Check if session management is enabled
@@ -308,12 +308,12 @@ public class ResourceSubscriptionTests(ResourceMcpServerFixture fixture)
         httpRequest2.Headers.Add("MCP-Session-Id", sessionId);
         httpRequest2.Content = JsonContent.Create(request);
 
-        var response2 = await fixture.HttpClient.SendAsync(httpRequest2);
+        var response2 = await fixture.HttpClient.SendAsync(httpRequest2, fixture.CancellationToken);
 
         // Assert - Both should succeed
         response2.EnsureSuccessStatusCode();
 
-        var content = await response2.Content.ReadAsStringAsync();
+        var content = await response2.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc = JsonDocument.Parse(content);
 
         Assert.True(jsonDoc.RootElement.TryGetProperty("result", out var result));
@@ -343,10 +343,10 @@ public class ResourceSubscriptionTests(ResourceMcpServerFixture fixture)
         });
 
         // Act - Subscribe to first resource, get session ID
-        var response1 = await fixture.HttpClient.SendAsync(httpRequest1);
+        var response1 = await fixture.HttpClient.SendAsync(httpRequest1, fixture.CancellationToken);
         response1.EnsureSuccessStatusCode();
 
-        var content1 = await response1.Content.ReadAsStringAsync();
+        var content1 = await response1.Content.ReadAsStringAsync(fixture.CancellationToken);
         var jsonDoc1 = JsonDocument.Parse(content1);
 
         // Check if session management is enabled
@@ -381,10 +381,10 @@ public class ResourceSubscriptionTests(ResourceMcpServerFixture fixture)
                 @params = new { uri = resource }
             });
 
-            var response = await fixture.HttpClient.SendAsync(httpRequest);
+            var response = await fixture.HttpClient.SendAsync(httpRequest, fixture.CancellationToken);
             response.EnsureSuccessStatusCode();
 
-            var content = await response.Content.ReadAsStringAsync();
+            var content = await response.Content.ReadAsStringAsync(fixture.CancellationToken);
             var jsonDoc = JsonDocument.Parse(content);
 
             Assert.True(jsonDoc.RootElement.TryGetProperty("result", out var result));

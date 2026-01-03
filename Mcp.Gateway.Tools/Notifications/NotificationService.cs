@@ -18,8 +18,8 @@ public class NotificationService : INotificationSender
     private readonly ILogger<NotificationService> _logger;
     private readonly ResourceSubscriptionRegistry? _subscriptionRegistry;  // v1.8.0 Phase 4
 
-    // Legacy WebSocket support (deprecated in v1.7.0)
-    private readonly ConcurrentBag<WebSocket> _subscribers = new();
+    // Legacy WebSocket support
+    private readonly ConcurrentBag<WebSocket> _subscribers = [];
 
     public NotificationService(
         EventIdGenerator eventIdGenerator,
@@ -36,35 +36,28 @@ public class NotificationService : INotificationSender
     }
 
     /// <summary>
-    /// Adds a WebSocket subscriber for notifications (DEPRECATED: Use SSE via GET /mcp instead)
+    /// Adds a WebSocket subscriber for notifications
     /// </summary>
-    [Obsolete("WebSocket notifications are deprecated. Use SSE (GET /mcp) instead.")]
     public void AddSubscriber(WebSocket webSocket)
     {
         if (webSocket.State == WebSocketState.Open)
         {
             _subscribers.Add(webSocket);
-            _logger.LogWarning(
-                "WebSocket subscriber added (deprecated). Total subscribers: {Count}. " +
-                "Consider migrating to SSE (GET /mcp) for MCP 2025-11-25 compliance.",
-                SubscriberCount);
         }
     }
 
     /// <summary>
-    /// Removes a WebSocket subscriber (DEPRECATED)
+    /// Removes a WebSocket subscriber
     /// </summary>
-    [Obsolete("WebSocket notifications are deprecated. Use SSE (GET /mcp) instead.")]
     public void RemoveSubscriber(WebSocket webSocket)
     {
         // ConcurrentBag doesn't have Remove, but we filter out closed connections when sending
-        _logger.LogInformation("WebSocket subscriber removed (deprecated)");
+        _logger.LogDebug("WebSocket subscriber removed");
     }
 
     /// <summary>
-    /// Gets the count of active WebSocket subscribers (DEPRECATED)
+    /// Gets the count of active WebSocket subscribers
     /// </summary>
-    [Obsolete("WebSocket notifications are deprecated. Use SSE (GET /mcp) instead.")]
     public int SubscriberCount => _subscribers.Count(ws => ws.State == WebSocketState.Open);
 
     /// <summary>
@@ -157,7 +150,7 @@ public class NotificationService : INotificationSender
     }
 
     /// <summary>
-    /// Broadcasts notification via WebSocket (deprecated but still functional)
+    /// Broadcasts notification via WebSocket
     /// </summary>
     private async Task BroadcastToWebSocketAsync(NotificationMessage notification, CancellationToken cancellationToken)
     {

@@ -184,21 +184,22 @@ public class MyTools
 }
 ```
 
-### Tool with Parameters
+### Tool with Parameters (Typed Return)
 
 ```csharp
 [McpTool("greet")]
-public JsonRpcMessage Greet(TypedJsonRpc<GreetParams> request)
+public TypedJsonRpc<GreetResponse> Greet(TypedJsonRpc<GreetParams> request)
 {
     var args = request.GetParams()
         ?? throw new ToolInvalidParamsException("Name required");
 
-    return ToolResponse.Success(
+    return TypedJsonRpc<GreetResponse>.Success(
         request.Id,
-        new { greeting = $"Hello, {args.Name}!" });
+        new GreetResponse($"Hello, {args.Name}!"));
 }
 
 public record GreetParams(string Name);
+public record GreetResponse(string Greeting);
 ```
 
 ### Tool with Metadata
@@ -207,25 +208,20 @@ public record GreetParams(string Name);
 [McpTool("add_numbers",
     Title = "Add Numbers",
     Description = "Adds two numbers and returns the sum",
-    Icon = "https://example.com/icon.png",
-    OutputSchema = @"{
-        ""type"": ""object"",
-        ""properties"": {
-            ""result"": {
-                ""type"": ""number"",
-                ""description"": ""The sum""
-            }
-        }
-    }")]
-public JsonRpcMessage Add(TypedJsonRpc<AddParams> request)
+    Icon = "https://example.com/icon.png")]
+// OutputSchema is automatically generated from AddResponse!
+public TypedJsonRpc<AddResponse> Add(TypedJsonRpc<AddParams> request)
 {
     var args = request.GetParams()!;
     var result = args.A + args.B;
     
-    return ToolResponse.Success(request.Id, new { result });
+    return TypedJsonRpc<AddResponse>.Success(
+        request.Id, 
+        new AddResponse(result));
 }
 
 public record AddParams(double A, double B);
+public record AddResponse(double Result);
 ```
 
 ## Tool Attributes
@@ -241,7 +237,7 @@ Marks a method as an MCP tool.
     string? Description = null,     // Optional: Description
     string? Icon = null,            // Optional: Icon URL
     string? InputSchema = null,     // Optional: Input JSON Schema (auto-generated if not provided)
-    string? OutputSchema = null)]   // Optional: Output JSON Schema
+    string? OutputSchema = null)]   // Optional: Output JSON Schema (auto-generated if not provided)
 ```
 
 **Attribute properties:**
@@ -253,24 +249,43 @@ Marks a method as an MCP tool.
 | `Description` | string | No | Tool description for AI |
 | `Icon` | string | No | Icon URL (v1.6.5+) |
 | `InputSchema` | string | No | Input JSON Schema (auto-generated from parameters if not provided) |
-| `OutputSchema` | string | No | Output JSON Schema (v1.6.5+) |
+| `OutputSchema` | string | No | Output JSON Schema (auto-generated from return type if not provided) |
 
 **InputSchema auto-generation:**
 - If not provided, MCP Gateway automatically generates `inputSchema` from the tool's parameter type
 - Uses `TypedJsonRpc<T>` parameter type to infer JSON Schema
-- Includes property names, types, descriptions (from `[Description]` attribute), and required fields
-- Example: `TypedJsonRpc<AddParams>` where `AddParams` is:
-  ```csharp
-  record AddParams(
-      [property: Description("First number")] double A,
-      [property: Description("Second number")] double B
-  );
-  ```
-  generates schema with `number` properties for `A` and `B` with descriptions
+
+**OutputSchema auto-generation (v1.8.0+):**
+- If not provided, MCP Gateway automatically generates `outputSchema` from the tool's return type
+- Uses `TypedJsonRpc<T>` return type to infer JSON Schema
+- Example: `TypedJsonRpc<AddResponse>` generates schema with `number` property for `Result`
 
 ## Tool Responses
 
-### Success Response
+### Success Response (Typed)
+
+```csharp
+return TypedJsonRpc<MyResponse>.Success(
+    request.Id,
+    new MyResponse(42));
+```
+
+**Output:**
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"result\":42}"
+    }
+  ],
+  "structuredContent": {
+    "result": 42
+  }
+}
+```
+
+### Success Response (Legacy)
 
 ```csharp
 return ToolResponse.Success(
@@ -286,8 +301,7 @@ return ToolResponse.Success(
       "type": "text",
       "text": "{\"result\":42}"
     }
-  ],
-  "isError": false
+  ]
 }
 ```
 
@@ -307,35 +321,6 @@ throw new ToolInvalidParamsException("Invalid input");
       "detail": "Invalid input"
     }
   }
-}
-```
-
-### Structured Content (v1.6.5+)
-
-```csharp
-return ToolResponse.SuccessWithStructured(
-    request.Id,
-    textContent: "Result: 42",
-    structuredContent: new { result = 42 });
-```
-
-**Output:**
-```json
-{
-  "content": [
-    {
-      "type": "text",
-      "text": "Result: 42"
-    },
-    {
-      "type": "resource",
-      "resource": {
-        "uri": "inline://structured",
-        "mimeType": "application/json",
-        "text": "{\"result\":42}"
-      }
-    }
-  ]
 }
 ```
 

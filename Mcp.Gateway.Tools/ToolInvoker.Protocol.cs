@@ -76,13 +76,17 @@ public partial class ToolInvoker
                 return HandleInitialize(message);
             }
             
-            if (message.Method == "tools/list" ||
-                message.Method == "prompts/list")
+            if (message.Method == "tools/list")
             {
                 // Use transport-aware filtering
                 return HandleFunctionsList(message, transport);
             }
-            
+
+            if (message.Method == "prompts/list")
+            {
+                return HandlePromptsList(message);
+            }
+
             // Formatted tool lists (functions/list/{format})
             if (message.Method?.StartsWith("tools/list/") == true ||
                 message.Method?.StartsWith("prompts/list/") == true)
@@ -187,7 +191,6 @@ public partial class ToolInvoker
             
             // Suggest similar tool names (v1.8.0)
             var allTools = _toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Tool)
-                .Concat(_toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Prompt))
                 .Select(t => t.Name)
                 .ToList();
             
@@ -223,7 +226,6 @@ public partial class ToolInvoker
                 if (!string.IsNullOrEmpty(toolName))
                 {
                     var toolDef = _toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Tool)
-                        .Concat(_toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Prompt))
                         .FirstOrDefault(t => t.Name.Equals(toolName, StringComparison.OrdinalIgnoreCase));
                     
                     if (toolDef is not null && !string.IsNullOrEmpty(toolDef.InputSchema))
@@ -307,54 +309,34 @@ public partial class ToolInvoker
     private JsonRpcMessage HandleInitialize(JsonRpcMessage request)
     {
         bool isTools = _toolService.GetAllFunctionDefinitions(ToolService.FunctionTypeEnum.Tool).Any();
-        bool isPrompts = _toolService.GetAllFunctionDefinitions(ToolService.FunctionTypeEnum.Prompt).Any();
+        bool isPrompts = _toolService.GetAllPromptsDefinitions().Any();
         bool hasResources = _toolService.GetAllResourceDefinitions().Any();
 
+        // https://modelcontextprotocol.io/specification/2025-11-25/schema#servercapabilities
         Dictionary<string, object> capabilities = [];
 
         if (isTools)
         {
-            capabilities["tools"] = new { };
+            capabilities["tools"] = _notificationSender is not null ? new { listChanged = true } : new { };
         }
         if (isPrompts)
         {
-            capabilities["prompts"] = new { };
+            capabilities["prompts"] = _notificationSender is not null ? new { listChanged = true } : new { };
         }
         if (hasResources)
         {
-            capabilities["resources"] = new { };
-        }
-
-        // Add notification capabilities (v1.6.0+)
-        // Note: Notifications require WebSocket transport
-        if (_notificationSender is not null)
-        {
-            var notifications = new Dictionary<string, object>();
-            
-            if (isTools)
-                notifications["tools"] = new { };
-            
-            if (isPrompts)
-                notifications["prompts"] = new { };
-            
-            if (hasResources)
-                notifications["resources"] = new { };
-
-            if (notifications.Count > 0)
-                capabilities["notifications"] = notifications;
+            capabilities["resources"] = _notificationSender is not null ? new { listChanged = true, subscribe = true } : new { };
         }
         
         // Make protocol version configurable for compatibility with older clients
         var protocolVersion = Environment.GetEnvironmentVariable("MCP_PROTOCOL_VERSION") ?? "2025-11-25";
 
+        var serverInfo = _implementationInfoOptions.Value;
+
         return ToolResponse.Success(request.Id, new
         {
-            protocolVersion = protocolVersion, // Configurable protocol version
-            serverInfo = new
-            {
-                name = "mcp-gateway",
-                version = "2.0.0"
-            },
+            protocolVersion, // Configurable protocol version
+            serverInfo,
             capabilities
         });
     }
@@ -414,7 +396,7 @@ public partial class ToolInvoker
                     object? schema = null;
                     try
                     {
-                        schema = JsonSerializer.Deserialize<object>(t.InputSchema, JsonOptions.Default);
+                        schema = JsonSerializer.Deserialize<object>(t.InputSchema!, JsonOptions.Default);
                     }
                     catch
                     {
@@ -428,7 +410,7 @@ public partial class ToolInvoker
                         ["description"] = t.Description,
                         ["inputSchema"] = schema!
                     };
-
+                    
                     // Add icons if present (MCP 2025-11-25)
                     if (!string.IsNullOrEmpty(t.Icon))
                     {
@@ -531,6 +513,62 @@ public partial class ToolInvoker
         }
     }
 
+
+    /// <summary>
+    /// Handles MCP prompt/list request.
+    /// </summary>
+    /// <param name="request">The JSON-RPC request</param>
+    private JsonRpcMessage HandlePromptsList(JsonRpcMessage request)
+    {
+        try
+        {
+            // Extract pagination parameters (v1.6.0+)
+            string? cursor = null;
+            int pageSize = Pagination.CursorHelper.DefaultPageSize;
+
+            if (request.Params is not null)
+            {
+                var @params = request.GetParams();
+
+                // Extract cursor (optional)
+                if (@params.TryGetProperty("cursor", out var cursorProp) &&
+                    cursorProp.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    cursor = cursorProp.GetString();
+                }
+
+                // Extract pageSize (optional, default 100)
+                if (@params.TryGetProperty("pageSize", out var pageSizeProp) &&
+                    pageSizeProp.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    pageSize = pageSizeProp.GetInt32();
+                }
+            }
+
+            // Get paginated functions for this transport
+            var allPrompts = _toolService.GetAllPromptsDefinitions();
+            var paginatedResult = Pagination.CursorHelper.Paginate(allPrompts, cursor, pageSize);
+
+
+            // Prompts: serialize with arguments (array)
+            var promptsList = paginatedResult.Items.ToList();
+
+            // Build response with pagination
+            var response = new ListPromptsResult
+            {
+                Prompts = promptsList,
+                NextCursor = paginatedResult.NextCursor
+            };
+
+            return ToolResponse.Success(request.Id, response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in prompts/list");
+            return ToolResponse.Error(request.Id, -32603, "Internal error", new { detail = ex.Message });
+        }
+    }
+
     /// <summary>
     /// Handles formatted function list requests (functions/list/{format}) (prompts/list/{format}).
     /// Supports multiple AI platform formats: ollama, microsoft-ai, openai, etc.
@@ -604,7 +642,7 @@ public partial class ToolInvoker
     /// <summary>
     /// Handles MCP functions/call request
     /// </summary>
-    private async Task<JsonRpcMessage> HandleFunctionsCallAsync(JsonRpcMessage request, CancellationToken cancellationToken)
+    private async Task<object?> HandleFunctionsCallAsync(JsonRpcMessage request, CancellationToken cancellationToken)
     {
         try
         {
@@ -677,6 +715,31 @@ public partial class ToolInvoker
                     return await ProcessToolResultAsync(result, functionDetails, false, request.Id, cancellationToken);
                 });
             
+            // Handle IAsyncEnumerable (streaming) result
+            if (processedResult is IAsyncEnumerable<JsonRpcMessage> asyncEnumerable)
+            {
+                // For streaming tools, we can't just return a single JsonRpcMessage.
+                // The caller (McpMiddleware) needs to handle this.
+                // But McpMiddleware expects a single object response.
+                
+                // If we are in HTTP context (StreamableHttpEndpoint), we can't easily stream multiple JSON responses 
+                // unless we use SSE or a specific streaming format.
+                // BUT, the user's test uses HttpMcpTransport which expects standard JSON-RPC responses.
+                // If the server sends multiple JSON objects concatenated, the client might be able to read them.
+                
+                // However, `StreamableHttpEndpoint` writes the response as JSON:
+                // await context.Response.WriteAsJsonAsync(response, ct);
+                
+                // If `response` is `IAsyncEnumerable`, `WriteAsJsonAsync` will serialize it as a JSON array `[...]`.
+                // This is NOT what we want for streaming. We want multiple individual JSON-RPC response objects.
+                
+                // To support this, we need to change `StreamableHttpEndpoint` to handle `IAsyncEnumerable`.
+                // But `InvokeSingleAsync` returns `Task<object?>`.
+                
+                // Let's return the enumerable and let the endpoint handle it.
+                return (dynamic)asyncEnumerable; 
+            }
+
             // Extract the actual result data
             object? resultData = null;
             if (processedResult is JsonRpcMessage msg)
@@ -750,6 +813,61 @@ public partial class ToolInvoker
         object? id,
         CancellationToken cancellationToken)
     {
+        // Handle TypedJsonRpc<T> return type (sync)
+        if (toolDetails.FunctionResultType.IsTypedJsonRpcResponse && result != null)
+        {
+            // If result is Task<TypedJsonRpc<T>>, await it first
+            if (result is Task task)
+            {
+                await task.ConfigureAwait(false);
+                // Get result from task
+                var taskResultProperty = task.GetType().GetProperty("Result");
+                result = taskResultProperty?.GetValue(task);
+            }
+
+            // Now result should be TypedJsonRpc<T>
+            // We need to extract the Inner JsonRpcMessage
+            // Since TypedJsonRpc<T> is generic, we use reflection or dynamic
+            if (result != null)
+            {
+                // Check if it has "Inner" property
+                var innerProp = result.GetType().GetProperty("Inner");
+                if (innerProp != null)
+                {
+                    var innerMessage = innerProp.GetValue(result) as JsonRpcMessage;
+                    return isNotification ? null : innerMessage;
+                }
+            }
+        }
+
+        // IAsyncEnumerable<JsonRpcMessage> (streaming)
+        if (result is IAsyncEnumerable<JsonRpcMessage> asyncEnumerable)
+        {
+            // For streaming tools, we iterate and send each message directly to the transport?
+            // But ToolInvoker doesn't have access to the transport directly here.
+            // It returns a result to the caller (McpMiddleware).
+            
+            // However, McpMiddleware expects a single response object.
+            // If we return IAsyncEnumerable, McpMiddleware needs to handle it.
+            
+            // BUT, looking at existing code in McpMiddleware (not shown here but inferred),
+            // it likely serializes the result.
+            
+            // Wait, if the tool returns IAsyncEnumerable, we can't just return it as a single object
+            // unless we buffer it (which defeats the purpose) or if the caller handles it.
+            
+            // Let's check if we can return the enumerable itself and let the middleware handle it?
+            // Or do we need to execute it here?
+            
+            // If we look at how `CounterTools` is implemented:
+            // public async IAsyncEnumerable<JsonRpcMessage> CountTo10Tool(JsonRpcMessage request)
+            
+            // This returns an IAsyncEnumerable.
+            // If we return this object, the caller (McpMiddleware) needs to know how to stream it.
+            
+            return asyncEnumerable;
+        }
+
         // Task<JsonRpcMessage>
         if (result is Task<JsonRpcMessage> jsonRpcTask)
         {

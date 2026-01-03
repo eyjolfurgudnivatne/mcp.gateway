@@ -111,9 +111,7 @@ public partial class ToolService
                         {
                             functionDelegate = Delegate.CreateDelegate(
                                 System.Linq.Expressions.Expression.GetDelegateType(
-                                    method.GetParameters().Select(p => p.ParameterType)
-                                        .Concat(new[] { method.ReturnType })
-                                        .ToArray()),
+                                    [.. method.GetParameters().Select(p => p.ParameterType), method.ReturnType]),
                                 method);
                         }
                         else
@@ -124,9 +122,7 @@ public partial class ToolService
                                 
                             functionDelegate = Delegate.CreateDelegate(
                                 System.Linq.Expressions.Expression.GetDelegateType(
-                                    method.GetParameters().Select(p => p.ParameterType)
-                                        .Concat(new[] { method.ReturnType })
-                                        .ToArray()),
+                                    [.. method.GetParameters().Select(p => p.ParameterType), method.ReturnType]),
                                 instance,
                                 method);
                         }
@@ -181,13 +177,12 @@ public partial class ToolService
             firstParam.GetGenericTypeDefinition() == typeof(TypedJsonRpc<>);
 
         // --- Sjekk inputtype stream ---
-        bool isInputStreamMessage = firstParam == typeof(StreamMessage);
         bool isInputToolConnector = firstParam == typeof(ToolConnector);
 
         // Validate input parameter types
-        if (!isJsonElementMessage && !isTypedJson && !isInputStreamMessage && !isInputToolConnector)
+        if (!isJsonElementMessage && !isTypedJson && !isInputToolConnector)
             throw new ArgumentException(
-                $"Function delegate for '{name}' must take JsonRpcMessage, TypedJsonRpc<T>, StreamMessage or ToolConnector as first parameter.");
+                $"Function delegate for '{name}' must take JsonRpcMessage, TypedJsonRpc<T> or ToolConnector as first parameter.");
 
         // Prompt-specific validation
         if (functionType == FunctionTypeEnum.Prompt && !isJsonElementMessage && !isTypedJson)
@@ -199,25 +194,19 @@ public partial class ToolService
             throw new ArgumentException(
                 $"Resource delegate for '{name}' must take JsonRpcMessage or TypedJsonRpc<T> as first parameter.");
 
-        // TODO: Erstattes av ToolConnector. dersom det er en stream, må det være minst en parameter til (for WebSocket)
-        if (isInputStreamMessage && parameters.Length < 2)
-            throw new ArgumentException(
-                $"Function delegate for '{name}' must take at least two parameters when using StreamMessage.");
-
-        // TODO: Erstattes av ToolConnector. ved input stream melding må neste parameter være WebSocket
-        if (isInputStreamMessage)
-        {
-            var secondParam = parameters[1].ParameterType;
-            if (secondParam != typeof(WebSocket))
-                throw new ArgumentException(
-                    $"Function delegate for '{name}' must take WebSocket as second parameter when using StreamMessage.");
-        }
-
         // --- Sjekk returtype JsonRpc ---
         bool isJsonRpcResponse = returnType == typeof(JsonRpcMessage) ||
             (returnType.IsGenericType &&
              returnType.GetGenericTypeDefinition() == typeof(Task<>) &&
              returnType.GenericTypeArguments[0] == typeof(JsonRpcMessage));
+
+        // --- Sjekk returtype TypedJsonRpc ---
+        bool isTypedJsonRpcResponse = 
+            (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(TypedJsonRpc<>)) ||
+            (returnType.IsGenericType &&
+             returnType.GetGenericTypeDefinition() == typeof(Task<>) &&
+             returnType.GenericTypeArguments[0].IsGenericType &&
+             returnType.GenericTypeArguments[0].GetGenericTypeDefinition() == typeof(TypedJsonRpc<>));
 
         // --- Sjekk returtype stream ---
         bool isStreamMessageResponse =
@@ -234,21 +223,21 @@ public partial class ToolService
         // Validate return types based on function type
         if (functionType == FunctionTypeEnum.Tool)
         {
-            if (!isJsonRpcResponse && !isStreamMessageResponse && !isVoidTask)
+            if (!isJsonRpcResponse && !isTypedJsonRpcResponse && !isStreamMessageResponse && !isVoidTask)
                 throw new ArgumentException(
-                    $"Tool delegate for '{name}' must return Task, Task<JsonRpcMessage>, JsonRpcMessage or IAsyncEnumerable<T>.");
+                    $"Tool delegate for '{name}' must return Task, Task<JsonRpcMessage>, JsonRpcMessage, TypedJsonRpc<T> or IAsyncEnumerable<T>.");
         }
         else if (functionType == FunctionTypeEnum.Prompt)
         {
-            if (!isJsonRpcResponse && !isGenericTask)
+            if (!isJsonRpcResponse && !isTypedJsonRpcResponse && !isGenericTask)
                 throw new ArgumentException(
-                    $"Prompt delegate for '{name}' must return Task<JsonRpcMessage> or JsonRpcMessage.");
+                    $"Prompt delegate for '{name}' must return Task<JsonRpcMessage>, JsonRpcMessage or TypedJsonRpc<T>.");
         }
         else if (functionType == FunctionTypeEnum.Resource)
         {
-            if (!isJsonRpcResponse && !isGenericTask)
+            if (!isJsonRpcResponse && !isTypedJsonRpcResponse && !isGenericTask)
                 throw new ArgumentException(
-                    $"Resource delegate for '{name}' must return Task<JsonRpcMessage> or JsonRpcMessage.");
+                    $"Resource delegate for '{name}' must return Task<JsonRpcMessage>, JsonRpcMessage or TypedJsonRpc<T>.");
         }
 
         // Kun Task tillatt for ToolConnector
@@ -258,7 +247,6 @@ public partial class ToolService
 
         var argumentType = new FunctionDetailArgumentType(
             IsToolConnector: isInputToolConnector,
-            IsStreamMessage: isInputStreamMessage,
             IsJsonElementMessage: isJsonElementMessage,
             IsTypedJsonRpc: isTypedJson,
             ParameterType: firstParam
@@ -268,7 +256,9 @@ public partial class ToolService
             IsVoidTask: isVoidTask,
             IsGenericTask: isGenericTask,
             IsIAsyncEnumerable: isStreamMessageResponse,
-            IsJsonRpcResponse: isJsonRpcResponse
+            IsJsonRpcResponse: isJsonRpcResponse,
+            IsTypedJsonRpcResponse: isTypedJsonRpcResponse,
+            ReturnType: returnType
         );
 
         // Register the function

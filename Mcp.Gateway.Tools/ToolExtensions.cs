@@ -3,6 +3,7 @@ namespace Mcp.Gateway.Tools;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
@@ -140,14 +141,26 @@ public static class ToolExtensions
     /// v1.8.0 Phase 4: SessionService cleanup callback for resource subscriptions
     /// </remarks>
     /// <param name="builder"></param>
-    public static void AddToolsService(this WebApplicationBuilder builder)
+    /// <param name="serverInfoConfigKey">Key in appsettings where server information is stored (typeof ImplementationInfo)</param>
+    public static void AddToolsService(this WebApplicationBuilder builder, string serverInfoConfigKey = "ServerInfo")
     {
         builder.Services.AddSingleton<ToolService>();
         builder.Services.AddScoped<ToolInvoker>();
         builder.Services.AddSingleton<EventIdGenerator>();     // v1.7.0
         builder.Services.AddSingleton<SseStreamRegistry>();    // v1.7.0 Phase 2
         builder.Services.AddSingleton<ResourceSubscriptionRegistry>();  // v1.8.0 Phase 4
-        
+
+        // Configure ImplementationInfo from "ServerInfo" section
+        builder.Services.Configure<ImplementationInfo>(builder.Configuration.GetSection(serverInfoConfigKey));
+        builder.Services.PostConfigure<ImplementationInfo>(options =>
+        {
+            if (string.IsNullOrWhiteSpace(options.Name))
+                options.Name = "mcp-gateway";
+
+            if (string.IsNullOrWhiteSpace(options.Version))
+                options.Version = typeof(ToolExtensions).Assembly.GetName().Version?.ToString() ?? "2.0.0";
+        });
+
         // Register SessionService with cleanup callback (v1.8.0 Phase 4)
         builder.Services.AddSingleton<SessionService>(sp =>
         {

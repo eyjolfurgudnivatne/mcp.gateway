@@ -27,7 +27,7 @@ public class McpProtocolVersionMiddlewareTests
         request.Headers.Add("MCP-Protocol-Version", "2025-11-25");
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -44,7 +44,7 @@ public class McpProtocolVersionMiddlewareTests
         request.Headers.Add("MCP-Protocol-Version", "2025-06-18");
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -61,7 +61,7 @@ public class McpProtocolVersionMiddlewareTests
         request.Headers.Add("MCP-Protocol-Version", "2024-01-01");
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -79,8 +79,8 @@ public class McpProtocolVersionMiddlewareTests
         request.Headers.Add("MCP-Protocol-Version", "2024-01-01");
 
         // Act
-        var response = await client.SendAsync(request);
-        var content = await response.Content.ReadAsStringAsync();
+        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+        var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Contains("Unsupported protocol version", content);
@@ -100,7 +100,7 @@ public class McpProtocolVersionMiddlewareTests
         // No MCP-Protocol-Version header
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -117,7 +117,7 @@ public class McpProtocolVersionMiddlewareTests
         request.Headers.Add("MCP-Protocol-Version", "invalid-version");
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -134,7 +134,7 @@ public class McpProtocolVersionMiddlewareTests
         request.Headers.Add("MCP-Protocol-Version", "");
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -155,7 +155,7 @@ public class McpProtocolVersionMiddlewareTests
         request.Headers.Add("MCP-Protocol-Version", "2025-11-25");
 
         // Act
-        await client.SendAsync(request);
+        await client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("2025-11-25", capturedVersion);
@@ -172,7 +172,7 @@ public class McpProtocolVersionMiddlewareTests
         request.Headers.Add("mcp-protocol-version", "2025-11-25"); // lowercase
 
         // Act
-        var response = await client.SendAsync(request);
+        var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

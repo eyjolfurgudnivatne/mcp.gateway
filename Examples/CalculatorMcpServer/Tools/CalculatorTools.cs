@@ -8,30 +8,17 @@ public class CalculatorTools
     [McpTool("add_numbers",
         Title = "Add Numbers",
         Description = "Adds two numbers and return result. Example: 5 + 3 = 8",
-        Icon = "https://example.com/icons/calculator.png",  // NEW: Icon for testing (v1.6.5)
-        OutputSchema = @"{
-            ""type"":""object"",
-            ""properties"":{
-                ""result"":{""type"":""number"",""description"":""The sum of the two numbers""},
-                ""operation"":{""type"":""string"",""description"":""The operation performed""}
-            },
-            ""required"":[""result""]
-        }")]  // NEW: OutputSchema for testing (v1.6.5)
-    public JsonRpcMessage AddNumbersTool(TypedJsonRpc<AddNumbersRequest> request)
+        Icon = "https://example.com/icons/calculator.png")]
+    public TypedJsonRpc<AddNumbersResponse> AddNumbersTool(TypedJsonRpc<AddNumbersRequest> request)
     {
         var args = request.GetParams()
             ?? throw new ToolInvalidParamsException(
                 "Parameters 'number1' and 'number2' are required and must be numbers.");
 
-        // NEW: Return with structured content (v1.6.5)
-        return ToolResponse.SuccessWithStructured(
+        // NEW: Return TypedJsonRpc<T> with auto-generated OutputSchema (v1.8.1)
+        return TypedJsonRpc<AddNumbersResponse>.Success(
             request.Id,
-            textContent: $"Result: {args.Number1 + args.Number2}",
-            structuredContent: new
-            {
-                result = args.Number1 + args.Number2,
-                operation = "addition"
-            });
+            new AddNumbersResponse(args.Number1 + args.Number2));
     }
 
     [McpTool("multiply_numbers",

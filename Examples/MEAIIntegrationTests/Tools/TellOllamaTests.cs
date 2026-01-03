@@ -8,6 +8,10 @@ using System.Net.Http.Json;
 [Collection("ServerCollection")]
 public class TellOllamaTests(MEAIIntegrationFixture fixture)
 {
+    /// <summary>
+    /// This will fail during normal test run. See README
+    /// </summary>
+    /// <returns></returns>
     [Fact]
     public async Task Tell_Ollama_ReturnResults()
     {
