@@ -78,20 +78,21 @@ using Mcp.Gateway.Tools;
 public class MyTools
 {
     [McpTool("greet")]
-    public JsonRpcMessage Greet(TypedJsonRpc<GreetParams> request)
+    public TypedJsonRpc<GreetResponse> Greet(TypedJsonRpc<GreetParams> request)
     {
         var name = request.Params.Name;
-        return ToolResponse.Success(
+        return TypedJsonRpc<GreetResponse>.Success(
             request.Id,
-            new { message = $"Hello, {name}!" });
+            new GreetResponse($"Hello, {name}!"));
     }
 }
 
 public record GreetParams(string Name);
+public record GreetResponse(string Message);
 ```
 
 **Benefits:**
-- ✅ **No manual JSON Schema** - automatically generated from `GreetParams`
+- ✅ **No manual JSON Schema** - automatically generated from `GreetParams` (Input) and `GreetResponse` (Output)
 - ✅ **Strongly-typed** - IntelliSense and compile-time safety
 - ✅ **Clean code** - easy to read and maintain
 

@@ -85,20 +85,21 @@ using Mcp.Gateway.Tools;
 public class MyTools
 {
     [McpTool("greet")]
-    public JsonRpcMessage Greet(TypedJsonRpc<GreetParams> request)
+    public TypedJsonRpc<GreetResponse> Greet(TypedJsonRpc<GreetParams> request)
     {
         var name = request.Params.Name;
-        return ToolResponse.Success(
+        return TypedJsonRpc<GreetResponse>.Success(
             request.Id,
-            new { message = $"Hello, {name}!" });
+            new GreetResponse($"Hello, {name}!"));
     }
 }
 
 public record GreetParams(string Name);
+public record GreetResponse(string Message);
 ```
 
 **Benefits:**
-- ✅ **No manual JSON Schema** - automatically generated from `GreetParams`
+- ✅ **No manual JSON Schema** - automatically generated from `GreetParams` (Input) and `GreetResponse` (Output)
 - ✅ **Strongly-typed** - IntelliSense and compile-time safety
 - ✅ **Clean code** - easy to read and maintain
 
@@ -232,11 +233,11 @@ Register the DI service in `Program.cs`:
 builder.Services.AddScoped<CalculatorService>();
 ```
 
-### TypedJsonRpc<T> (optional helper, v1.3.0)
+### TypedJsonRpc<T> (v1.3.0) and Auto-Schema (v1.8.0)
 
 For tools that prefer strongly-typed request models, you can use `TypedJsonRpc<T>`:
 
-```
+```csharp
 public sealed record AddNumbersRequestTyped(
     [property: JsonPropertyName("number1")]
     [property: Description("First number to add")] double Number1,
@@ -244,32 +245,42 @@ public sealed record AddNumbersRequestTyped(
     [property: JsonPropertyName("number2")]
     [property: Description("Second number to add")] double Number2);
 
+public sealed record AddNumbersResponseTyped(
+    [property: Description("The result of the addition")] double Result);
+
 [McpTool("add_numbers_typed_ii",
     Title = "Add Numbers (typed)",
     Description = "Adds two numbers using TypedJsonRpc with auto-generated schema.")]
-public JsonRpcMessage AddNumbersToolTypedII(TypedJsonRpc<AddNumbersRequestTyped> request)
+public TypedJsonRpc<AddNumbersResponseTyped> AddNumbersToolTypedII(TypedJsonRpc<AddNumbersRequestTyped> request)
 {
     var args = request.GetParams()
         ?? throw new ToolInvalidParamsException(
             "Parameters 'number1' and 'number2' are required and must be numbers.");
 
-    return ToolResponse.Success(
+    return TypedJsonRpc<AddNumbersResponseTyped>.Success(
         request.Id,
-        new { result = args.Number1 + args.Number2 });
+        new AddNumbersResponseTyped(args.Number1 + args.Number2));
 }
 ```
 
+**Input Schema Generation:**
 If `InputSchema` is omitted on `[McpTool]` **and** the first parameter is `TypedJsonRpc<TParams>`:
+- `tools/list` will auto-generate a JSON Schema for `TParams`.
 
-- `tools/list` will auto-generate a JSON Schema for `TParams`:
-  - Root: `type: "object"`
-  - `properties` from public properties on `TParams`
-  - `required` from non-nullable properties (nullable → optional)
-  - `JsonPropertyName` for JSON field names
-  - `[property: Description("...")]` mapped to `description`
-  - enums represented as string enums (`"type": "string", "enum": ["Active", "Disabled"]`)
+**Output Schema Generation (v1.8.0):**
+If `OutputSchema` is omitted on `[McpTool]` **and** the return type is `TypedJsonRpc<TResponse>`:
+- `tools/list` will auto-generate a JSON Schema for `TResponse`.
+- The response will automatically include `structuredContent` matching the schema.
 
-If `InputSchema` is set on `[McpTool]`, it always wins and auto-generation is skipped.
+**Schema features:**
+- Root: `type: "object"`
+- `properties` from public properties
+- `required` from non-nullable properties (nullable → optional)
+- `JsonPropertyName` for JSON field names
+- `[property: Description("...")]` mapped to `description`
+- enums represented as string enums (`"type": "string", "enum": ["Active", "Disabled"]`)
+
+If `InputSchema` or `OutputSchema` is set on `[McpTool]`, it always wins and auto-generation is skipped for that part.
 
 ### MCP Prompts (v1.4.0)
 
