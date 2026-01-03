@@ -30,13 +30,25 @@ public class ToolNotFoundException(string message) : Exception(message) { }
 /// Invalid method parameter(s).
 /// </summary>
 /// <remarks>-32602 Invalid params</remarks>
-/// <param name="message">Extra error information passed to data propery.</param>
 public class ToolInvalidParamsException : Exception
 {
+    /// <summary>
+    /// The name of the tool associated with the invalid parameters.
+    /// </summary>
     public string? ToolName { get; }
-    
+
+    /// <summary>
+    /// Initializes a new instance of the ToolInvalidParamsException class with a specified error message.
+    /// </summary>
+    /// <param name="message">The message that describes the error.</param>
     public ToolInvalidParamsException(string message) : base(message) { }
-    
+
+    /// <summary>
+    /// Initializes a new instance of the ToolInvalidParamsException class with a specified error message and the name
+    /// of the tool that caused the exception.
+    /// </summary>
+    /// <param name="message">The message that describes the error.</param>
+    /// <param name="toolName">The name of the tool associated with the invalid parameters.</param>
     public ToolInvalidParamsException(string message, string toolName) : base(message)
     {
         ToolName = toolName;
@@ -55,15 +67,20 @@ public class ToolInternalErrorException(string message) : Exception(message) { }
 /// Used for better error guidance when sessions expire.
 /// </summary>
 /// <remarks>-32001 Session error (custom code)</remarks>
-public class SessionExpiredException : Exception
+/// <remarks>
+/// Initializes a new instance of the SessionExpiredException class with a specified session ID.
+/// </remarks>
+/// <param name="sessionId">The unique identifier for the current session.</param>
+/// <param name="timeoutMinutes">Set the timeout duration, in minutes, for the associated operation or process.</param>
+public class SessionExpiredException(string sessionId, int timeoutMinutes = 30) : Exception($"Session '{sessionId}' not found or expired after {timeoutMinutes} minutes of inactivity")
 {
-    public string SessionId { get; }
-    public int TimeoutMinutes { get; }
-    
-    public SessionExpiredException(string sessionId, int timeoutMinutes = 30) 
-        : base($"Session '{sessionId}' not found or expired after {timeoutMinutes} minutes of inactivity")
-    {
-        SessionId = sessionId;
-        TimeoutMinutes = timeoutMinutes;
-    }
+    /// <summary>
+    /// Gets the unique identifier for the current session.
+    /// </summary>
+    public string SessionId { get; } = sessionId;
+
+    /// <summary>
+    /// Gets the timeout duration, in minutes, for the associated operation or process.
+    /// </summary>
+    public int TimeoutMinutes { get; } = timeoutMinutes;
 }
