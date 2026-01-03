@@ -1,4 +1,6 @@
+#pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace Mcp.Gateway.Tools;
+#pragma warning restore IDE0130 // Namespace does not match folder structure
 
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
@@ -28,7 +30,14 @@ public class ListPromptsResult
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, object>? Meta { get; set; }
 
-    // Fanger opp ekstra properties ([key: string]: unknown)
+    /// <summary>
+    /// Gets or sets a collection of additional data that is not mapped to known properties during JSON serialization or
+    /// deserialization.
+    /// </summary>
+    /// <remarks>This property stores any extra JSON properties encountered during deserialization that do not
+    /// have corresponding members in the class. When serializing, any key-value pairs in this dictionary will be
+    /// included as additional JSON properties. This enables forward compatibility and extensibility for handling
+    /// unknown or dynamic data.</remarks>
     [JsonExtensionData]
     public Dictionary<string, object>? AdditionalData { get; set; }
 }
@@ -121,6 +130,9 @@ public class PromptArgument
     public bool? Required { get; set; }
 }
 
+/// <summary>
+/// Parameters for a prompts/get request from the client to the server.
+/// </summary>
 public class PromptRequest {
     /// <summary>
     /// The name of the prompt to retrieve.
@@ -137,6 +149,11 @@ public class PromptRequest {
 
 }
 
+/// <summary>
+/// Represents a request to retrieve a named prompt, optionally supplying arguments to customize its behavior.
+/// </summary>
+/// <typeparam name="TArguments">The type of the arguments used to customize the prompt. This can be any type that represents the data required by
+/// the prompt, or null if no arguments are needed.</typeparam>
 public class PromptRequest<TArguments>
 {
     /// <summary>
@@ -179,7 +196,14 @@ public class PromptResponse
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, object>? Meta { get; set; }
 
-    // Fanger opp ekstra properties ([key: string]: unknown)
+    /// <summary>
+    /// Gets or sets a collection of additional data that is not mapped to known properties during JSON serialization or
+    /// deserialization.
+    /// </summary>
+    /// <remarks>This property stores any extra JSON properties encountered during deserialization that do not
+    /// have corresponding members in the class. When serializing, any key-value pairs in this dictionary will be
+    /// included as additional JSON properties. This enables forward compatibility and extensibility for handling
+    /// unknown or dynamic data.</remarks>
     [JsonExtensionData]
     public Dictionary<string, object>? AdditionalData { get; set; }
 }
@@ -189,9 +213,18 @@ public class PromptResponse
 /// </summary>
 public sealed record PromptMessage
 {
+    /// <summary>
+    /// The role of the message sender (system, user, assistant, or tool).
+    /// </summary>
     [JsonIgnore]
     public PromptRole Role { get; init; }
 
+    /// <summary>
+    /// Gets or sets the role as a string value for serialization purposes.
+    /// </summary>
+    /// <remarks>This property is intended for use with JSON serialization and deserialization. It represents
+    /// the role in a format suitable for wire transfer and may differ from the internal representation. Setting this
+    /// property updates the underlying role accordingly.</remarks>
     [JsonPropertyName("role")]
     public string RoleString
     {
@@ -199,11 +232,22 @@ public sealed record PromptMessage
         init => Role = FromWireRole(value);
     }
 
+    /// <summary>
+    /// The content of the message.
+    /// </summary>
     [JsonPropertyName("content")]
     public IContentBlock? Content { get; init; } = null;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PromptMessage"/> class.
+    /// </summary>
     public PromptMessage() { }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PromptMessage"/> class with the specified role and content.
+    /// </summary>
+    /// <param name="role">The role of the message sender.</param>
+    /// <param name="content">The content of the message.</param>
     public PromptMessage(PromptRole role, IContentBlock content)
     {
         Role = role;
@@ -229,6 +273,12 @@ public sealed record PromptMessage
     };
 }
 
+/// <summary>
+/// Specifies the role of a message or participant in an AI prompt exchange.
+/// </summary>
+/// <remarks>Use this enumeration to indicate whether a message originates from the system, a user, an AI
+/// assistant, or an external tool. This distinction is important for processing and interpreting conversational context
+/// in AI-driven applications.</remarks>
 public enum PromptRole
 {
     System,
