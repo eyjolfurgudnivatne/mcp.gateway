@@ -48,7 +48,7 @@ dotnet new web -n MyMcpServer
 cd MyMcpServer
 
 # Install MCP Gateway
-dotnet add package Mcp.Gateway.Tools --version 1.8.0
+dotnet add package Mcp.Gateway.Tools
 ```
 
 ### 2. Create Your First Tool

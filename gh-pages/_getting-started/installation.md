@@ -29,13 +29,13 @@ Get started with MCP Gateway in minutes.
 ### Using .NET CLI
 
 ```bash
-dotnet add package Mcp.Gateway.Tools --version 1.8.0
+dotnet add package Mcp.Gateway.Tools
 ```
 
 ### Using Package Manager Console
 
 ```powershell
-Install-Package Mcp.Gateway.Tools -Version 1.8.0
+Install-Package Mcp.Gateway.Tools
 ```
 
 ### Using Visual Studio
