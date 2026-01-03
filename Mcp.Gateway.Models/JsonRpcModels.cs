@@ -135,7 +135,7 @@ public sealed record JsonRpcMessage(
     [JsonIgnore] public bool IsParams => IsRequest && Params is not null;
 
     /// <summary>
-    /// Helper to get ID as string for logging/comparison
+    /// Helper to get ID as string for logging/comparison.
     /// Gets the identifier as a string representation, or null if the identifier is not set.
     /// </summary>
     [JsonIgnore] public string? IdAsString => Id?.ToString();
