@@ -9,13 +9,13 @@ public class CalculatorTools
     [McpTool("add_numbers",
         Title = "Add Numbers",
         Description = "Adds two numbers and return result. Example: 5 + 3 = 8")]
-    public JsonRpcMessage AddNumbersTool(TypedJsonRpc<AddNumbersRequest> request)
+    public TypedJsonRpc<AddNumbersResponse> AddNumbersTool(TypedJsonRpc<AddNumbersRequest> request)
     {
         var args = request.GetParams()
             ?? throw new ToolInvalidParamsException(
                 "Parameters 'number1' and 'number2' are required and must be numbers.");
 
-        return ToolResponse.Success(
+        return TypedJsonRpc<AddNumbersResponse>.Success(
             request.Id,
             new AddNumbersResponse(args.Number1 + args.Number2));
     }
