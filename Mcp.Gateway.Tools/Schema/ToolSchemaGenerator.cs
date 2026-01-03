@@ -18,6 +18,11 @@ internal static class ToolSchemaGenerator
         if (tParams == null)
             return null;
 
+        return GenerateSchemaForTypePublic(tParams);
+    }
+
+    public static string GenerateSchemaForTypePublic(Type tParams)
+    {
         return GenerateSchemaForType(tParams);
     }
 

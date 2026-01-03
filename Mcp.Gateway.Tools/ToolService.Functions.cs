@@ -41,7 +41,6 @@ public partial class ToolService
                 var method = functionDetails.FunctionDelegate.Method;
                 string? description = null;
                 string? attrInputSchema = null;
-                IReadOnlyList<PromptArgument>? arguments = null;
                 ToolCapabilities capabilities = ToolCapabilities.Standard;
 
                 // Tool
@@ -67,6 +66,29 @@ public partial class ToolService
                     else
                     {
                         inputSchema = attrInputSchema;
+                    }
+
+                    // Generate output schema if not provided and return type is TypedJsonRpc<T>
+                    if (string.IsNullOrWhiteSpace(outputSchema) && functionDetails.FunctionResultType.IsTypedJsonRpcResponse)
+                    {
+                        // Extract T from TypedJsonRpc<T>
+                        var returnType = functionDetails.FunctionResultType.ReturnType;
+                        
+                        // Handle Task<TypedJsonRpc<T>>
+                        if (functionDetails.FunctionResultType.IsGenericTask)
+                        {
+                            returnType = returnType.GenericTypeArguments[0];
+                        }
+                        
+                        // Now returnType is TypedJsonRpc<T>
+                        var tResponse = returnType.GetGenericArguments().FirstOrDefault();
+                        
+                        if (tResponse != null)
+                        {
+                            // Use ToolSchemaGenerator to generate schema for TResponse
+                            // We can reuse the existing generator logic as it generates schema for a Type
+                            outputSchema = ToolSchemaGenerator.GenerateSchemaForTypePublic(tResponse);
+                        }
                     }
 
                     // Validate InputSchema at runtime

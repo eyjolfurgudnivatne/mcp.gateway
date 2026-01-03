@@ -56,7 +56,9 @@ public partial class ToolService(IServiceProvider serviceProvider)
         bool IsVoidTask, 
         bool IsGenericTask, 
         bool IsIAsyncEnumerable, 
-        bool IsJsonRpcResponse);
+        bool IsJsonRpcResponse,
+        bool IsTypedJsonRpcResponse,
+        Type ReturnType);
     
     /// <summary>
     /// Gets function details by name (or URI for resources).

@@ -200,6 +200,14 @@ public partial class ToolService
              returnType.GetGenericTypeDefinition() == typeof(Task<>) &&
              returnType.GenericTypeArguments[0] == typeof(JsonRpcMessage));
 
+        // --- Sjekk returtype TypedJsonRpc ---
+        bool isTypedJsonRpcResponse = 
+            (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(TypedJsonRpc<>)) ||
+            (returnType.IsGenericType &&
+             returnType.GetGenericTypeDefinition() == typeof(Task<>) &&
+             returnType.GenericTypeArguments[0].IsGenericType &&
+             returnType.GenericTypeArguments[0].GetGenericTypeDefinition() == typeof(TypedJsonRpc<>));
+
         // --- Sjekk returtype stream ---
         bool isStreamMessageResponse =
             (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>)) ||
@@ -215,21 +223,21 @@ public partial class ToolService
         // Validate return types based on function type
         if (functionType == FunctionTypeEnum.Tool)
         {
-            if (!isJsonRpcResponse && !isStreamMessageResponse && !isVoidTask)
+            if (!isJsonRpcResponse && !isTypedJsonRpcResponse && !isStreamMessageResponse && !isVoidTask)
                 throw new ArgumentException(
-                    $"Tool delegate for '{name}' must return Task, Task<JsonRpcMessage>, JsonRpcMessage or IAsyncEnumerable<T>.");
+                    $"Tool delegate for '{name}' must return Task, Task<JsonRpcMessage>, JsonRpcMessage, TypedJsonRpc<T> or IAsyncEnumerable<T>.");
         }
         else if (functionType == FunctionTypeEnum.Prompt)
         {
-            if (!isJsonRpcResponse && !isGenericTask)
+            if (!isJsonRpcResponse && !isTypedJsonRpcResponse && !isGenericTask)
                 throw new ArgumentException(
-                    $"Prompt delegate for '{name}' must return Task<JsonRpcMessage> or JsonRpcMessage.");
+                    $"Prompt delegate for '{name}' must return Task<JsonRpcMessage>, JsonRpcMessage or TypedJsonRpc<T>.");
         }
         else if (functionType == FunctionTypeEnum.Resource)
         {
-            if (!isJsonRpcResponse && !isGenericTask)
+            if (!isJsonRpcResponse && !isTypedJsonRpcResponse && !isGenericTask)
                 throw new ArgumentException(
-                    $"Resource delegate for '{name}' must return Task<JsonRpcMessage> or JsonRpcMessage.");
+                    $"Resource delegate for '{name}' must return Task<JsonRpcMessage>, JsonRpcMessage or TypedJsonRpc<T>.");
         }
 
         // Kun Task tillatt for ToolConnector
@@ -248,7 +256,9 @@ public partial class ToolService
             IsVoidTask: isVoidTask,
             IsGenericTask: isGenericTask,
             IsIAsyncEnumerable: isStreamMessageResponse,
-            IsJsonRpcResponse: isJsonRpcResponse
+            IsJsonRpcResponse: isJsonRpcResponse,
+            IsTypedJsonRpcResponse: isTypedJsonRpcResponse,
+            ReturnType: returnType
         );
 
         // Register the function
