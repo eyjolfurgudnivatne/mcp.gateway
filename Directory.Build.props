@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
-    <Version>1.8.2</Version>
+    <Version>1.8.3</Version>
     <Authors>ARKo AS - AHelse Development Team</Authors>
     <Company>ARKo AS</Company>
     <Copyright>Copyright (c) 2026 ARKo AS - AHelse Development Team</Copyright>
-    <PackageReleaseNotes>v1.8.2: Typed Returns &amp; Auto-Output Schema - Tools can now return TypedJsonRpc&lt;T&gt; for compile-time type safety, automatic outputSchema generation, and simplified structuredContent responses. Updated documentation and examples.</PackageReleaseNotes>
+    <PackageReleaseNotes>v1.8.3: Non-Generic CallToolAsync - Added non-generic CallToolAsync overload to IMcpClient for scenarios where the return value is not needed.</PackageReleaseNotes>
   </PropertyGroup>
 </Project>
