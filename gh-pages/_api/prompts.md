@@ -169,7 +169,7 @@ public JsonRpcMessage CodeReview(TypedJsonRpc<CodeReviewArgs> request)
         new PromptResponse
         {
             Description = "Code review prompt",
-            Messagesc = [
+            Messages = [
                 new PromptMessage(
                     PromptRole.User, 
                     new TextContent {
