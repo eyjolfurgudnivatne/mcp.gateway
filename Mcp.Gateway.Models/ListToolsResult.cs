@@ -30,7 +30,14 @@ public class ListToolsResult
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, object>? Meta { get; set; }
 
-    // Fanger opp ekstra properties ([key: string]: unknown)
+    /// <summary>
+    /// Gets or sets a collection of additional data that is not mapped to known properties during JSON serialization or
+    /// deserialization.
+    /// </summary>
+    /// <remarks>This property stores any extra JSON properties encountered during deserialization that do not
+    /// have corresponding members in the class. When serializing, any key-value pairs in this dictionary will be
+    /// included as additional JSON properties. This enables forward compatibility and extensibility for handling
+    /// unknown or dynamic data.</remarks>
     [JsonExtensionData]
     public Dictionary<string, object>? AdditionalData { get; set; }
 }
