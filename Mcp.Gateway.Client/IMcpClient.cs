@@ -45,7 +45,17 @@ public interface IMcpClient : IAsyncDisposable
     /// <returns>
     /// A <see cref="Task{TResult}"/> representing the asynchronous operation. The result contains the tool's response, or <c>null</c> if the operation fails.
     /// </returns>
-    Task<TResult?> CallToolAsync<TResult>(string toolName, object arguments, CancellationToken ct = default);
+    /// <exception cref="McpClientException">Thrown when the tool execution fails or returns an error.</exception>
+    Task<TResult?> CallToolAsync<TResult>(string toolName, object? arguments, CancellationToken ct = default);
+
+    /// <summary>
+    /// Calls a tool on the MCP server with the specified arguments.
+    /// </summary>
+    /// <param name="toolName">The name of the tool to call.</param>
+    /// <param name="arguments">The arguments to pass to the tool.</param>
+    /// <param name="ct">A cancellation token that can be used to cancel the operation.</param>
+    /// <exception cref="McpClientException">Thrown when the tool execution fails or returns an error.</exception>
+    Task CallToolAsync(string toolName, object? arguments, CancellationToken ct = default);
 
     /// <summary>
     /// Calls a tool on the MCP server with the specified arguments and returns a stream of results.

@@ -86,9 +86,10 @@ public class McpClient(IMcpTransport transport) : IMcpClient
     }
 
     /// <inheritdoc/>
-    public async Task<TResult?> CallToolAsync<TResult>(string toolName, object arguments, CancellationToken ct = default)
+    public async Task<TResult?> CallToolAsync<TResult>(string toolName, object? arguments, CancellationToken ct = default)
     {
         EnsureInitialized();
+        arguments ??= new { };
         var request = JsonRpcMessage.CreateRequest("tools/call", GetNextId(), new
         {
             name = toolName,
@@ -104,6 +105,25 @@ public class McpClient(IMcpTransport transport) : IMcpClient
 
         // Helper to extract result from MCP content format if needed
         return response.GetToolsCallResult<TResult>();
+    }
+
+    /// <inheritdoc/>
+    public async Task CallToolAsync(string toolName, object? arguments, CancellationToken ct = default)
+    {
+        EnsureInitialized();
+        arguments ??= new { };
+        var request = JsonRpcMessage.CreateRequest("tools/call", GetNextId(), new
+        {
+            name = toolName,
+            arguments
+        });
+
+        var response = await SendRequestAsync(request, ct);
+
+        if (response.Error != null)
+        {
+            throw new McpClientException($"Tool call failed: {response.Error.Message}", response.Error);
+        }
     }
 
     /// <inheritdoc/>
