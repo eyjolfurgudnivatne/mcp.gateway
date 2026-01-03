@@ -281,8 +281,20 @@ public sealed record PromptMessage
 /// in AI-driven applications.</remarks>
 public enum PromptRole
 {
+    /// <summary>
+    /// Indicates that the message is a system instruction or configuration.
+    /// </summary>
     System,
+    /// <summary>
+    /// Indicates that the message originates from the user.
+    /// </summary>
     User,
+    /// <summary>
+    /// Indicates that the message originates from the AI assistant.
+    /// </summary>
     Assistant,
+    /// <summary>
+    /// Indicates that the message is a result or output from a tool execution.
+    /// </summary>
     Tool
 }

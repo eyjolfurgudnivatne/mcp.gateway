@@ -11,9 +11,21 @@ using System.Text.Json.Serialization;
 /// </summary>
 public static class StreamMessageType
 {
+    /// <summary>
+    /// Identifies a message that initiates a new stream.
+    /// </summary>
     public static readonly string Start = "start";
+    /// <summary>
+    /// Identifies a message containing a data chunk.
+    /// </summary>
     public static readonly string Chunk = "chunk";
+    /// <summary>
+    /// Identifies a message indicating the stream has completed.
+    /// </summary>
     public static readonly string Done = "done";
+    /// <summary>
+    /// Identifies a message reporting an error in the stream.
+    /// </summary>
     public static readonly string Error = "error";
 }
 
