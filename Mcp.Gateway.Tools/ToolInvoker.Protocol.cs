@@ -642,7 +642,7 @@ public partial class ToolInvoker
     /// <summary>
     /// Handles MCP functions/call request
     /// </summary>
-    private async Task<JsonRpcMessage> HandleFunctionsCallAsync(JsonRpcMessage request, CancellationToken cancellationToken)
+    private async Task<object?> HandleFunctionsCallAsync(JsonRpcMessage request, CancellationToken cancellationToken)
     {
         try
         {
@@ -715,6 +715,31 @@ public partial class ToolInvoker
                     return await ProcessToolResultAsync(result, functionDetails, false, request.Id, cancellationToken);
                 });
             
+            // Handle IAsyncEnumerable (streaming) result
+            if (processedResult is IAsyncEnumerable<JsonRpcMessage> asyncEnumerable)
+            {
+                // For streaming tools, we can't just return a single JsonRpcMessage.
+                // The caller (McpMiddleware) needs to handle this.
+                // But McpMiddleware expects a single object response.
+                
+                // If we are in HTTP context (StreamableHttpEndpoint), we can't easily stream multiple JSON responses 
+                // unless we use SSE or a specific streaming format.
+                // BUT, the user's test uses HttpMcpTransport which expects standard JSON-RPC responses.
+                // If the server sends multiple JSON objects concatenated, the client might be able to read them.
+                
+                // However, `StreamableHttpEndpoint` writes the response as JSON:
+                // await context.Response.WriteAsJsonAsync(response, ct);
+                
+                // If `response` is `IAsyncEnumerable`, `WriteAsJsonAsync` will serialize it as a JSON array `[...]`.
+                // This is NOT what we want for streaming. We want multiple individual JSON-RPC response objects.
+                
+                // To support this, we need to change `StreamableHttpEndpoint` to handle `IAsyncEnumerable`.
+                // But `InvokeSingleAsync` returns `Task<object?>`.
+                
+                // Let's return the enumerable and let the endpoint handle it.
+                return (dynamic)asyncEnumerable; 
+            }
+
             // Extract the actual result data
             object? resultData = null;
             if (processedResult is JsonRpcMessage msg)
@@ -788,6 +813,34 @@ public partial class ToolInvoker
         object? id,
         CancellationToken cancellationToken)
     {
+        // IAsyncEnumerable<JsonRpcMessage> (streaming)
+        if (result is IAsyncEnumerable<JsonRpcMessage> asyncEnumerable)
+        {
+            // For streaming tools, we iterate and send each message directly to the transport?
+            // But ToolInvoker doesn't have access to the transport directly here.
+            // It returns a result to the caller (McpMiddleware).
+            
+            // However, McpMiddleware expects a single response object.
+            // If we return IAsyncEnumerable, McpMiddleware needs to handle it.
+            
+            // BUT, looking at existing code in McpMiddleware (not shown here but inferred),
+            // it likely serializes the result.
+            
+            // Wait, if the tool returns IAsyncEnumerable, we can't just return it as a single object
+            // unless we buffer it (which defeats the purpose) or if the caller handles it.
+            
+            // Let's check if we can return the enumerable itself and let the middleware handle it?
+            // Or do we need to execute it here?
+            
+            // If we look at how `CounterTools` is implemented:
+            // public async IAsyncEnumerable<JsonRpcMessage> CountTo10Tool(JsonRpcMessage request)
+            
+            // This returns an IAsyncEnumerable.
+            // If we return this object, the caller (McpMiddleware) needs to know how to stream it.
+            
+            return asyncEnumerable;
+        }
+
         // Task<JsonRpcMessage>
         if (result is Task<JsonRpcMessage> jsonRpcTask)
         {

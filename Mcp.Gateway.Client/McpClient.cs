@@ -100,6 +100,86 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         return response.GetToolsCallResult<TResult>();
     }
 
+    public async IAsyncEnumerable<TResult> CallToolStreamAsync<TResult>(string toolName, object arguments, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+    {
+        EnsureInitialized();
+        var request = JsonRpcMessage.CreateRequest("tools/call", GetNextId(), new
+        {
+            name = toolName,
+            arguments
+        });
+
+        if (request.Id == null) throw new ArgumentException("Request must have an ID", nameof(request));
+
+        // We need a channel to stream responses
+        var channel = Channel.CreateUnbounded<JsonRpcMessage>();
+        
+        // Register the channel for this request ID
+        // Note: We need a way to distinguish between single-response and multi-response requests in _pendingRequests
+        // Currently _pendingRequests stores TaskCompletionSource<JsonRpcMessage>.
+        // We need to refactor _pendingRequests to support streaming or handle it differently.
+        
+        // Refactoring strategy:
+        // Instead of changing _pendingRequests type (which would be a larger change), 
+        // let's introduce a separate dictionary for streaming requests: _streamingRequests.
+        // But ProcessTransportMessagesAsync needs to check both.
+        
+        // Let's use a common interface or base type? No, simpler to just add another dictionary.
+        // But wait, ProcessTransportMessagesAsync needs to know where to route the message.
+        
+        // Alternative: Use a custom TCS-like object that can handle multiple results?
+        // Or just use Channel<JsonRpcMessage> in _pendingRequests?
+        // If we change _pendingRequests to ConcurrentDictionary<object, Channel<JsonRpcMessage>>, 
+        // then single-response methods can just read the first item.
+        
+        // Let's try to adapt SendRequestAsync to use Channel internally?
+        // That would be a good refactor.
+        
+        // However, to minimize changes and risk, let's add _activeStreams.
+        // If a message ID is in _activeStreams, write to that channel.
+        // If it's in _pendingRequests, set the TCS.
+        
+        // But we need to handle the case where a response comes in.
+        
+        // Let's implement _activeStreams.
+        
+        _activeStreams[request.Id] = channel;
+
+        try
+        {
+            await _transport.SendAsync(request, ct);
+        }
+        catch (Exception ex)
+        {
+            _activeStreams.TryRemove(request.Id, out _);
+            throw new McpClientException($"Failed to send tool stream request: {ex.Message}", null);
+        }
+
+        try
+        {
+            // Yield results as they come in
+            await foreach (var response in channel.Reader.ReadAllAsync(ct))
+            {
+                if (response.Error != null)
+                {
+                    throw new McpClientException($"Tool stream failed: {response.Error.Message}", response.Error);
+                }
+
+                var result = response.GetToolsCallResult<TResult>();
+                if (result != null)
+                {
+                    yield return result;
+                }
+            }
+        }
+        finally
+        {
+            _activeStreams.TryRemove(request.Id, out _);
+        }
+    }
+
+    private readonly ConcurrentDictionary<object, Channel<JsonRpcMessage>> _activeStreams = new();
+
     public async Task<ListResourcesResult?> ListResourcesAsync(string? cursor = null, CancellationToken ct = default)
     {
         EnsureInitialized();
@@ -225,6 +305,16 @@ public class McpClient(IMcpTransport transport) : IMcpClient
                 {
                     if (message.Id != null)
                     {
+                        // 1. Check streaming requests first
+                        if (_activeStreams.TryGetValue(message.Id, out var channel))
+                        {
+                            await channel.Writer.WriteAsync(message, ct);
+                            // Do NOT remove from _activeStreams here, as we expect multiple messages.
+                            // The stream is removed when CallToolStreamAsync finishes (e.g. via cancellation).
+                            continue; 
+                        }
+                        
+                        // 2. Check pending single-response requests
                         // Try exact match first
                         if (_pendingRequests.TryGetValue(message.Id, out var tcs))
                         {
@@ -240,16 +330,25 @@ public class McpClient(IMcpTransport transport) : IMcpClient
                             {
                                 var i = (int)l;
                                 if (_pendingRequests.ContainsKey(i)) matchingKey = i;
+                                else if (_activeStreams.ContainsKey(i)) matchingKey = i; // Check streams too
                             }
                             else if (message.Id is int i)
                             {
                                 var l2 = (long)i;
                                 if (_pendingRequests.ContainsKey(l2)) matchingKey = l2;
+                                else if (_activeStreams.ContainsKey(l2)) matchingKey = l2; // Check streams too
                             }
 
-                            if (matchingKey != null && _pendingRequests.TryGetValue(matchingKey, out tcs))
+                            if (matchingKey != null)
                             {
-                                tcs.TrySetResult(message);
+                                if (_activeStreams.TryGetValue(matchingKey, out channel))
+                                {
+                                    await channel.Writer.WriteAsync(message, ct);
+                                }
+                                else if (_pendingRequests.TryGetValue(matchingKey, out tcs))
+                                {
+                                    tcs.TrySetResult(message);
+                                }
                             }
                             else
                             {

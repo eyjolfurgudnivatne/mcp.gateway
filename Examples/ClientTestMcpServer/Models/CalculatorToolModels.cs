@@ -18,3 +18,6 @@ public sealed record MultiplyRequest(
 
 public sealed record MultiplyResponse(
     [property: JsonPropertyName("result")] double Result);
+
+public sealed record CountTo10Response(
+    [property: JsonPropertyName("result")] int Result);

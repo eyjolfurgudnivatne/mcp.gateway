@@ -87,12 +87,38 @@ public class HttpMcpTransport : IMcpTransport
         // Note: Notifications might return 204 No Content
         if (response.StatusCode != System.Net.HttpStatusCode.NoContent)
         {
-            var responseMessage = await response.Content.ReadFromJsonAsync<JsonRpcMessage>(JsonOptions.Default, ct);
-            if (responseMessage != null)
+            // Check content type for JSON Lines (streaming)
+            // Or just try to read multiple JSON objects if possible.
+            // ReadFromJsonAsync reads a single object.
+            
+            // If the response contains multiple JSON objects (JSON Lines), ReadFromJsonAsync might fail or only read the first one.
+            // We need to handle streaming responses.
+            
+            // Let's read as stream and parse manually.
+            using var stream = await response.Content.ReadAsStreamAsync(ct);
+            using var reader = new StreamReader(stream);
+            
+            while (true)
             {
-                // Fix ID if it's a JsonElement (System.Text.Json deserializes object properties as JsonElement)
-                var fixedMsg = NormalizeMessageId(responseMessage);
-                await _incomingMessages.Writer.WriteAsync(fixedMsg, ct);
+                var line = await reader.ReadLineAsync(ct);
+                if (line == null) break; // EOF
+                
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                
+                try
+                {
+                    var responseMessage = JsonSerializer.Deserialize<JsonRpcMessage>(line, JsonOptions.Default);
+                    if (responseMessage != null)
+                    {
+                        // Fix ID if it's a JsonElement (System.Text.Json deserializes object properties as JsonElement)
+                        var fixedMsg = NormalizeMessageId(responseMessage);
+                        await _incomingMessages.Writer.WriteAsync(fixedMsg, ct);
+                    }
+                }
+                catch (JsonException)
+                {
+                    // Ignore invalid lines
+                }
             }
         }
     }

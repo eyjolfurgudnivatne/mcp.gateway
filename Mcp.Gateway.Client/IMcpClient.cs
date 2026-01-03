@@ -28,6 +28,7 @@ public interface IMcpClient : IAsyncDisposable
     // Tools
     Task<ListToolsResult?> ListToolsAsync(string? cursor = null, CancellationToken ct = default);
     Task<TResult?> CallToolAsync<TResult>(string toolName, object arguments, CancellationToken ct = default);
+    IAsyncEnumerable<TResult> CallToolStreamAsync<TResult>(string toolName, object arguments, CancellationToken ct = default);
     
     // Resources
     Task<ListResourcesResult?> ListResourcesAsync(string? cursor = null, CancellationToken ct = default);
