@@ -45,9 +45,24 @@ jobs:
       - name: Run tests
         run: dotnet test --configuration Release --no-build --verbosity normal --filter "FullyQualifiedName!~OllamaIntegrationTests&FullyQualifiedName!~MEAIIntegrationTests"
       
-      - name: Pack NuGet package
+      - name: Pack NuGet packages
         run: |
+          # Pack Models
+          dotnet pack Mcp.Gateway.Models/Mcp.Gateway.Models.csproj \
+            --configuration Release \
+            --no-build \
+            --output ./nupkgs \
+            /p:PackageVersion=${{ steps.version.outputs.version }}
+
+          # Pack Tools
           dotnet pack Mcp.Gateway.Tools/Mcp.Gateway.Tools.csproj \
+            --configuration Release \
+            --no-build \
+            --output ./nupkgs \
+            /p:PackageVersion=${{ steps.version.outputs.version }}
+
+          # Pack Client
+          dotnet pack Mcp.Gateway.Client/Mcp.Gateway.Client.csproj \
             --configuration Release \
             --no-build \
             --output ./nupkgs \
