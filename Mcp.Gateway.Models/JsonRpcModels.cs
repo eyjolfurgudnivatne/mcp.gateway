@@ -217,7 +217,14 @@ public sealed record JsonRpcMessage(
         if (Result is T typed) return typed;
         if (Result is JsonElement je)
         {
-            // 1) MCP content-format: { content: [ { text: "<json or text>" } ] }
+            // 1) MCP structuredContent: { content: [ { text: "<json or text>" }, structuredContent : {} ] }
+            if (je.TryGetProperty("structuredContent", out var structuredContentProp))
+            {
+                return structuredContentProp.Deserialize<T>(JsonOptions.Default);
+            }
+
+
+            // 2) MCP content-format: { content: [ { text: "<json or text>" } ] }
             if (je.TryGetProperty("content", out var contentProp))
             {
                 var contentItem = contentProp.EnumerateArray().FirstOrDefault();
@@ -241,7 +248,7 @@ public sealed record JsonRpcMessage(
             }
         }
 
-        // 2) Fallback: serialize + deserialize (sjelden nødvendig)
+        // 3) Fallback: serialize + deserialize (sjelden nødvendig)
         return JsonSerializer.Deserialize<T>(
             JsonSerializer.Serialize(Result, JsonOptions.Default),
             JsonOptions.Default);
