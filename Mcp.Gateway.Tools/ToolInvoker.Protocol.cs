@@ -75,7 +75,13 @@ public partial class ToolInvoker
             {
                 return HandleInitialize(message);
             }
-            
+
+            // MCP ping method to check if transport protocol is alive
+            if (message.Method == "system/ping")
+            {
+                return ToolResponse.Success(message.Id, new {});
+            }
+
             if (message.Method == "tools/list")
             {
                 // Use transport-aware filtering
