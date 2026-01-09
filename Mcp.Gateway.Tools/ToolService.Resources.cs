@@ -87,6 +87,11 @@ public partial class ToolService
 
                 if (attr == null)
                 {
+                    if (_dynamicResourceMetadata.TryGetValue(uri, out var dynamicDef))
+                    {
+                        return dynamicDef;
+                    }
+
                     System.Diagnostics.Debug.WriteLine(
                         $"WARNING: Resource '{uri}' found but McpResourceAttribute is missing");
                     return null;
@@ -138,8 +143,18 @@ public partial class ToolService
         }
         
         var method = functionDetails.FunctionDelegate.Method;
-        var attr = method.GetCustomAttribute<McpResourceAttribute>()
-            ?? throw new ToolInternalErrorException($"Resource '{uri}' missing McpResourceAttribute");
+        var attr = method.GetCustomAttribute<McpResourceAttribute>();
+
+        // Handle dynamic resources
+        if (attr == null)
+        {
+            if (_dynamicResourceMetadata.TryGetValue(uri, out var dynamicDef))
+            {
+                return dynamicDef;
+            }
+            // Should theoretically not happen if logic is consistent
+            throw new ToolInternalErrorException($"Resource '{uri}' missing both McpResourceAttribute and dynamic metadata");
+        }
 
         return new ResourceDefinition
         {
