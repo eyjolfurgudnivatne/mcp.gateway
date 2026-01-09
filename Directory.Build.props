@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
-    <Version>1.8.3</Version>
+    <Version>1.8.4</Version>
     <Authors>ARKo AS - AHelse Development Team</Authors>
     <Company>ARKo AS</Company>
     <Copyright>Copyright (c) 2026 ARKo AS - AHelse Development Team</Copyright>
-    <PackageReleaseNotes>v1.8.3: Non-Generic CallToolAsync - Added non-generic CallToolAsync overload to IMcpClient for scenarios where the return value is not needed.</PackageReleaseNotes>
+    <PackageReleaseNotes>v1.8.4: System Ping and Connectivity Check - Added internal 'system/ping' tool and client PingAsync method for connection verification.</PackageReleaseNotes>
   </PropertyGroup>
 </Project>
