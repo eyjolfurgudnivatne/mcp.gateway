@@ -491,6 +491,66 @@ await fetch('/mcp', {
 });
 ```
 
+## Dynamic Resources (v1.8.5)
+
+Support for registering and unregistering resources at runtime without using attributes. This is useful for scenarios where resources are not known at compile time, such as dynamic file lists or user-specific data.
+
+### Registering a Resource
+
+Use the `RegisterResource` method on `ToolService` (available via dependency injection).
+
+```csharp
+[McpTool("add-dynamic-resource")]
+public async Task<JsonRpcMessage> AddResource(
+    JsonRpcMessage request, 
+    ToolService toolService)
+{
+    // Define the resource handler
+    Func<JsonRpcMessage, Task<JsonRpcMessage>> handler = async (req) =>
+    {
+        var content = new ResourceContent(
+            Uri: "dynamic://data/1",
+            MimeType: "application/json",
+            Text: "{\"value\": 42}"
+        );
+        return ToolResponse.Success(req.Id, content);
+    };
+
+    // Register dynamically
+    toolService.RegisterResource(
+        uri: "dynamic://data/1",
+        handler: handler,
+        name: "Dynamic Data",
+        description: "A resource created at runtime",
+        mimeType: "application/json"
+    );
+
+    return ToolResponse.Success(request.Id, new { added = true });
+}
+```
+
+### Unregistering a Resource
+
+Use the `UnregisterResource` method to remove a resource at runtime.
+
+```csharp
+[McpTool("remove-dynamic-resource")]
+public JsonRpcMessage RemoveResource(
+    JsonRpcMessage request, 
+    ToolService toolService)
+{
+    // Remove the resource
+    toolService.UnregisterResource("dynamic://data/1");
+
+    return ToolResponse.Success(request.Id, new { removed = true });
+}
+```
+
+### Key Features
+- **Runtime Metadata**: Define Name, Description, and MimeType programmatically without `[McpResource]`.
+- **Seamless Integration**: Dynamically registered resources appear in `resources/list` and work with `resources/read` just like static ones.
+- **Thread Safety**: Registration and unregistration are thread-safe and can be called concurrently.
+
 ## Testing
 
 ### Unit Test
