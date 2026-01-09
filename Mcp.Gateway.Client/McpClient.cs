@@ -75,6 +75,20 @@ public class McpClient(IMcpTransport transport) : IMcpClient
     }
 
     /// <inheritdoc/>
+    public async Task PingAsync(CancellationToken ct = default)
+    {
+        // "ping" er en vanlig konvensjon i JSON-RPC. 
+        var request = JsonRpcMessage.CreateRequest("system/ping", GetNextId(), new { });
+
+        var response = await SendRequestAsync(request, ct);
+
+        if (response?.Error != null)
+        {
+            throw new McpClientException("Ping failed", response.Error);
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task<ListToolsResult?> ListToolsAsync(string? cursor = null, CancellationToken ct = default)
     {
         EnsureInitialized();

@@ -26,6 +26,14 @@ public interface IMcpClient : IAsyncDisposable
     ImplementationInfo? ServerInfo { get; }
 
     /// <summary>
+    /// Sends a ping request to verify connectivity with the remote service asynchronously.
+    /// </summary>
+    /// <param name="ct">A cancellation token that can be used to cancel the ping operation.</param>
+    /// <returns>A task that represents the asynchronous ping operation.</returns>
+    /// <exception cref="McpClientException">Thrown when the ping operation fails.</exception>
+    Task PingAsync(CancellationToken ct = default);
+
+    /// <summary>
     /// Lists the available tools on the MCP server.
     /// </summary>
     /// <param name="cursor">An optional cursor for paginated results.</param>
