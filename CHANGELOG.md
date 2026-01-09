@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.8.5] - 2026-01-09
+
+**✨ Dynamic Resources**
+
+Added support for programmatically registering and unregistering resources at runtime, enabling dynamic scenarios where resources are not known at compile time.
+
+### Added
+- **Dynamic Resource Registration**
+  - `ToolService.RegisterResource(...)` allows registering resources programmatically.
+  - `ToolService.UnregisterResource(...)` allows removing resources at runtime.
+  - Support for metadata (Name, Description, MimeType) without attributes.
+  - Seamless integration with existing `resources/list` and `resources/read` endpoints.
+
+---
+
 ## [1.8.4] - 2026-01-09
 
 **✨ System Ping & Client Connectivity Check**

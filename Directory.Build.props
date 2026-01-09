@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
-    <Version>1.8.4</Version>
+    <Version>1.8.5</Version>
     <Authors>ARKo AS - AHelse Development Team</Authors>
     <Company>ARKo AS</Company>
     <Copyright>Copyright (c) 2026 ARKo AS - AHelse Development Team</Copyright>
-    <PackageReleaseNotes>v1.8.4: System Ping and Connectivity Check - Added internal 'system/ping' tool and client PingAsync method for connection verification.</PackageReleaseNotes>
+    <PackageReleaseNotes>v1.8.5: Dynamic Resource Management - Introduced support for programmatically registering and unregistering resources at runtime, enabling dynamic scenarios where resources are not known at compile time.</PackageReleaseNotes>
   </PropertyGroup>
 </Project>
