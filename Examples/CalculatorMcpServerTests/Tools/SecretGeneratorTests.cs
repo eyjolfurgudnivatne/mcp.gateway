@@ -29,4 +29,26 @@ public class SecretGeneratorTests(CalculatorMcpServerFixture fixture)
         Assert.NotNull(cResult);
         Assert.NotNull(cResult.Secret);
     }
+
+    [Fact]
+    public async Task Generate_SuperSecret_ReturnsSecretEnum()
+    {
+        // Arrange
+        var request = JsonRpcMessage.CreateRequest(
+            "generate_super_secret",
+            Guid.NewGuid().ToString("D"),
+            new CalculatorMcpServer.Tools.SecretGenerator.SecretRequest(CalculatorMcpServer.Tools.SecretGenerator.SecretType.Base64));
+
+        // Act
+        var response = await fixture.HttpClient.PostAsJsonAsync("/rpc", request, fixture.CancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var content = await response.Content.ReadFromJsonAsync<JsonRpcMessage>(fixture.CancellationToken);
+        Assert.NotNull(content);
+        Assert.True(content.IsSuccessResponse, $"Failed to generate secret");
+
+        var cResult = content.GetToolsCallResult<CalculatorMcpServer.Tools.SecretGenerator.SecretResponse>();
+        Assert.NotNull(cResult);
+        Assert.NotNull(cResult.Secret);
+    }
 }

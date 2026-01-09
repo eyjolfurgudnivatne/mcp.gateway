@@ -49,6 +49,33 @@ public class SecretGenerator
                 Type: reqParams.Format));
     }
 
+    // return typed enum
+    [McpTool("generate_super_secret",
+        Title = "Generate Super Secret",
+        Description = "Generates a random super secret token. Use this when you need a unique, unpredictable value that cannot be calculated.")]
+    public TypedJsonRpc<SecretResponse> GenerateSuperSecretTool(TypedJsonRpc<SecretRequest> request)
+    {
+        // Get format parameter (default to guid)
+        var reqParams = request.GetParams()
+            ?? throw new ToolInvalidParamsException(
+                "Parameter 'format' are required and must be one of enum values.");
+
+        // Generate random secret
+        string secret = reqParams.Format switch
+        {
+            SecretType.Hex => GenerateHexSecret(),
+            SecretType.Base64 => GenerateBase64Secret(),
+            _ => Guid.NewGuid().ToString("D") // Default: GUID
+        };
+
+        return TypedJsonRpc<SecretResponse>.Success(
+            request.Id,
+            new SecretResponse(
+                Secret: secret,
+                Timestamp: DateTimeOffset.UtcNow,
+                Type: reqParams.Format));
+    }
+
     private static string GenerateHexSecret()
     {
         byte[] bytes = new byte[16];
