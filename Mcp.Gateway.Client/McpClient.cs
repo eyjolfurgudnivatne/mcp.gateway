@@ -77,8 +77,9 @@ public class McpClient(IMcpTransport transport) : IMcpClient
     /// <inheritdoc/>
     public async Task PingAsync(CancellationToken ct = default)
     {
-        // "ping" er en vanlig konvensjon i JSON-RPC. 
-        var request = JsonRpcMessage.CreateRequest("system/ping", GetNextId(), new { });
+        // "ping" er en vanlig konvensjon i JSON-RPC.
+        // https://modelcontextprotocol.io/specification/2025-11-25/schema#pingrequest
+        var request = JsonRpcMessage.CreateRequest("ping", GetNextId(), new { });
 
         var response = await SendRequestAsync(request, ct);
 

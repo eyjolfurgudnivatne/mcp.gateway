@@ -79,7 +79,8 @@ public partial class ToolInvoker
             }
 
             // MCP ping method to check if transport protocol is alive
-            if (message.Method == "system/ping")
+            // https://modelcontextprotocol.io/specification/2025-11-25/schema#ping
+            if (message.Method == "ping")
             {
                 return ToolResponse.Success(message.Id, new {});
             }
