@@ -150,3 +150,68 @@ public class Annotation
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public double? Priority { get; set; }
 }
+
+/// <summary>
+/// Parameters for a resources/read request.
+/// </summary>
+public class ReadResourceRequestParams
+{
+    /// <summary>
+    /// The _meta property/parameter is reserved by MCP to allow clients and servers to attach additional metadata to their interactions.
+    /// </summary>
+    [JsonPropertyName("_meta")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, object>? Meta { get; set; }
+
+    /// <summary>
+    /// The URI of the resource. The URI can use any protocol; it is up to the server how to interpret it.
+    /// </summary>
+    [JsonPropertyName("uri")]
+    public string Uri { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// The server’s response to a resources/read request from the client.
+/// </summary>
+public class ReadResourceResult
+{
+    /// <summary>
+    /// The _meta property/parameter is reserved by MCP to allow clients and servers to attach additional metadata to their interactions.
+    /// </summary>
+    [JsonPropertyName("_meta")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Dictionary<string, object>? Meta { get; set; }
+
+    /// <summary>
+    /// The URI of the resource. The URI can use any protocol; it is up to the server how to interpret it.
+    /// </summary>
+    [JsonPropertyName("contents")]
+    public ResourceContent Contents { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets a collection of additional data that is not mapped to known properties during JSON serialization or
+    /// deserialization.
+    /// </summary>
+    /// <remarks>This property stores any extra JSON properties encountered during deserialization that do not
+    /// have corresponding members in the class. When serializing, any key-value pairs in this dictionary will be
+    /// included as additional JSON properties. This enables forward compatibility and extensibility for handling
+    /// unknown or dynamic data.</remarks>
+    [JsonExtensionData]
+    public Dictionary<string, object>? AdditionalData { get; set; }
+}
+
+/// <summary>
+/// Represents the content of a resource (from resources/read).
+/// Contains the actual data/content that the resource provides.
+/// </summary>
+/// <param name="Uri">Resource URI that was read</param>
+/// <param name="MimeType">MIME type of the content</param>
+/// <param name="Text">Text content (for text-based resources). Mutually exclusive with Blob.</param>
+/// <param name="Blob">Binary content (for binary resources). Mutually exclusive with Text. Reserved for v1.6+.</param>
+/// <param name="Meta">The _meta property/parameter is reserved by MCP to allow clients and servers to attach additional metadata to their interactions.</param>
+public sealed record ResourceContent(
+    [property: JsonPropertyName("uri")] string Uri,
+    [property: JsonPropertyName("mimeType")] string? MimeType,
+    [property: JsonPropertyName("text")] string? Text = null,
+    [property: JsonPropertyName("blob")] byte[]? Blob = null,
+    [property: JsonPropertyName("_meta")][property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] Dictionary<string, object>? Meta = null);
