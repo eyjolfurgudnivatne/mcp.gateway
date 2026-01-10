@@ -32,4 +32,31 @@ public class SystemPingTests(ClientTestMcpServerFixture fixture)
             Assert.Fail("System ping failed");
         }
     }
+
+    [Fact]
+    public async Task SystemPing_Websocket_ReturnsOk()
+    {
+        // 1. Opprett transport (her WebSocket)
+        var socket = await fixture.CreateWebSocketClientAsync("/ws");
+        await using var transport = new WebSocketMcpTransport(socket);
+        Assert.NotNull(transport);
+
+        // 2. Opprett klient
+        await using var client = new McpClient(transport);
+        Assert.NotNull(client);
+
+        // 3. Koble til (utfører handshake)
+        await client.ConnectAsync(TestContext.Current.CancellationToken);
+
+        // 4. Kall ping
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(1)); // Rask sjekk
+        try
+        {
+            await client.PingAsync(cts.Token);
+        }
+        catch (Exception)
+        {
+            Assert.Fail("System ping failed");
+        }
+    }
 }

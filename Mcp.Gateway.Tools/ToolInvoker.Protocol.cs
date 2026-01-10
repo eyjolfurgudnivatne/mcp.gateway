@@ -2,6 +2,7 @@ namespace Mcp.Gateway.Tools;
 
 using Mcp.Gateway.Tools.Formatters;
 using Microsoft.Extensions.Logging;
+using System.Net.WebSockets;
 using System.Text.Json;
 using static Mcp.Gateway.Tools.ToolService;
 
@@ -42,7 +43,8 @@ public partial class ToolInvoker
     public async Task<object?> InvokeSingleAsync(
         JsonElement element,
         string transport,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        WebSocket? socket = null)
     {
         object? id = null;
         
@@ -150,12 +152,44 @@ public partial class ToolInvoker
             // Check if this is a ToolConnector-based tool (streaming)
             if (toolDetails.FunctionArgumentType.IsToolConnector)
             {
-                // ToolConnector functions should be initiated via StreamMessage start, not JSON-RPC
-                return ToolResponse.Error(
-                    id,
-                    -32601,
-                    "Use StreamMessage to initiate streaming",
-                    "Send a StreamMessage with type='start' to begin streaming");
+                if (socket is null)
+                {
+                    // ToolConnector functions should be initiated via StreamMessage start, not JSON-RPC
+                    return ToolResponse.Error(
+                        id,
+                        -32601,
+                        "Use StreamMessage to initiate streaming",
+                        "Send a StreamMessage with type='start' to begin streaming");
+                }
+                else
+                {
+                    // Create ToolConnector and pass WebSocket ownership
+                    var connector = new ToolConnector(socket);
+
+                    // For read functions: create a synthetic StreamMessage from JSON-RPC request
+                    // This allows tool to start receive loop with proper context
+                    var metaObj = new
+                    {
+                        method = message.Method,
+                        binary = true, // Default to binary for now
+                        correlationId = message.Id
+                    };
+
+                    // Serialize to JsonElement so ToolConnector can parse it
+                    var metaJson = JsonSerializer.Serialize(metaObj, JsonOptions.Default);
+                    var metaElement = JsonDocument.Parse(metaJson).RootElement.Clone();
+
+                    connector.StreamMessage = StreamMessage.CreateStartMessage(metaElement) with { Id = message.IdAsString };
+
+                    // Invoke tool with connector
+                    var result = _toolService.InvokeFunctionDelegate(
+                        message.Method,
+                        toolDetails,
+                        connector);
+
+                    // Return the Task so caller knows this is ToolConnector
+                    return result;
+                }
             }
             
             // Build arguments for tool method

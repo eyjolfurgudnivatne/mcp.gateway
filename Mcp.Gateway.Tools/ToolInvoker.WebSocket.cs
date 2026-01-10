@@ -274,157 +274,279 @@ public partial class ToolInvoker
         WebSocket socket,
         CancellationToken cancellationToken)
     {
-        object? id = null;
+        return await InvokeSingleAsync(element, "ws", cancellationToken, socket);
+        //object? id = null;
         
-        try
-        {
-            // Parse JSON-RPC message
-            if (!JsonRpcMessage.TryGetFromJsonElement(element, out var message) || message is null)
-            {
-                return ToolResponse.Error(
-                    null,
-                    -32600,
-                    "Invalid Request",
-                    "Must be valid JSON-RPC 2.0 message");
-            }
+        //try
+        //{
+        //    // Parse JSON-RPC message
+        //    if (!JsonRpcMessage.TryGetFromJsonElement(element, out var message) || message is null)
+        //    {
+        //        return ToolResponse.Error(
+        //            null,
+        //            -32600,
+        //            "Invalid Request",
+        //            "Must be valid JSON-RPC 2.0 message");
+        //    }
 
-            id = message.Id;
+        //    id = message.Id;
 
-            // Only process requests and notifications
-            if (!message.IsRequest && !message.IsNotification)
-            {
-                return ToolResponse.Error(
-                    id,
-                    -32600,
-                    "Invalid Request",
-                    "Message must be a request or notification");
-            }
+        //    // Only process requests and notifications
+        //    if (!message.IsRequest && !message.IsNotification)
+        //    {
+        //        return ToolResponse.Error(
+        //            id,
+        //            -32600,
+        //            "Invalid Request",
+        //            "Message must be a request or notification");
+        //    }
 
-            // MCP protocol methods (check BEFORE GetFunctionDetails!)
-            if (message.Method == "initialize")
-            {
-                return HandleInitialize(message);
-            }
+        //    // MCP protocol methods (check BEFORE GetFunctionDetails!)
+        //    if (message.Method == "initialize")
+        //    {
+        //        return HandleInitialize(message);
+        //    }
+
+        //    // MCP ping method to check if transport protocol is alive
+        //    if (message.Method == "system/ping")
+        //    {
+        //        return ToolResponse.Success(message.Id, new { });
+        //    }
+
+        //    if (message.Method == "tools/list")
+        //    {
+        //        // Use transport-aware filtering
+        //        return HandleFunctionsList(message, "ws");
+        //    }
+
+        //    if (message.Method == "prompts/list")
+        //    {
+        //        return HandlePromptsList(message);
+        //    }
+
+        //    // Formatted tool lists (functions/list/{format})
+        //    if (message.Method?.StartsWith("tools/list/") == true ||
+        //        message.Method?.StartsWith("prompts/list/") == true)
+        //    {
+        //        return HandleFormattedFunctionsList(message, "ws");
+        //    }
+
+        //    if (message.Method == "tools/call" ||
+        //        message.Method == "prompts/get")
+        //    {
+        //        return await HandleFunctionsCallAsync(message, cancellationToken);
+        //    }
+
+        //    // MCP Resources support (v1.5.0)
+        //    if (message.Method == "resources/list")
+        //    {
+        //        return HandleResourcesList(message);
+        //    }
             
-            if (message.Method == "tools/list" ||
-                message.Method == "prompts/list")
-            {
-                return HandleFunctionsList(message, "ws");
-            }
+        //    if (message.Method == "resources/read")
+        //    {
+        //        return await HandleResourcesReadAsync(message, cancellationToken);
+        //    }
 
-            // Formatted tool lists (functions/list/{format})
-            if (message.Method?.StartsWith("tools/list/") == true ||
-                message.Method?.StartsWith("prompts/list/") == true)
-            {
-                return HandleFormattedFunctionsList(message, "ws");
-            }
+        //    // MCP notifications (client → server, no response expected)
+        //    if (message.Method?.StartsWith("notifications/") == true)
+        //    {
+        //        // Log and ignore MCP notifications (e.g., "notifications/initialized")
+        //        _logger.LogInformation("Received MCP notification: {Method}", message.Method);
+        //        return null; // No response for notifications
+        //    }
 
-            if (message.Method == "tools/call")
-            {
-                return await HandleFunctionsCallAsync(message, cancellationToken);
-            }
-
-            // MCP Resources support (v1.5.0)
-            if (message.Method == "resources/list")
-            {
-                return HandleResourcesList(message);
-            }
+        //    // Fix for CS8604: Add null check for message.Method before calling GetFunctionDetails
+        //    if (string.IsNullOrEmpty(message.Method))
+        //    {
+        //        return ToolResponse.Error(
+        //            id,
+        //            -32600,
+        //            "Invalid Request",
+        //            "Method name must not be null or empty");
+        //    }
+        //    var toolDetails = _toolService.GetFunctionDetails(message.Method);
             
-            if (message.Method == "resources/read")
-            {
-                return await HandleResourcesReadAsync(message, cancellationToken);
-            }
-
-            // MCP notifications (client → server, no response expected)
-            if (message.Method?.StartsWith("notifications/") == true)
-            {
-                // Log and ignore MCP notifications (e.g., "notifications/initialized")
-                _logger.LogInformation("Received MCP notification: {Method}", message.Method);
-                return null; // No response for notifications
-            }
-
-            // Fix for CS8604: Add null check for message.Method before calling GetFunctionDetails
-            if (string.IsNullOrEmpty(message.Method))
-            {
-                return ToolResponse.Error(
-                    id,
-                    -32600,
-                    "Invalid Request",
-                    "Method name must not be null or empty");
-            }
-            var toolDetails = _toolService.GetFunctionDetails(message.Method);
+        //    // Check if this is a ToolConnector-based tool (streaming)
+        //    if (toolDetails.FunctionArgumentType.IsToolConnector)
+        //    {
+        //        // Create ToolConnector and pass WebSocket ownership
+        //        var connector = new ToolConnector(socket);
+                
+        //        // For read functions: create a synthetic StreamMessage from JSON-RPC request
+        //        // This allows tool to start receive loop with proper context
+        //        var metaObj = new
+        //        {
+        //            method = message.Method,
+        //            binary = true, // Default to binary for now
+        //            correlationId = message.Id
+        //        };
+                
+        //        // Serialize to JsonElement so ToolConnector can parse it
+        //        var metaJson = JsonSerializer.Serialize(metaObj, JsonOptions.Default);
+        //        var metaElement = JsonDocument.Parse(metaJson).RootElement.Clone();
+                
+        //        connector.StreamMessage = StreamMessage.CreateStartMessage(metaElement) with { Id = message.IdAsString };
+                
+        //        // Invoke tool with connector
+        //        var result = _toolService.InvokeFunctionDelegate(
+        //            message.Method,
+        //            toolDetails,
+        //            connector);
+                
+        //        // Return the Task so caller knows this is ToolConnector
+        //        return result;
+        //    }
             
-            // Check if this is a ToolConnector-based tool (streaming)
-            if (toolDetails.FunctionArgumentType.IsToolConnector)
-            {
-                // Create ToolConnector and pass WebSocket ownership
-                var connector = new ToolConnector(socket);
-                
-                // For read functions: create a synthetic StreamMessage from JSON-RPC request
-                // This allows tool to start receive loop with proper context
-                var metaObj = new
-                {
-                    method = message.Method,
-                    binary = true, // Default to binary for now
-                    correlationId = message.Id
-                };
-                
-                // Serialize to JsonElement so ToolConnector can parse it
-                var metaJson = JsonSerializer.Serialize(metaObj, JsonOptions.Default);
-                var metaElement = JsonDocument.Parse(metaJson).RootElement.Clone();
-                
-                connector.StreamMessage = StreamMessage.CreateStartMessage(metaElement) with { Id = message.IdAsString };
-                
-                // Invoke tool with connector
-                var result = _toolService.InvokeFunctionDelegate(
-                    message.Method,
-                    toolDetails,
-                    connector);
-                
-                // Return the Task so caller knows this is ToolConnector
-                return result;
-            }
-            
-            // Regular tool (non-streaming)
-            object[] args;
+        //    // Regular tool (non-streaming)
+        //    object[] args;
 
-            // If the tool expects a TypedJsonRpc<T>, wrap the JsonRpcMessage accordingly.
-            if (toolDetails.FunctionArgumentType.IsTypedJsonRpc)
-            {
-                var paramType = toolDetails.FunctionArgumentType.ParameterType;
+        //    // If the tool expects a TypedJsonRpc<T>, wrap the JsonRpcMessage accordingly.
+        //    if (toolDetails.FunctionArgumentType.IsTypedJsonRpc)
+        //    {
+        //        var paramType = toolDetails.FunctionArgumentType.ParameterType;
 
-                args = [Activator.CreateInstance(paramType, message)
-                        ?? throw new ToolInternalErrorException(
-                            $"{message.Method}: Failed to create TypedJsonRpc instance for parameter type '{paramType.FullName}'")];
-            }
-            else
-            {
-                args = [message];
-            }
+        //        args = [Activator.CreateInstance(paramType, message)
+        //                ?? throw new ToolInternalErrorException(
+        //                    $"{message.Method}: Failed to create TypedJsonRpc instance for parameter type '{paramType.FullName}'")];
+        //    }
+        //    else
+        //    {
+        //        args = [message];
+        //    }
 
-            var regularResult = _toolService.InvokeFunctionDelegate(
-                message.Method,
-                toolDetails,
-                args);
+        //    // Invoke the tool with lifecycle hooks (v1.8.0)
+        //    return await InvokeToolWithHooksAsync(
+        //        message.Method,
+        //        message,
+        //        async () =>
+        //        {
+        //            // Invoke the tool
+        //            var result = _toolService.InvokeFunctionDelegate(
+        //                message.Method,
+        //                toolDetails,
+        //                args);
 
-            // Handle different return types
-            return await ProcessToolResultAsync(regularResult, toolDetails, message.IsNotification, id, cancellationToken);
-        }
-        catch (ToolNotFoundException ex)
-        {
-            _logger.LogWarning(ex, "Tool not found: {Method}", ex.Message);
-            return ToolResponse.Error(id, -32601, "Method not found", new { detail = ex.Message });
-        }
-        catch (ToolInvalidParamsException ex)
-        {
-            _logger.LogWarning(ex, "Invalid params for tool");
-            return ToolResponse.Error(id, -32602, "Invalid params", new { detail = ex.Message });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error invoking tool");
-            return ToolResponse.Error(id, -32603, "Internal error", new { detail = ex.Message });
-        }
+        //            // Handle different return types
+        //            return await ProcessToolResultAsync(result, toolDetails, message.IsNotification, id, cancellationToken);
+        //        });
+        //}
+        //catch (ToolNotFoundException ex)
+        //{
+        //    _logger.LogWarning(ex, "Tool not found: {Method}", ex.Message);
+
+        //    // Suggest similar tool names (v1.8.0)
+        //    var allTools = _toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Tool)
+        //        .Select(t => t.Name)
+        //        .ToList();
+
+        //    var requestedTool = id?.ToString() ?? "unknown";
+        //    var similarTools = StringSimilarity.FindSimilarStrings(
+        //        ex.Message.Replace("Function '", "").Replace("' is not configured.", ""),
+        //        allTools,
+        //        maxResults: 3,
+        //        maxDistance: 3);
+
+        //    if (similarTools.Any())
+        //    {
+        //        return ToolResponse.Error(id, -32601, "Method not found", new
+        //        {
+        //            detail = ex.Message,
+        //            requestedTool = ex.Message.Replace("Function '", "").Replace("' is not configured.", ""),
+        //            suggestions = similarTools,
+        //            hint = $"Did you mean: {string.Join(", ", similarTools)}?"
+        //        });
+        //    }
+
+        //    return ToolResponse.Error(id, -32601, "Method not found", new { detail = ex.Message });
+        //}
+        //catch (ToolInvalidParamsException ex)
+        //{
+        //    _logger.LogWarning(ex, "Invalid params for tool");
+
+        //    // Try to get tool details for schema information (v1.8.0)
+        //    try
+        //    {
+        //        // Use ToolName from exception if available
+        //        var toolName = ex.ToolName;
+        //        if (!string.IsNullOrEmpty(toolName))
+        //        {
+        //            var toolDef = _toolService.GetAllFunctionDefinitions(FunctionTypeEnum.Tool)
+        //                .FirstOrDefault(t => t.Name.Equals(toolName, StringComparison.OrdinalIgnoreCase));
+
+        //            if (toolDef is not null && !string.IsNullOrEmpty(toolDef.InputSchema))
+        //            {
+        //                // Parse schema to extract helpful info
+        //                var schemaDoc = JsonDocument.Parse(toolDef.InputSchema);
+        //                var schemaRoot = schemaDoc.RootElement;
+
+        //                // Extract required fields
+        //                var requiredFields = new List<string>();
+        //                if (schemaRoot.TryGetProperty("required", out var reqProp))
+        //                {
+        //                    foreach (var field in reqProp.EnumerateArray())
+        //                    {
+        //                        var fieldName = field.GetString();
+        //                        if (!string.IsNullOrEmpty(fieldName))
+        //                            requiredFields.Add(fieldName);
+        //                    }
+        //                }
+
+        //                // Build example with ALL required fields (v1.8.0)
+        //                var exampleParams = new List<string>();
+        //                if (schemaRoot.TryGetProperty("properties", out var propsProp))
+        //                {
+        //                    foreach (var prop in propsProp.EnumerateObject())
+        //                    {
+        //                        if (requiredFields.Contains(prop.Name))
+        //                        {
+        //                            var propType = prop.Value.TryGetProperty("type", out var typeProp)
+        //                                ? typeProp.GetString() ?? "unknown"
+        //                                : "unknown";
+
+        //                            var exampleValue = propType switch
+        //                            {
+        //                                "string" => "\"example\"",
+        //                                "number" => "42",
+        //                                "integer" => "42",
+        //                                "boolean" => "true",
+        //                                _ => "..."
+        //                            };
+
+        //                            exampleParams.Add($"\"{prop.Name}\": {exampleValue}");
+        //                        }
+        //                    }
+        //                }
+
+        //                var exampleJson = exampleParams.Any()
+        //                    ? $"{{ {string.Join(", ", exampleParams)} }}"
+        //                    : null;
+
+        //                return ToolResponse.Error(id, -32602, "Invalid params", new
+        //                {
+        //                    detail = ex.Message,
+        //                    tool = toolName,
+        //                    requiredFields = requiredFields.Any() ? requiredFields : null,
+        //                    example = exampleJson,
+        //                    hint = requiredFields.Any()
+        //                        ? $"Required fields: {string.Join(", ", requiredFields)}"
+        //                        : "Check tool schema for parameter details"
+        //                });
+        //            }
+        //        }
+        //    }
+        //    catch
+        //    {
+        //        // If schema extraction fails, fall back to simple error
+        //    }
+
+        //    return ToolResponse.Error(id, -32602, "Invalid params", new { detail = ex.Message });
+        //}
+        //catch (Exception ex)
+        //{
+        //    _logger.LogError(ex, "Error invoking tool");
+        //    return ToolResponse.Error(id, -32603, "Internal error", new { detail = ex.Message });
+        //}
     }
 
     /// <summary>
