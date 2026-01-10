@@ -1,12 +1,15 @@
-## [1.8.5] - 2026-01-09
+## [1.8.6] - 2026-01-10
 
-**✨ Dynamic Resources**
+**🐛 WebSocket Ping Fix & Unified Pipeline**
 
-Added support for programmatically registering and unregistering resources at runtime, enabling dynamic scenarios where resources are not known at compile time.
+Fixed an issue where `system/ping` was not handled correctly on WebSocket connections. This release unifies the invocation pipeline, ensuring WebSocket and HTTP transports share the same protocol setup routines.
 
-### Added
-- **Dynamic Resource Registration**
-  - `ToolService.RegisterResource(...)` allows registering resources programmatically.
-  - `ToolService.UnregisterResource(...)` allows removing resources at runtime.
-  - Support for metadata (Name, Description, MimeType) without attributes.
-  - Seamless integration with existing `resources/list` and `resources/read` endpoints.
+### Fixed
+- **WebSocket System Ping**
+  - Resolved an issue where `system/ping` requests failed or were ignored over WebSocket connections.
+  - WebSocket transport now correctly handles internal system tools.
+
+### Changed
+- **Unified Tool Invocation**
+  - Refactored WebSocket handling to use the shared `ToolInvoker` pipeline.
+  - Ensures consistent protocol behavior (ping, error handling, lifecycle hooks) across all transports.

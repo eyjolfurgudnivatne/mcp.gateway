@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
-    <Version>1.8.5</Version>
+    <Version>1.8.6</Version>
     <Authors>ARKo AS - AHelse Development Team</Authors>
     <Company>ARKo AS</Company>
     <Copyright>Copyright (c) 2026 ARKo AS - AHelse Development Team</Copyright>
-    <PackageReleaseNotes>v1.8.5: Dynamic Resource Management - Introduced support for programmatically registering and unregistering resources at runtime, enabling dynamic scenarios where resources are not known at compile time.</PackageReleaseNotes>
+    <PackageReleaseNotes>v1.8.6: WebSocket Ping Fix and Unified Pipeline - Fixed system/ping on WebSocket and unified the invocation pipeline for consistent protocol behavior across all transports.</PackageReleaseNotes>
   </PropertyGroup>
 </Project>
