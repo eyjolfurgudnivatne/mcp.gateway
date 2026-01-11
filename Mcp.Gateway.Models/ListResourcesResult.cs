@@ -161,13 +161,40 @@ public class ReadResourceRequestParams
     /// </summary>
     [JsonPropertyName("_meta")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public Dictionary<string, object>? Meta { get; set; }
+    public ReadResourceRequestParamsMeta? Meta { get; set; }
 
     /// <summary>
     /// The URI of the resource. The URI can use any protocol; it is up to the server how to interpret it.
     /// </summary>
     [JsonPropertyName("uri")]
     public string Uri { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Meta information for a resources/read request.
+/// </summary>
+public class ReadResourceRequestParamsMeta
+{
+    /// <summary>
+    /// If specified, the caller is requesting out-of-band progress notifications for
+    /// this request (as represented by notifications/progress). The value of this parameter
+    /// is an opaque token that will be attached to any subsequent notifications.
+    /// The receiver is not obligated to provide these notifications.
+    /// </summary>
+    [JsonPropertyName("progressToken")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ProgressToken { get; set; }
+
+    /// <summary>
+    /// Gets or sets a collection of additional data that is not mapped to known properties during JSON serialization or
+    /// deserialization.
+    /// </summary>
+    /// <remarks>This property stores any extra JSON properties encountered during deserialization that do not
+    /// have corresponding members in the class. When serializing, any key-value pairs in this dictionary will be
+    /// included as additional JSON properties. This enables forward compatibility and extensibility for handling
+    /// unknown or dynamic data.</remarks>
+    [JsonExtensionData]
+    public Dictionary<string, object>? AdditionalData { get; set; }
 }
 
 /// <summary>
@@ -186,7 +213,7 @@ public class ReadResourceResult
     /// The URI of the resource. The URI can use any protocol; it is up to the server how to interpret it.
     /// </summary>
     [JsonPropertyName("contents")]
-    public ResourceContent Contents { get; set; } = null!;
+    public List<ResourceContent> Contents { get; set; } = null!;
 
     /// <summary>
     /// Gets or sets a collection of additional data that is not mapped to known properties during JSON serialization or
