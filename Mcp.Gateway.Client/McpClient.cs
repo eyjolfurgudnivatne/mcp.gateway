@@ -236,7 +236,7 @@ public class McpClient(IMcpTransport transport) : IMcpClient
     }
 
     /// <inheritdoc/>
-    public async Task<ResourceContent> ReadResourceAsync(string uri, CancellationToken ct = default)
+    public async Task<ReadResourceResult> ReadResourceAsync(string uri, CancellationToken ct = default)
     {
         EnsureInitialized();
         var request = JsonRpcMessage.CreateRequest("resources/read", GetNextId(), new { uri });
@@ -248,11 +248,17 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         }
 
         // Expecting { contents: [ { uri, mimeType, text/blob } ] }
-        var result = response.GetResult<JsonElement>();
-        if (result.TryGetProperty("contents", out var contents) && contents.GetArrayLength() > 0)
+        try
         {
-            var content = contents[0].Deserialize<ResourceContent>(JsonOptions.Default);
-            return content ?? throw new McpClientException("Failed to deserialize resource content");
+            var result = response.GetResult<ReadResourceResult>();
+            if (result is not null)
+            {
+                return result;
+            }
+        }
+        catch (Exception)
+        {
+            throw new McpClientException("Failed to deserialize resource content");
         }
 
         throw new McpClientException("No content returned for resource");
@@ -268,6 +274,19 @@ public class McpClient(IMcpTransport transport) : IMcpClient
         if (response.Error != null)
         {
             throw new McpClientException($"Subscribe failed: {response.Error.Message}", response.Error);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task UnSubscribeResourceAsync(string uri, CancellationToken ct = default)
+    {
+        EnsureInitialized();
+        var request = JsonRpcMessage.CreateRequest("resources/unsubscribe", GetNextId(), new { uri });
+        var response = await SendRequestAsync(request, ct);
+
+        if (response.Error != null)
+        {
+            throw new McpClientException($"Unsubscribe failed: {response.Error.Message}", response.Error);
         }
     }
 

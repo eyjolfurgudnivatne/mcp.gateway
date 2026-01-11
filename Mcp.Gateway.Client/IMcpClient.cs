@@ -95,7 +95,7 @@ public interface IMcpClient : IAsyncDisposable
     /// <returns>
     /// A <see cref="Task{TResult}"/> representing the asynchronous operation. The result contains the <see cref="ResourceContent"/> of the resource.
     /// </returns>
-    Task<ResourceContent> ReadResourceAsync(string uri, CancellationToken ct = default);
+    Task<ReadResourceResult> ReadResourceAsync(string uri, CancellationToken ct = default);
 
     /// <summary>
     /// Subscribes to updates for a resource on the MCP server by its URI.
@@ -106,6 +106,16 @@ public interface IMcpClient : IAsyncDisposable
     /// A <see cref="Task"/> representing the asynchronous operation.
     /// </returns>
     Task SubscribeResourceAsync(string uri, CancellationToken ct = default);
+
+    /// <summary>
+    /// Unsubscribes from updates for a resource on the MCP server by its URI.
+    /// </summary>
+    /// <param name="uri">The URI of the resource to unsubscribe from.</param>
+    /// <param name="ct">A cancellation token that can be used to cancel the operation.</param>
+    /// <returns>
+    /// A <see cref="Task"/> representing the asynchronous operation.
+    /// </returns>
+    Task UnSubscribeResourceAsync(string uri, CancellationToken ct = default);
 
     /// <summary>
     /// Lists the available prompts on the MCP server.
