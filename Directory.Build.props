@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
-    <Version>1.8.6</Version>
+    <Version>1.8.7</Version>
     <Authors>ARKo AS - AHelse Development Team</Authors>
     <Company>ARKo AS</Company>
     <Copyright>Copyright (c) 2026 ARKo AS - AHelse Development Team</Copyright>
-    <PackageReleaseNotes>v1.8.6: WebSocket Ping Fix and Unified Pipeline - Fixed system/ping on WebSocket and unified the invocation pipeline for consistent protocol behavior across all transports.</PackageReleaseNotes>
+    <PackageReleaseNotes>v1.8.7: Resource API Refinements and Ping Compliance. BREAKING: Client ReadResourceAsync now returns ReadResourceResult. Added Client UnsubscribeResourceAsync. Moved system/ping to ping for spec compliance. Added resource metadata support.</PackageReleaseNotes>
   </PropertyGroup>
 </Project>
