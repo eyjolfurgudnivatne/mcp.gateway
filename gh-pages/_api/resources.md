@@ -195,12 +195,17 @@ public class FileResources
     {
         var data = File.ReadAllText("data/users.json");
         
-        return ResourceResponse.Success(
+        var content = new ResourceContent(
+            Uri: "file://data/users.json",
+            MimeType: "application/json",
+            Text: data);
+
+        return ToolResponse.Success(
             request.Id,
-            new ResourceContent(
-                Uri: "file://data/users.json",
-                MimeType: "application/json",
-                Text: data));
+            new ReadResourceResult
+            {
+                Contents = [content]
+            });
     }
 }
 ```
@@ -217,12 +222,17 @@ public async Task<JsonRpcMessage> GetUsersFromDb(JsonRpcMessage request)
     var users = await _dbContext.Users.ToListAsync();
     var json = JsonSerializer.Serialize(users);
     
-    return ResourceResponse.Success(
+    var content = new ResourceContent(
+        Uri: "db://users",
+        MimeType: "application/json",
+        Text: json);
+
+    return ToolResponse.Success(
         request.Id,
-        new ResourceContent(
-            Uri: "db://users",
-            MimeType: "application/json",
-            Text: json));
+        new ReadResourceResult
+        {
+            Contents = [content]
+        });
 }
 ```
 
@@ -242,12 +252,17 @@ public JsonRpcMessage GetMetrics(JsonRpcMessage request)
         timestamp = DateTime.UtcNow
     };
     
-    return ResourceResponse.Success(
+    var content = new ResourceContent(
+        Uri: "system://metrics",
+        MimeType: "application/json",
+        Text: JsonSerializer.Serialize(metrics));
+
+    return ToolResponse.Success(
         request.Id,
-        new ResourceContent(
-            Uri: "system://metrics",
-            MimeType: "application/json",
-            Text: JsonSerializer.Serialize(metrics)));
+        new ReadResourceResult
+        {
+            Contents = [content]
+        });
 }
 ```
 
@@ -402,7 +417,7 @@ public JsonRpcMessage GetUsers(JsonRpcMessage request)
     }
     
     var data = File.ReadAllText("data/users.json");
-    return ResourceResponse.Success(...);
+    return ToolResponse.Success(...);
 }
 ```
 
@@ -424,7 +439,7 @@ public async Task<JsonRpcMessage> GetUsers(JsonRpcMessage request)
         _cache.Set(cacheKey, data, TimeSpan.FromMinutes(5));
     }
     
-    return ResourceResponse.Success(...);
+    return ToolResponse.Success(...);
 }
 ```
 
@@ -513,7 +528,13 @@ public async Task<JsonRpcMessage> AddResource(
             MimeType: "application/json",
             Text: "{\"value\": 42}"
         );
-        return ToolResponse.Success(req.Id, content);
+
+        var result = new ReadResourceResult
+        {
+            Contents = [content]
+        }
+
+        return ToolResponse.Success(req.Id, result);
     };
 
     // Register dynamically

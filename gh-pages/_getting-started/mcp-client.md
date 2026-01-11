@@ -155,8 +155,8 @@ foreach (var resource in resourcesResult.Resources)
 Get the content of a specific resource.
 
 ```csharp
-var content = await client.ReadResourceAsync("file://logs/app.log");
-Console.WriteLine($"Content: {content.Text}");
+var readResourceResult = await client.ReadResourceAsync("file://logs/app.log");
+Console.WriteLine($"Content: {readResourceResult.Contents[0].Text}");
 ```
 
 ---

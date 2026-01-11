@@ -70,6 +70,7 @@ if (isStdioMode)
 app.UseWebSockets();
 app.UseProtocolVersionValidation();
 app.MapStreamableHttpEndpoint("/mcp");
+app.MapWsRpcEndpoint("/ws");
 
 app.Run();
 ```
@@ -609,7 +610,7 @@ While dots (`.`) are allowed by the MCP specification, we recommend using unders
 
 ```csharp
 // Recommended: Clear and widely compatible
-[McpTool("add_numbers")]      // snake_case (recommended)
+[McpTool("add_numbers")]       // snake_case (recommended)
 [McpTool("get-weather")]       // kebab-case (recommended)
 
 // Also valid: Namespace-style (useful for organization)
@@ -687,11 +688,13 @@ public JsonRpcMessage SystemMetrics(JsonRpcMessage request)
     var metrics = new { cpu = GetCpu(), memory = GetMemory() };
     var json = JsonSerializer.Serialize(metrics);
     
-    return ToolResponse.Success(request.Id, new ResourceContent(
-        Uri: "system://metrics",
-        MimeType: "application/json",
-        Text: json
-    ));
+    return ToolResponse.Success(request.Id, new ReadResourceResult
+    {
+        Contents = [new ResourceContent(
+            Uri: "system://metrics",
+            MimeType: "application/json",
+            Text: json)]
+    });
 }
 ```
 

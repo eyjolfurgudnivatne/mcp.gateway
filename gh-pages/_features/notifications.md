@@ -120,27 +120,28 @@ eventSource.addEventListener('error', (error) => {
 
 ## Notification Types
 
-### Progress Notifications
-
-```csharp
-await _notificationSender.SendNotificationAsync(
-    NotificationMessage.Progress("Processing..."));
-```
-
 ### Resource Updated
 
 ```csharp
-await _notificationSender.SendNotificationAsync(
+await _notificationSender.SendNotificationAsync(    
     NotificationMessage.ResourcesUpdated("file://data/users.json"));
+
+await _notificationSender.SendNotificationAsync(
+    NotificationMessage.ResourcesUpdated());    
 ```
 
-### Tool Result
+### Tools Changed
 
 ```csharp
 await _notificationSender.SendNotificationAsync(
-    NotificationMessage.ToolResult(
-        toolCallId: "call-123",
-        result: new { status = "completed" }));
+    NotificationMessage.ToolsChanged());
+```
+
+### Prompts Changed
+
+```csharp
+await _notificationSender.SendNotificationAsync(
+    NotificationMessage.PromptsChanged());
 ```
 
 ### Custom Notifications
@@ -148,6 +149,7 @@ await _notificationSender.SendNotificationAsync(
 ```csharp
 await _notificationSender.SendNotificationAsync(
     new NotificationMessage(
+        JsonRpc: "2.0",
         Method: "notifications/custom",
         Params: new { message = "Custom event" }));
 ```

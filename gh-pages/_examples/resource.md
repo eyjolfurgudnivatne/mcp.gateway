@@ -240,11 +240,16 @@ public class FileResource
         
         return ToolResponse.Success(
             request.Id,
-            new ResourceContent(
-                Uri: "file://logs/app.log",
-                MimeType: "text/plain",
-                Text: logs
-            ));
+            new ReadResourceResult
+            {
+                Meta = new Dictionary<string, object> {
+                    { "tools.gateway.mcp/status", "Hello World" }
+                },
+                Contents = [new ResourceContent(
+                    Uri: "file://logs/app.log",
+                    MimeType: "text/plain",
+                    Text: logs)]
+            });
     }
 }
 ```
@@ -269,11 +274,13 @@ public JsonRpcMessage SystemMetrics(JsonRpcMessage request)
     
     return ToolResponse.Success(
         request.Id,
-        new ResourceContent(
-            Uri: "system://metrics",
-            MimeType: "application/json",
-            Text: json
-        ));
+        new ReadResourceResult
+        {
+            Contents = [new ResourceContent(
+                Uri: "system://metrics",
+                MimeType: "application/json",
+                Text: json)]
+        });
 }
 ```
 
@@ -489,13 +496,17 @@ public JsonRpcMessage Report(JsonRpcMessage request)
     var data = File.ReadAllBytes(filePath);
     var base64 = Convert.ToBase64String(data);
     
+    var content = new ResourceContent(
+        Uri: "file://data/report.pdf",
+        MimeType: "application/pdf",
+        Blob: base64);
+
     return ToolResponse.Success(
         request.Id,
-        new ResourceContent(
-            Uri: "file://data/report.pdf",
-            MimeType: "application/pdf",
-            Blob: base64
-        ));
+        new ReadResourceResult 
+        {
+            Contents = [content]
+        });
 }
 ```
 
@@ -508,11 +519,18 @@ public JsonRpcMessage Report(JsonRpcMessage request)
 public JsonRpcMessage Config(JsonRpcMessage request)
 {
     var config = File.ReadAllText("appsettings.json");
-    return ToolResponse.Success(request.Id, 
-        new ResourceContent(
-            Uri: "file://config/app.json",
-            MimeType: "application/json",
-            Text: config));
+
+    var content = new ResourceContent(
+        Uri: "file://config/app.json",
+        MimeType: "application/json",
+        Text: config);
+
+    return ToolResponse.Success(
+        request.Id,
+        new ReadResourceResult 
+        {
+            Contents = [content]
+        });
 }
 ```
 
@@ -529,10 +547,13 @@ public JsonRpcMessage ErrorLogs(JsonRpcMessage request)
     var content = string.Join("\n", lines);
     
     return ToolResponse.Success(request.Id,
-        new ResourceContent(
-            Uri: "file://logs/errors.log",
-            MimeType: "text/plain",
-            Text: content));
+        new ReadResourceResult 
+        {
+            Contents = [new ResourceContent(
+                Uri: "file://logs/errors.log",
+                MimeType: "text/plain",
+                Text: content)]
+        });
 }
 ```
 
@@ -546,10 +567,13 @@ public async Task<JsonRpcMessage> Products(JsonRpcMessage request)
     var json = JsonSerializer.Serialize(products);
     
     return ToolResponse.Success(request.Id,
-        new ResourceContent(
-            Uri: "data://products",
-            MimeType: "application/json",
-            Text: json));
+        new ReadResourceResult
+        {
+            Contents = [new ResourceContent(
+                Uri: "data://products",
+                MimeType: "application/json",
+                Text: json)]
+        });
 }
 ```
 
@@ -563,10 +587,13 @@ public async Task<JsonRpcMessage> Weather(JsonRpcMessage request)
         "https://api.weather.com/current");
     
     return ToolResponse.Success(request.Id,
-        new ResourceContent(
-            Uri: "api://weather/current",
-            MimeType: "application/json",
-            Text: response));
+        new ReadResourceResult
+        {
+            Contents = [new ResourceContent(
+                Uri: "api://weather/current",
+                MimeType: "application/json",
+                Text: response)]
+        });
 }
 ```
 
