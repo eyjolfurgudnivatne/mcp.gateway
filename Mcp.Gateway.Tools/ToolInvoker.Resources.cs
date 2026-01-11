@@ -83,17 +83,10 @@ public partial class ToolInvoker
     {
         try
         {
-            var requestParams = request.GetParams();
+            var requestParams = request.GetParams<ReadResourceRequestParams>();
             
             // Check if 'uri' parameter exists
-            if (!requestParams.TryGetProperty("uri", out var uriElement))
-            {
-                return ToolResponse.Error(request.Id, -32602, "Invalid params", "Missing 'uri' parameter");
-            }
-            
-            var uri = uriElement.GetString();
-            
-            if (string.IsNullOrEmpty(uri))
+            if (requestParams is null || string.IsNullOrEmpty(requestParams.Uri))
             {
                 return ToolResponse.Error(request.Id, -32602, "Invalid params", "Missing 'uri' parameter");
             }
@@ -102,58 +95,68 @@ public partial class ToolInvoker
             ResourceDefinition resourceDef;
             try
             {
-                resourceDef = _toolService.GetResourceDefinition(uri);
+                resourceDef = _toolService.GetResourceDefinition(requestParams.Uri);
             }
             catch (ToolNotFoundException)
             {
-                return ToolResponse.Error(request.Id, -32601, "Resource not found", new { detail = $"Resource '{uri}' is not configured" });
+                return ToolResponse.Error(request.Id, -32601, "Resource not found", new { detail = $"Resource '{requestParams.Uri}' is not configured" });
             }
 
             // Build resource request (similar to tools/call)
-            var resourceRequest = JsonRpcMessage.CreateRequest("resource_read", request.Id, new { uri });
+            var resourceRequest = JsonRpcMessage.CreateRequest("resource_read", request.Id, requestParams);
 
             // Invoke resource method
-            var result = _toolService.InvokeResourceDelegate(uri, resourceRequest);
+            var result = _toolService.InvokeResourceDelegate(requestParams.Uri, resourceRequest);
 
             // Get function details to process the result correctly
-            var functionDetails = _toolService.GetFunctionDetails(uri);
+            var functionDetails = _toolService.GetFunctionDetails(requestParams.Uri);
 
             // Process result (sync or async) using the shared tool result processor
             var processedResult = await ProcessToolResultAsync(result, functionDetails, false, request.Id, cancellationToken);
 
-            // Extract the ResourceContent from the JsonRpcMessage result
+            ReadResourceResult? readResult = null;
             ResourceContent? content = null;
+
+            // Extract the ReadResourceResult or ResourceContent (backward compatible) from the JsonRpcMessage result
             if (processedResult is JsonRpcMessage msg && msg.Result != null)
             {
+                string json = "";
                 try
                 {
-                    var json = JsonSerializer.Serialize(msg.Result, JsonOptions.Default);
-                    content = JsonSerializer.Deserialize<ResourceContent>(json, JsonOptions.Default);
+                    json = JsonSerializer.Serialize(msg.Result, JsonOptions.Default);
+                    readResult = JsonSerializer.Deserialize<ReadResourceResult>(json, JsonOptions.Default);
+                    // AdditionalData captured all the data from contents?
+                    if (readResult != null && readResult.Contents is null)
+                        readResult = null;
                 }
-                catch
+                catch { }
+
+                if (readResult is null)
                 {
-                    // Fallback: treat result as plain text
-                    content = new ResourceContent(
-                        Uri: uri,
-                        MimeType: resourceDef.MimeType,
-                        Text: msg.Result is string s ? s : JsonSerializer.Serialize(msg.Result, JsonOptions.Default)
-                    );
+                    try
+                    {
+                        content = JsonSerializer.Deserialize<ResourceContent>(json, JsonOptions.Default);
+                    }
+                    catch { }
+                }
+
+
+                if (readResult is null)
+                {
+                    content ??= new ResourceContent(
+                            Uri: requestParams.Uri,
+                            MimeType: resourceDef.MimeType,
+                            Text: msg.Result is string s ? s : JsonSerializer.Serialize(msg.Result, JsonOptions.Default));
+
+                    readResult = new ReadResourceResult
+                    {
+                        Contents = [content]
+                    };
                 }
             }
 
-            // Wrap in MCP resources/read format
-            return ToolResponse.Success(request.Id, new
-            {
-                contents = new[]
-                {
-                    new
-                    {
-                        uri = content?.Uri ?? uri,
-                        mimeType = content?.MimeType ?? resourceDef.MimeType ?? "text/plain",
-                        text = content?.Text
-                    }
-                }
-            });
+            // MCP resources/read format
+            return ToolResponse.Success(request.Id, readResult);
         }
         catch (ToolNotFoundException ex)
         {
