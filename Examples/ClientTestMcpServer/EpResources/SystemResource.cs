@@ -28,13 +28,19 @@ public class SystemResource
 
         var json = JsonSerializer.Serialize(status, JsonOptions.Default);
 
-        var content = new ResourceContent(
-            Uri: "system://status",
-            MimeType: "application/json",
-            Text: json
-        );
+        var result = new ReadResourceResult
+        {
+            Meta = new Dictionary<string, object> {
+                { "tools.gateway.mcp/status", "Hello World" }
+            },
+            Contents = [
+                new ResourceContent(
+                    Uri: "system://status",
+                    MimeType: "application/json",
+                    Text: json)]
+        };
 
-        return ToolResponse.Success(request.Id, content);
+        return ToolResponse.Success(request.Id, result);
     }
 
     [McpResource("system://environment",

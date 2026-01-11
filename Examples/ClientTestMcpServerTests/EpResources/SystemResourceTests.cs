@@ -72,6 +72,10 @@ public class SystemResourceTests(ClientTestMcpServerFixture fixture)
         // 4. Get resource
         var resource = await client.ReadResourceAsync("system://status", TestContext.Current.CancellationToken);
         Assert.NotNull(resource);
-        Assert.NotNull(resource.Text);
+        Assert.NotNull(resource.Contents);
+        Assert.Single(resource.Contents);
+        Assert.NotNull(resource.Meta);
+        Assert.True(resource.Meta.ContainsKey("tools.gateway.mcp/status"));
+        Assert.Equal("Hello World", resource.Meta["tools.gateway.mcp/status"].ToString());
     }
 }

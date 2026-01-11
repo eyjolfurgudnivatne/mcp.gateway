@@ -37,7 +37,9 @@ public class DynamicResourceTests(ClientTestMcpServerFixture fixture)
         // 6. Get resource
         var resource = await client.ReadResourceAsync("dynamic://test/resource1", TestContext.Current.CancellationToken);
         Assert.NotNull(resource);
-        Assert.NotNull(resource.Text);
+        Assert.NotNull(resource.Contents);
+        Assert.NotNull(resource.Contents[0]);
+        Assert.NotNull(resource.Contents[0].Text);
 
         // 7. Ta bort ressurs
         var removeResourceResponse = await client.CallToolAsync<DynamicResourceResponse>("remove-test-resource", null, ct: TestContext.Current.CancellationToken);
